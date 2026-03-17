@@ -168,18 +168,30 @@ const Spin = ({text="Carregando…"}) => <div className="ld"><Ic n="spin" s={28}
 
 // ── LOGIN ──────────────────────────────────────────────────────────────────────
 function Login({onLogin}) {
-  const [email,setEmail]=useState('');
-  const [pass,setPass]=useState('');
-  const [err,setErr]=useState('');
-  const [busy,setBusy]=useState(false);
+  const [chave, setChave] = useState('');
+  const [err,   setErr]   = useState('');
+  const [busy,  setBusy]  = useState(false);
+
+  // Format chave automatically as XXXX-XXXX-XXXX
+  const handleChave = (val) => {
+    const digits = val.replace(/[^0-9a-zA-Z]/g,'');
+    let fmt = digits;
+    if(digits.length > 4)  fmt = digits.slice(0,4) + '-' + digits.slice(4);
+    if(digits.length > 8)  fmt = digits.slice(0,4) + '-' + digits.slice(4,8) + '-' + digits.slice(8,12);
+    setChave(fmt);
+  };
 
   const go = async () => {
-    if(!email||!pass) return;
+    const chaveClean = chave.trim();
+    if(!chaveClean) { setErr('Por favor insira a sua chave de acesso.'); return; }
     setBusy(true); setErr('');
     try {
-      const rows = await db.get('clients',`?email=eq.${encodeURIComponent(email)}&select=*`);
-      if(rows.length && rows[0].password===pass) onLogin(rows[0]);
-      else setErr('E-mail ou senha incorretos.');
+      const rows = await db.get('clients', `?chave_acesso=eq.${encodeURIComponent(chaveClean)}&select=*`);
+      if(rows.length > 0) {
+        onLogin(rows[0]);
+      } else {
+        setErr('Chave de acesso não encontrada. Verifique e tente novamente.');
+      }
     } catch { setErr('Erro de conexão. Tente novamente.'); }
     setBusy(false);
   };
@@ -197,10 +209,24 @@ function Login({onLogin}) {
       <div className="lr">
         <div className="lc">
           <h2>Bem-vindo</h2>
-          <p>Acesse sua conta para acompanhar seu processo.</p>
-          <div className="fg"><label>E-mail</label><input type="email" placeholder="seu@email.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()}/></div>
-          <div className="fg"><label>Senha</label><input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&go()}/></div>
-          <button className="btnp" onClick={go} disabled={busy}>{busy?<><Ic n="spin" s={16}/>Entrando…</>:'Entrar no Portal'}</button>
+          <p>Insira a sua chave de acesso para acompanhar o seu processo.</p>
+          <div className="fg">
+            <label>Chave de Acesso</label>
+            <input
+              placeholder="XXXX-XXXX-XXXX"
+              value={chave}
+              onChange={e=>handleChave(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&go()}
+              maxLength={14}
+              style={{fontSize:'1.2rem',letterSpacing:'.15em',textAlign:'center',fontWeight:600}}
+            />
+          </div>
+          <p style={{fontSize:'.78rem',color:'var(--mu)',textAlign:'center',marginBottom:'1rem',marginTop:'-.5rem'}}>
+            A sua chave foi enviada pelo escritório Bono & Lacerda
+          </p>
+          <button className="btnp" onClick={go} disabled={busy}>
+            {busy?<><Ic n="spin" s={16}/>A verificar…</>:'Aceder ao Portal'}
+          </button>
           {err&&<p className="errmsg">{err}</p>}
         </div>
       </div>
