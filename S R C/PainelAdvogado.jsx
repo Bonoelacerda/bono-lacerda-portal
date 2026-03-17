@@ -1190,4 +1190,582 @@ export default function App(){
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
     </>
   );
+}  };
+  return map[name] || null;
+}
+
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap');
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes rin{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f8f6f1;--w:#fff;--n:#16213e;--n2:#1a2a4a;--g:#b8860b;--g2:#d4a017;--gd:rgba(184,134,11,.12);--tx:#1c1c2e;--mu:#7a7a95;--bo:#e8e4dc;--ok:#16a34a;--er:#dc2626;--sh:0 2px 16px rgba(22,33,62,.08);--shm:0 6px 32px rgba(22,33,62,.12)}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+.alog{min-height:100vh;background:var(--n);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.alog::before{content:'ADVOCACIA';position:absolute;font-family:'Cormorant Garamond',serif;font-size:16vw;font-weight:700;color:rgba(255,255,255,.025);pointer-events:none;white-space:nowrap}
+.alc{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3rem;width:380px;position:relative;z-index:1;animation:up .4s ease}
+.alc h1{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.9rem;margin-bottom:.3rem}
+.alc>p{color:rgba(255,255,255,.45);font-size:.85rem;margin-bottom:2.5rem}
+.tag{display:inline-block;background:var(--gd);border:1px solid var(--g);color:var(--g2);font-size:.7rem;font-weight:600;padding:.2rem .7rem;border-radius:99px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem}
+.lf{margin-bottom:1.1rem}
+.lf label{display:block;color:rgba(255,255,255,.5);font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
+.lf input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.8rem 1rem;color:#fff;font-family:'Outfit',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s}
+.lf input:focus{border-color:var(--g)}
+.abtn{width:100%;padding:.9rem;background:var(--g);color:#fff;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.abtn:hover{background:var(--g2)}
+.hint{margin-top:1.5rem;color:rgba(255,255,255,.3);font-size:.78rem;text-align:center;line-height:1.7}
+.aerr{color:#f87171;font-size:.82rem;margin-top:.7rem;text-align:center}
+.al{display:flex;min-height:100vh}
+.sb{width:240px;background:var(--n);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100}
+.sbb{padding:1.8rem 1.5rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.sbb h2{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.05rem;line-height:1.3}
+.sbb span{color:var(--g2);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase}
+.sbw{padding:1rem 1.5rem;display:flex;align-items:center;gap:.7rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.av{border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--n);flex-shrink:0}
+.wn{font-size:.85rem;font-weight:600;color:#fff}
+.wr{font-size:.72rem;color:rgba(255,255,255,.4)}
+.sbnv{flex:1;padding:.75rem 0}
+.ni{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.5rem;color:rgba(255,255,255,.5);font-size:.85rem;font-weight:500;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.ni:hover{color:#fff;background:rgba(255,255,255,.04)}
+.ni.on{color:var(--g2);border-left-color:var(--g2);background:var(--gd)}
+.nbdg{margin-left:auto;background:var(--g);color:var(--n);font-size:.68rem;font-weight:700;min-width:18px;height:18px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.sbft{padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,.06)}
+.out{display:flex;align-items:center;gap:.6rem;color:rgba(255,255,255,.35);font-size:.82rem;cursor:pointer;background:none;border:none;font-family:'Outfit',sans-serif}
+.out:hover{color:rgba(255,255,255,.7)}
+.mc{margin-left:240px;flex:1;padding:2.5rem;animation:up .3s ease}
+.tb{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem}
+.pt{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--tx)}
+.ps{color:var(--mu);font-size:.85rem;margin-top:.1rem}
+.card{background:var(--w);border-radius:16px;border:1px solid var(--bo);box-shadow:var(--sh)}
+.cp{padding:1.5rem}
+.ct{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--tx);margin-bottom:1rem;font-weight:600}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.st{background:var(--w);border:1px solid var(--bo);border-radius:14px;padding:1.25rem 1.5rem;box-shadow:var(--sh)}
+.stl{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:.4rem}
+.stv{font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:var(--tx);line-height:1}
+.sts{font-size:.75rem;color:var(--mu);margin-top:.3rem}
+.bd{display:inline-flex;align-items:center;padding:.2rem .65rem;border-radius:99px;font-size:.72rem;font-weight:600}
+.bg{background:#dcfce7;color:#15803d} .ba{background:#fef3c7;color:#92400e} .bb{background:#dbeafe;color:#1d4ed8} .bgr{background:#f1f5f9;color:#475569} .br{background:#fee2e2;color:#b91c1c}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);font-weight:600;padding:.75rem 1rem;border-bottom:1px solid var(--bo)}
+.tbl td{padding:1rem;border-bottom:1px solid var(--bo);font-size:.88rem;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#fafaf8}
+.sw{position:relative;margin-bottom:1.25rem}
+.sw input{width:100%;padding:.75rem 1rem .75rem 2.75rem;border:1.5px solid var(--bo);border-radius:10px;font-family:'Outfit',sans-serif;font-size:.9rem;background:var(--w);color:var(--tx);outline:none;transition:border-color .2s}
+.sw input:focus{border-color:var(--g)}
+.si{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--mu);pointer-events:none}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.2rem;border-radius:8px;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-dk{background:var(--n);color:#fff} .btn-dk:hover{background:var(--n2)}
+.btn-ok{background:#16a34a;color:#fff} .btn-ok:hover{background:#15803d}
+.btn-gh{background:transparent;color:var(--mu);border:1.5px solid var(--bo)} .btn-gh:hover{border-color:var(--g);color:var(--g)}
+.ib{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--bo);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--mu);cursor:pointer;transition:all .15s}
+.ib:hover{border-color:var(--g);color:var(--g)}
+.ib.d:hover{border-color:var(--er);color:var(--er)}
+.ov{position:fixed;inset:0;background:rgba(22,33,62,.55);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;animation:up .2s}
+.mo{background:var(--w);border-radius:20px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shm);animation:up .25s ease}
+.moh{display:flex;align-items:center;justify-content:space-between;padding:1.5rem;border-bottom:1px solid var(--bo)}
+.moh h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--tx)}
+.mob{padding:1.5rem}
+.mof{padding:1.25rem 1.5rem;border-top:1px solid var(--bo);display:flex;gap:.75rem;justify-content:flex-end}
+.ff{margin-bottom:1.1rem}
+.ff label{display:block;font-size:.75rem;font-weight:600;color:var(--tx);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
+.ff input,.ff select,.ff textarea{width:100%;padding:.75rem 1rem;border:1.5px solid var(--bo);border-radius:10px;font-family:'Outfit',sans-serif;font-size:.9rem;color:var(--tx);background:var(--bg);outline:none;transition:border-color .2s}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--g);background:#fff}
+.ff textarea{resize:vertical;min-height:80px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.tabs{display:flex;gap:.25rem;background:var(--w);padding:.3rem;border-radius:12px;border:1px solid var(--bo);width:fit-content;margin-bottom:1.25rem}
+.tab{padding:.5rem 1.2rem;border:none;border-radius:9px;font-family:'Outfit';font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;background:transparent;color:var(--mu)}
+.tab.on{background:var(--n);color:#fff}
+.sr{display:flex;align-items:flex-start;gap:1rem;padding:.9rem 0;border-bottom:1px solid var(--bo)}
+.sr:last-child{border-bottom:none}
+.sc2{width:28px;height:28px;border-radius:50%;border:2px solid var(--bo);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .2s}
+.sc2.dn{background:var(--n);border-color:var(--n);color:#fff}
+.cw{display:flex;flex-direction:column;height:320px}
+.cms{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem;padding-bottom:.5rem}
+.mr{display:flex;gap:.5rem;align-items:flex-end}
+.mr.mi{flex-direction:row-reverse}
+.mb{max-width:70%;padding:.65rem .9rem;border-radius:14px;font-size:.85rem;line-height:1.5}
+.mb.th{background:var(--bg);border:1px solid var(--bo);border-bottom-left-radius:4px}
+.mb.mi{background:var(--n);color:#fff;border-bottom-right-radius:4px}
+.mt2{font-size:.68rem;color:var(--mu);margin-top:.2rem}
+.cir{display:flex;gap:.6rem;margin-top:.75rem;border-top:1px solid var(--bo);padding-top:.75rem}
+.cin{flex:1;padding:.65rem .9rem;border:1.5px solid var(--bo);border-radius:10px;font-family:'Outfit';font-size:.87rem;outline:none;color:var(--tx)}
+.cin:focus{border-color:var(--g)}
+.bsend{width:38px;height:38px;border-radius:10px;background:var(--n);border:none;display:flex;align-items:center;justify-content:center;color:var(--g2);cursor:pointer;flex-shrink:0}
+.bsend:hover{background:var(--n2)}
+.mcard{border:1px solid var(--bo);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;background:var(--bg);transition:border-color .15s}
+.mdb{background:var(--n);color:#fff;border-radius:10px;width:52px;text-align:center;padding:.5rem 0;flex-shrink:0}
+.mdb .day{font-family:'Cormorant Garamond',serif;font-size:1.6rem;line-height:1}
+.mdb .mon{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;opacity:.7;margin-top:2px}
+.dr{display:flex;align-items:center;gap:.9rem;padding:.85rem 1rem;border-radius:10px;border:1px solid var(--bo);background:var(--bg);margin-bottom:.6rem}
+.dic{width:36px;height:36px;background:var(--n);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--g2);flex-shrink:0}
+.uz{border:2px dashed var(--bo);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;color:var(--mu);margin-bottom:1.25rem}
+.uz:hover{border-color:var(--g);color:var(--g);background:var(--gd)}
+.pw{background:var(--bo);border-radius:99px;height:6px}
+.pf{height:6px;border-radius:99px;background:var(--n);transition:width .4s}
+.ld{display:flex;align-items:center;justify-content:center;min-height:200px;flex-direction:column;gap:1rem;color:var(--mu);font-size:.9rem}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--n);color:#fff;padding:.9rem 1.3rem;border-radius:12px;font-size:.85rem;z-index:9999;box-shadow:var(--shm);border-left:3px solid var(--g);animation:rin .3s ease}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bo);border-radius:99px}
+`;
+
+function Toast({msg,onClose}){useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t)},[]);return<div className="toast">✓ {msg}</div>;}
+function Spin(){return<div className="ld"><Icon name="spin" size={28}/><span>Carregando…</span></div>;}
+function Av({name="",size=36}){return<div className="av" style={{width:size,height:size,fontSize:size*.22}}>{ini(name)}</div>;}
+function StatusBadge({s}){return s==="em_andamento"?<span className="bd ba">Em andamento</span>:s==="concluido"?<span className="bd bg">Concluído</span>:<span className="bd bgr">Aguardando</span>;}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+function Login({onLogin}){
+  const [email,setEmail]=useState("");
+  const [pass,setPass]=useState("");
+  const [err,setErr]=useState("");
+  const go=()=>{
+    if(email==="bonoelacerda@gmail.com"&&pass==="admin123") onLogin();
+    else setErr("Credenciais inválidas.");
+  };
+  return(
+    <div className="alog">
+      <div className="alc">
+        <span className="tag">Painel Administrativo</span>
+        <h1>Bono & Lacerda</h1>
+        <p>Advocacia Internacional — Acesso restrito</p>
+        <div className="lf"><label>E-mail</label><input type="email" placeholder="bonoelacerda@gmail.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
+        <div className="lf"><label>Senha</label><input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
+        <button className="abtn" onClick={go}>Entrar no Painel</button>
+        {err&&<div className="aerr">{err}</div>}
+        <p className="hint">Demo: bonoelacerda@gmail.com / admin123</p>
+      </div>
+    </div>
+  );
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function Dash({clients}){
+  const ativos=clients.filter(c=>c.proc?.status==="em_andamento").length;
+  const reunioes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Painel Geral</h1><p className="ps">Visão geral do escritório</p></div></div>
+      <div className="sg">
+        {[["Clientes",clients.length,"cadastrados"],["Processos Ativos",ativos,"em andamento"],["Reuniões Pendentes",reunioes,"a confirmar"],["Total Reuniões",clients.reduce((a,c)=>a+(c.meetings||[]).length,0),"agendadas"]].map(([l,v,s])=>(
+          <div className="st" key={l}><div className="stl">{l}</div><div className="stv">{v}</div><div className="sts">{s}</div></div>
+        ))}
+      </div>
+      {reunioes>0&&(
+        <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem",display:"flex",gap:".75rem",alignItems:"center"}}>
+          <span style={{fontSize:"1.3rem"}}>📬</span>
+          <div><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>{reunioes} pedido(s) de reunião aguardando confirmação</div>
+          <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Abra o cliente → aba Reuniões para confirmar e criar evento no Google Calendar</div></div>
+        </div>
+      )}
+      <div className="card cp">
+        <div className="ct">Clientes Recentes</div>
+        <table className="tbl"><thead><tr><th>Cliente</th><th>Tipo</th><th>Status</th><th>Progresso</th></tr></thead>
+        <tbody>{clients.slice(0,6).map(c=>{
+          const ss=c.steps||[]; const pct=ss.length?Math.round(ss.filter(s=>s.done).length/ss.length*100):0;
+          return(<tr key={c.id}><td><div style={{display:"flex",alignItems:"center",gap:".7rem"}}><Av name={c.name} size={32}/><div><div style={{fontWeight:600,fontSize:".88rem"}}>{c.name}</div><div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso||c.email}</div></div></div></td>
+            <td style={{fontSize:".82rem"}}>{c.proc?.type||"—"}</td><td><StatusBadge s={c.proc?.status}/></td>
+            <td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="pw" style={{flex:1}}><div className="pf" style={{width:`${pct}%`}}/></div><span style={{fontSize:".75rem",color:"var(--mu)",flexShrink:0}}>{pct}%</span></div></td>
+          </tr>);})}
+        </tbody></table>
+      </div>
+    </div>
+  );
+}
+
+// ── CLIENT DETAIL ─────────────────────────────────────────────────────────────
+function Detail({cid,clients,setClients,showToast,onBack}){
+  const client=clients.find(c=>c.id===cid);
+  const [tab,setTab]=useState("processo");
+  const [steps,setSteps]=useState(client?.steps||[]);
+  const [docs,setDocs]=useState(client?.docs||[]);
+  const [msgs,setMsgs]=useState(client?.msgs||[]);
+  const [meets,setMeets]=useState(client?.meetings||[]);
+  const [chatIn,setChatIn]=useState("");
+  const [showMtg,setShowMtg]=useState(false);
+  const [mf,setMf]=useState({title:"",date:"",time:"10:00",type:"presencial",notes:""});
+  const [saving,setSaving]=useState(false);
+  const fileRef=useRef(); const botRef=useRef();
+  useEffect(()=>{botRef.current?.scrollIntoView({behavior:"smooth"})},[msgs]);
+  if(!client) return null;
+  const proc=client.proc;
+  const done=steps.filter(s=>s.done).length;
+  const pct=steps.length?Math.round(done/steps.length*100):0;
+
+  const toggleStep=async s=>{
+    const r=await api.patch("process_steps",s.id,{done:!s.done});
+    if(r[0]) setSteps(ss=>ss.map(x=>x.id===s.id?{...x,done:!s.done}:x));
+    showToast("Etapa atualizada!");
+  };
+  const sendMsg=async()=>{
+    if(!chatIn.trim()||!proc) return;
+    const r=await api.post("messages",{process_id:proc.id,from_role:"lawyer",text:chatIn});
+    if(r[0]) setMsgs(m=>[...m,r[0]]);
+    setChatIn(""); showToast("Mensagem enviada!");
+  };
+  const addMeeting=async()=>{
+    if(!mf.title||!mf.date||!proc) return;
+    setSaving(true);
+    const r=await api.post("meetings",{process_id:proc.id,...mf,status:"confirmado"});
+    if(r[0]){
+      setMeets(m=>[...m,r[0]]);
+      await api.post("notifications",{client_id:client.id,text:`Reunião agendada para ${mf.date.split("-").reverse().join("/")} às ${mf.time}. Tipo: ${mf.type}.`,icon:"📅",read:false});
+      showToast("Reunião agendada!");
+    }
+    setSaving(false); setShowMtg(false); setMf({title:"",date:"",time:"10:00",type:"presencial",notes:""});
+  };
+  const confirmMeet=async m=>{
+    await api.patch("meetings",m.id,{status:"confirmado"});
+    setMeets(ms=>ms.map(x=>x.id===m.id?{...x,status:"confirmado"}:x));
+    await api.post("notifications",{client_id:client.id,text:`Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}.`,icon:"✅",read:false});
+    // Ask Claude to create the Google Calendar event
+    const msg = `Cria um evento no Google Calendar (bonoelacerda@gmail.com): Título: "📅 ${m.title} — ${client.name}", Data: ${m.date}T${m.time}:00, fuso horário Europe/Lisbon, duração 1 hora, descrição: "Cliente: ${client.name}\\nChave: ${client.chave_acesso||""}\\nTipo: ${m.type}${m.notes?"\\nNotas: "+m.notes:""}", lembrete 30min popup e 60min email.`;
+    if(window.sendPrompt) window.sendPrompt(msg);
+    showToast("✅ Reunião confirmada! A criar evento no Google Calendar…");
+  };
+  const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
+  const uploadDoc=async f=>{
+    if(!f||!proc) return;
+    const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado"});
+    if(r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
+  };
+  const notify=async()=>{
+    await api.post("notifications",{client_id:client.id,text:"Nova atualização no seu processo. Acesse o portal para ver.",icon:"🔔",read:false});
+    showToast("Notificação enviada!");
+  };
+
+  const pendentes=meets.filter(m=>m.status==="pendente");
+
+  return(
+    <div>
+      <div className="tb">
+        <div style={{display:"flex",alignItems:"center",gap:"1rem"}}>
+          <button className="btn btn-gh" onClick={onBack}>← Voltar</button>
+          <Av name={client.name} size={44}/>
+          <div><h1 className="pt" style={{fontSize:"1.6rem"}}>{client.name}</h1>
+          <p className="ps">{client.chave_acesso||client.email} · {client.phone||"—"}</p></div>
+        </div>
+        <StatusBadge s={proc?.status}/>
+      </div>
+
+      <div className="card cp" style={{marginBottom:"1.25rem",display:"flex",gap:"2rem",flexWrap:"wrap",alignItems:"center"}}>
+        {[["Processo",proc?.number||proc?.chave_acesso||"—"],["Tipo",proc?.type||"—"],["Artigo",client.artigo||"—"],["Desde",fmtd(client.since)]].map(([k,v])=>(
+          <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".88rem"}}>{v}</div></div>
+        ))}
+        {client.pendencias&&(
+          <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:8,padding:".6rem .9rem"}}>
+            <div style={{fontWeight:600,fontSize:".78rem",color:"#92400e"}}>⚠️ {client.pendencias}</div>
+            {client.observacao&&<div style={{fontSize:".75rem",color:"#b45309",marginTop:2}}>{client.observacao}</div>}
+          </div>
+        )}
+        <div style={{marginLeft:"auto",minWidth:160}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:".72rem",color:"var(--mu)"}}>Progresso</span><span style={{fontSize:".72rem",fontWeight:700}}>{pct}%</span></div>
+          <div className="pw" style={{height:8}}><div className="pf" style={{width:`${pct}%`,height:8}}/></div>
+        </div>
+      </div>
+
+      <div className="tabs">
+        {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["chat","Chat"]].map(([id,label])=>(
+          <button key={id} className={`tab${tab===id?" on":""}`} onClick={()=>setTab(id)}>{label}</button>
+        ))}
+      </div>
+
+      {tab==="processo"&&(
+        <div className="card cp">
+          <div className="ct">Etapas do Processo</div>
+          <p style={{fontSize:".82rem",color:"var(--mu)",marginBottom:"1rem"}}>Clique no círculo para marcar/desmarcar.</p>
+          {steps.map(s=>(
+            <div className="sr" key={s.id}>
+              <div className={`sc2${s.done?" dn":""}`} onClick={()=>toggleStep(s)}>{s.done&&<Icon name="check" size={12}/>}</div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".9rem",color:s.done?"var(--tx)":"var(--mu)"}}>{s.title}</div><div style={{fontSize:".75rem",color:"var(--mu)",marginTop:1}}>{s.date}</div></div>
+              <span className={`bd${s.done?" bg":" bgr"}`}>{s.done?"Concluído":"Pendente"}</span>
+            </div>
+          ))}
+          <button className="btn btn-dk" style={{marginTop:"1.25rem"}} onClick={notify}><Icon name="bell" size={15}/> Notificar cliente</button>
+        </div>
+      )}
+
+      {tab==="documentos"&&(
+        <div className="card cp">
+          <div className="ct">Documentos</div>
+          <div className="uz" onClick={()=>fileRef.current.click()}>
+            <Icon name="upload" size={28}/>
+            <div style={{fontWeight:600,marginTop:8,fontSize:".9rem"}}>Enviar documento ao cliente</div>
+            <div style={{fontSize:".78rem",marginTop:4}}>PDF, DOC, JPG — até 20 MB</div>
+            <input ref={fileRef} type="file" style={{display:"none"}} onChange={e=>uploadDoc(e.target.files[0])}/>
+          </div>
+          {docs.map(d=>(
+            <div className="dr" key={d.id}>
+              <div className="dic"><Icon name="file" size={16}/></div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date}</div></div>
+              <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
+            </div>
+          ))}
+          {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"1.5rem",fontSize:".85rem"}}>Nenhum documento ainda.</p>}
+        </div>
+      )}
+
+      {tab==="reunioes"&&(
+        <div className="card cp">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.25rem"}}>
+            <div className="ct" style={{margin:0}}>Reuniões</div>
+            <button className="btn btn-dk" onClick={()=>setShowMtg(true)}><Icon name="plus" size={15}/> Nova Reunião</button>
+          </div>
+          {pendentes.length>0&&(
+            <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:10,padding:".9rem 1.1rem",marginBottom:"1.25rem"}}>
+              <div style={{fontWeight:600,fontSize:".85rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) do cliente aguardando confirmação</div>
+              <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Clique em "✓ Confirmar" para criar o evento no Google Calendar automaticamente</div>
+            </div>
+          )}
+          {!meets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"2rem",fontSize:".85rem"}}>Nenhuma reunião agendada.</p>}
+          {meets.map(m=>{
+            const d=new Date((m.date||"")+"T12:00:00");
+            const isPending=m.status==="pendente";
+            return(
+              <div className="mcard" key={m.id} style={{borderColor:isPending?"#fcd34d":"var(--bo)",background:isPending?"#fffbf0":"var(--bg)"}}>
+                <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
+                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>⏰ {m.time} · {m.type==="videochamada"?"📹 Video":m.type==="whatsapp"?"💬 WhatsApp":m.type==="presencial"?"📍 Presencial":"📞 Tel"}</div>
+                  {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
+                </div>
+                <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
+                  {isPending?(
+                    <>
+                      <button className="btn btn-ok" style={{fontSize:".78rem",padding:".4rem .9rem"}} onClick={()=>confirmMeet(m)}>✓ Confirmar + 📅</button>
+                      <button className="ib d" onClick={async()=>{await api.patch("meetings",m.id,{status:"recusado"});setMeets(ms=>ms.map(x=>x.id===m.id?{...x,status:"recusado"}:x));}}><Icon name="close" size={13}/></button>
+                    </>
+                  ):(
+                    <>
+                      <span className={`bd${m.status==="confirmado"?" bg":m.status==="recusado"?" br":" bgr"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="recusado"?"Recusado":m.status}</span>
+                      <button className="ib d" onClick={()=>delMeeting(m.id)}><Icon name="trash" size={13}/></button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab==="chat"&&(
+        <div className="card cp">
+          <div className="ct">Chat com {client.name}</div>
+          <div className="cw">
+            <div className="cms">
+              {msgs.map(m=>(
+                <div key={m.id} className={`mr${m.from_role==="lawyer"?" mi":""}`}>
+                  <div><div className={`mb${m.from_role==="lawyer"?" mi":" th"}`}>{m.text}</div>
+                  <div className="mt2" style={{textAlign:m.from_role==="lawyer"?"right":"left"}}>{fmtt(m.created_at)}</div></div>
+                </div>
+              ))}
+              {!msgs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"2rem",fontSize:".85rem"}}>Nenhuma mensagem ainda.</p>}
+              <div ref={botRef}/>
+            </div>
+            <div className="cir">
+              <input className="cin" placeholder="Escreva uma mensagem para o cliente…" value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()}/>
+              <button className="bsend" onClick={sendMsg}><Icon name="send" size={14}/></button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMtg&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMtg(false)}>
+          <div className="mo">
+            <div className="moh"><h2>Agendar Reunião</h2><button className="ib" onClick={()=>setShowMtg(false)}><Icon name="close" size={15}/></button></div>
+            <div className="mob">
+              <div className="ff"><label>Título *</label><input value={mf.title} onChange={e=>setMf(f=>({...f,title:e.target.value}))} placeholder="Ex: Alinhamento processual"/></div>
+              <div className="fr">
+                <div className="ff"><label>Data *</label><input type="date" value={mf.date} onChange={e=>setMf(f=>({...f,date:e.target.value}))}/></div>
+                <div className="ff"><label>Hora</label><input type="time" value={mf.time} onChange={e=>setMf(f=>({...f,time:e.target.value}))}/></div>
+              </div>
+              <div className="ff"><label>Tipo</label>
+                <select value={mf.type} onChange={e=>setMf(f=>({...f,type:e.target.value}))}>
+                  <option value="presencial">📍 Presencial</option>
+                  <option value="videochamada">📹 Videochamada</option>
+                  <option value="telefone">📞 Telefone</option>
+                  <option value="whatsapp">💬 WhatsApp</option>
+                </select>
+              </div>
+              <div className="ff"><label>Notas</label><textarea value={mf.notes} onChange={e=>setMf(f=>({...f,notes:e.target.value}))}/></div>
+            </div>
+            <div className="mof">
+              <button className="btn btn-gh" onClick={()=>setShowMtg(false)}>Cancelar</button>
+              <button className="btn btn-dk" onClick={addMeeting} disabled={saving}>{saving?<><Icon name="spin" size={15}/>Agendando…</>:<><Icon name="check" size={15}/>Agendar + 📅</>}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CLIENTS SCREEN ────────────────────────────────────────────────────────────
+function Clients({clients,setClients,showToast,openClient}){
+  const [q,setQ]=useState("");
+  const [showAdd,setShowAdd]=useState(false);
+  const [form,setForm]=useState({name:"",email:"",phone:"",cpf:"",type:"",pass:"123456"});
+  const [busy,setBusy]=useState(false);
+  const filtered=clients.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.chave_acesso||"").includes(q)||(c.proc?.type||"").toLowerCase().includes(q.toLowerCase()));
+
+  const save=async()=>{
+    if(!form.name||!form.email) return;
+    setBusy(true);
+    const cl=await api.post("clients",{name:form.name,email:form.email,password:form.pass||"123456",phone:form.phone,cpf:form.cpf});
+    if(cl[0]){
+      const pr=await api.post("processes",{client_id:cl[0].id,number:`BL-${Date.now().toString().slice(-6)}`,type:form.type||"Processo Jurídico",status:"aguardando",current_step:1,lawyer:"Dr. Ramom Lacerda",lawyer_avatar:"RL"});
+      if(pr[0]){
+        const ss=["Análise Documental","Submissão do Requerimento","Entrevista / Análise","Aprovação","Emissão do Documento Final"];
+        await Promise.all(ss.map((title,i)=>api.post("process_steps",{process_id:pr[0].id,step_order:i+1,title,detail:"Fase não iniciada.",done:false,date:"—"})));
+        const steps=await api.get("process_steps",`?process_id=eq.${pr[0].id}&order=step_order.asc`);
+        setClients(cs=>[...cs,{...cl[0],proc:pr[0],steps,docs:[],msgs:[],meetings:[]}]);
+        showToast(`Cliente "${form.name}" cadastrado!`);
+      }
+    }
+    setBusy(false); setShowAdd(false); setForm({name:"",email:"",phone:"",cpf:"",type:"",pass:"123456"});
+  };
+
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Clientes</h1><p className="ps">{clients.length} clientes cadastrados</p></div>
+        <button className="btn btn-dk" onClick={()=>setShowAdd(true)}><Icon name="plus" size={16}/> Novo Cliente</button>
+      </div>
+      <div className="card cp">
+        <div className="sw"><span className="si"><Icon name="search" size={16}/></span><input placeholder="Buscar por nome, chave ou tipo…" value={q} onChange={e=>setQ(e.target.value)}/></div>
+        <table className="tbl">
+          <thead><tr><th>Cliente</th><th>Chave / Email</th><th>Tipo</th><th>Status</th><th></th></tr></thead>
+          <tbody>{filtered.map(c=>(
+            <tr key={c.id}>
+              <td><div style={{display:"flex",alignItems:"center",gap:".75rem"}}><Av name={c.name} size={34}/><div><div style={{fontWeight:600,fontSize:".88rem"}}>{c.name}</div></div></div></td>
+              <td style={{fontSize:".82rem",color:"var(--mu)",letterSpacing:".05em"}}>{c.chave_acesso||c.email||"—"}</td>
+              <td style={{fontSize:".85rem"}}>{c.proc?.type||"—"}</td>
+              <td><StatusBadge s={c.proc?.status}/></td>
+              <td><div style={{display:"flex",gap:".4rem"}}>
+                <button className="btn btn-gh" style={{padding:".4rem .8rem",fontSize:".78rem"}} onClick={()=>openClient(c.id)}><Icon name="arrow" size={13}/> Abrir</button>
+                <button className="ib d" onClick={async()=>{await api.del("clients",c.id);setClients(cs=>cs.filter(x=>x.id!==c.id));showToast("Removido.");}}><Icon name="trash" size={13}/></button>
+              </div></td>
+            </tr>
+          ))}
+          {!filtered.length&&<tr><td colSpan={5} style={{textAlign:"center",padding:"2rem",color:"var(--mu)",fontSize:".88rem"}}>Nenhum cliente encontrado.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      {showAdd&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
+          <div className="mo">
+            <div className="moh"><h2>Novo Cliente</h2><button className="ib" onClick={()=>setShowAdd(false)}><Icon name="close" size={15}/></button></div>
+            <div className="mob">
+              <div className="fr"><div className="ff"><label>Nome *</label><input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div><div className="ff"><label>CPF/NIF</label><input value={form.cpf} onChange={e=>setForm(f=>({...f,cpf:e.target.value}))}/></div></div>
+              <div className="fr"><div className="ff"><label>E-mail *</label><input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div><div className="ff"><label>Telefone</label><input value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div></div>
+              <div className="fr"><div className="ff"><label>Tipo de Processo</label><input placeholder="Ex: Nacionalidade Portuguesa" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}/></div><div className="ff"><label>Senha inicial</label><input value={form.pass} onChange={e=>setForm(f=>({...f,pass:e.target.value}))}/></div></div>
+            </div>
+            <div className="mof"><button className="btn btn-gh" onClick={()=>setShowAdd(false)}>Cancelar</button><button className="btn btn-dk" onClick={save} disabled={busy}>{busy?<><Icon name="spin" size={15}/>Salvando…</>:<><Icon name="check" size={15}/>Cadastrar</>}</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ALL MEETINGS ──────────────────────────────────────────────────────────────
+function AllMeetings({clients}){
+  const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const pendentes=all.filter(m=>m.status==="pendente");
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{all.length} reuniões · {pendentes.length} pendentes</p></div></div>
+      {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
+      <div className="card cp">
+        {!all.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
+        {all.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
+          <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)"}}>
+            <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
+            </div>
+            <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
+          </div>
+        );})}
+      </div>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+export default function App(){
+  const [auth,setAuth]=useState(false);
+  const [tab,setTab]=useState("dash");
+  const [clients,setClients]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [openC,setOpenC]=useState(null);
+  const [toast,setToast]=useState(null);
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),3500);};
+
+  const loadClients=async()=>{
+    setLoading(true);
+    try{
+      const cs=await api.get("clients","?order=created_at.desc");
+      const enriched=await Promise.all(cs.map(async c=>{
+        const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
+        const proc=procs[0]||null;
+        let steps=[],docs=[],msgs=[],meetings=[];
+        if(proc){
+          [steps,docs,msgs,meetings]=await Promise.all([
+            api.get("process_steps",`?process_id=eq.${proc.id}&order=step_order.asc`),
+            api.get("documents",`?process_id=eq.${proc.id}&order=created_at.desc`),
+            api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
+            api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
+          ]);
+        }
+        return{...c,proc,steps,docs,msgs,meetings};
+      }));
+      setClients(enriched);
+    }catch(e){showToast("Erro ao carregar dados.");}
+    setLoading(false);
+  };
+
+  const onLogin=()=>{setAuth(true);loadClients();};
+  const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
+  const nav=[
+    {id:"dash",label:"Painel Geral",ic:"dash"},
+    {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
+    {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
+  ];
+
+  if(!auth) return<><style>{css}</style><Login onLogin={onLogin}/></>;
+
+  return(
+    <>
+      <style>{css}</style>
+      <div className="al">
+        <aside className="sb">
+          <div className="sbb"><h2>Bono & Lacerda</h2><span>Painel Administrativo</span></div>
+          <div className="sbw"><div className="av" style={{width:36,height:36,fontSize:".78rem"}}>RL</div>
+            <div><div className="wn">Dr. Ramom Lacerda</div><div className="wr">OAB/PB 19.165 · Lisboa</div></div>
+          </div>
+          <nav className="sbnv">
+            {nav.map(n=>(
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);}}>
+                <Icon name={n.ic} size={16}/>{n.label}
+                {n.badge>0&&<span className="nbdg">{n.badge}</span>}
+              </div>
+            ))}
+          </nav>
+          <div className="sbft"><button className="out" onClick={()=>{setAuth(false);setClients([]);}}><Icon name="logout" size={15}/>Sair</button></div>
+        </aside>
+        <main className="mc">
+          {loading?<div className="ld"><Icon name="spin" size={28}/><span>Carregando {clients.length} clientes…</span></div>:
+          openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
+          tab==="dash"?<Dash clients={clients}/>:
+          tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
+          tab==="meetings"?<AllMeetings clients={clients}/>:null}
+        </main>
+      </div>
+      {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
+    </>
+  );
 }
