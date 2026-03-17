@@ -23,4 +23,4 @@ Sistema de gestão de processos jurídicos com portal para clientes e painel adm
 
 - React 18 + Vite
 - Supabase (banco de dados em Dublin, Irlanda)
-- Vercel (hospedagem)
+- Vercel (hospedagem) 
