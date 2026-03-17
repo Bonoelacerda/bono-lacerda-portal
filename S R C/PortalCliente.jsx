@@ -236,17 +236,75 @@ function Login({onLogin}) {
 
 // ── DASHBOARD ──────────────────────────────────────────────────────────────────
 function Dashboard({client,proc,steps}) {
-  if(!proc) return <Spin text="Carregando processo…"/>;
-  const done=steps.filter(s=>s.done).length;
-  const pct=steps.length?Math.round(done/steps.length*100):0;
+  const done = steps.filter(s=>s.done).length;
+  const pct  = steps.length ? Math.round(done/steps.length*100) : 0;
+  const firstName = client.name.split(' ')[0];
+
+  // If no process yet, show a friendly waiting screen
+  if(!proc) return (
+    <div>
+      <div className="ph"><h1>Olá, {firstName}! 👋</h1><p>O seu processo está a ser preparado.</p></div>
+      <div className="card" style={{padding:'2.5rem',textAlign:'center'}}>
+        <div style={{fontSize:'3rem',marginBottom:'1rem'}}>⏳</div>
+        <div style={{fontFamily:'Playfair Display,serif',fontSize:'1.3rem',color:'var(--n)',marginBottom:'.75rem'}}>
+          Processo em preparação
+        </div>
+        <p style={{color:'var(--mu)',fontSize:'.9rem',lineHeight:1.7,maxWidth:400,margin:'0 auto'}}>
+          O escritório Bono & Lacerda está a preparar o seu processo.<br/>
+          Em breve terá acesso a todas as informações aqui.
+        </p>
+        {client.pendencias && (
+          <div style={{marginTop:'1.5rem',background:'#fef3c7',border:'1px solid #fcd34d',borderRadius:12,padding:'1rem 1.5rem',display:'inline-block',textAlign:'left'}}>
+            <div style={{fontWeight:600,fontSize:'.85rem',color:'#92400e',marginBottom:4}}>⚠️ Pendência identificada</div>
+            <div style={{fontSize:'.82rem',color:'#92400e'}}>{client.pendencias}</div>
+            {client.observacao && <div style={{fontSize:'.78rem',color:'#b45309',marginTop:4}}>{client.observacao}</div>}
+          </div>
+        )}
+        <div style={{marginTop:'2rem',fontSize:'.82rem',color:'var(--mu)'}}>
+          📞 +351 933 912 776 · ✉️ bonoelacerda@gmail.com
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div>
-      <div className="ph"><h1>Olá, {client.name.split(' ')[0]}! 👋</h1><p>Acompanhe o andamento do seu processo.</p></div>
+      <div className="ph"><h1>Olá, {firstName}! 👋</h1><p>Acompanhe o andamento do seu processo.</p></div>
       <div className="dg">
-        <div className="sc"><div className="sl">Número do Processo</div><div className="sv" style={{fontSize:'.9rem',marginTop:4}}>{proc.number}</div><div className="ss">{proc.type}</div></div>
-        <div className="sc"><div className="sl">Progresso</div><div className="sv">{pct}%</div><div className="pb"><div className="pbf" style={{width:`${pct}%`}}/></div><div className="ss" style={{marginTop:6}}>{done} de {steps.length} etapas</div></div>
-        <div className="sc"><div className="sl">Última Atualização</div><div className="sv" style={{fontSize:'1rem',marginTop:4}}>{fmtd(proc.last_update)}</div><div style={{marginTop:6}}><span className="bd bg">Em andamento</span></div></div>
+        <div className="sc">
+          <div className="sl">Chave de Acesso</div>
+          <div className="sv" style={{fontSize:'.95rem',marginTop:4,letterSpacing:'.08em'}}>{client.chave_acesso}</div>
+          <div className="ss">{proc.type}</div>
+        </div>
+        <div className="sc">
+          <div className="sl">Progresso</div>
+          <div className="sv">{pct}%</div>
+          <div className="pb"><div className="pbf" style={{width:`${pct}%`}}/></div>
+          <div className="ss" style={{marginTop:6}}>{done} de {steps.length} etapas</div>
+        </div>
+        <div className="sc">
+          <div className="sl">Última Atualização</div>
+          <div className="sv" style={{fontSize:'1rem',marginTop:4}}>{fmtd(proc.last_update)}</div>
+          <div style={{marginTop:6}}>
+            <span className={`bd ${proc.status==='aguardando'?'ba':proc.status==='concluido'?'bg':'bb'}`}>
+              {proc.status==='aguardando'?'Aguardando':proc.status==='concluido'?'Concluído':'Em andamento'}
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Pendência alert */}
+      {client.pendencias && (
+        <div style={{background:'#fef3c7',border:'1px solid #fcd34d',borderRadius:12,padding:'1rem 1.5rem',marginBottom:'1.25rem',display:'flex',gap:'1rem',alignItems:'flex-start'}}>
+          <div style={{fontSize:'1.3rem',flexShrink:0}}>⚠️</div>
+          <div>
+            <div style={{fontWeight:600,fontSize:'.88rem',color:'#92400e'}}>Pendência no seu processo</div>
+            <div style={{fontSize:'.82rem',color:'#92400e',marginTop:3}}>{client.pendencias}</div>
+            {client.observacao && <div style={{fontSize:'.78rem',color:'#b45309',marginTop:4}}>{client.observacao}</div>}
+          </div>
+        </div>
+      )}
+
       <div style={{display:'grid',gridTemplateColumns:'1.5fr 1fr',gap:'1.25rem'}}>
         <div className="card">
           <div className="ct">Etapas do Processo</div>
@@ -276,6 +334,13 @@ function Dashboard({client,proc,steps}) {
               </div>
             </div>
           </div>
+          {client.artigo && (
+            <div className="card">
+              <div className="ct">Artigo do Processo</div>
+              <div style={{fontSize:'1.1rem',fontWeight:700,color:'var(--n)'}}>{client.artigo}</div>
+              <div style={{fontSize:'.78rem',color:'var(--mu)',marginTop:4}}>Nacionalidade Portuguesa</div>
+            </div>
+          )}
           <div className="card">
             <div className="ct">Escritório</div>
             <div style={{fontSize:'.82rem',color:'var(--mu)',lineHeight:1.9}}>
