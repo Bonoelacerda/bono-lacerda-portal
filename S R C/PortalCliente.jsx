@@ -8,6 +8,25 @@ const db = {
   get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
   post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method: "POST", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
   patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
+  // Storage: upload file to Supabase Storage
+  upload: async (path, file) => {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
+      method: "POST",
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type },
+      body: file
+    });
+    return r.ok;
+  },
+  // Storage: get signed download URL
+  signedUrl: async (path) => {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/sign/documentos/${path}`, {
+      method: "POST",
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn: 31536000 })
+    });
+    const d = await r.json();
+    return d.signedURL ? `${SUPA_URL}/storage/v1${d.signedURL}` : null;
+  }
 };
 
 const MO = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
@@ -383,9 +402,21 @@ function Docs({ proc, toast }) {
 
   const upload = async f => {
     if (!f) return;
-    const row = { process_id:proc.id, name:f.name, size:`${(f.size/1024).toFixed(0)} KB`, date:new Date().toISOString().split("T")[0], status:"aguardando", uploaded_by:"cliente" };
+    // Upload file to Supabase Storage
+    const path = `${proc.id}/${Date.now()}_${f.name}`;
+    const ok = await db.upload(path, f);
+    if (!ok) { toast("Erro ao enviar ficheiro. Tente novamente."); return; }
+    // Save metadata in documents table
+    const row = { process_id:proc.id, name:f.name, size:`${(f.size/1024).toFixed(0)} KB`, date:new Date().toISOString().split("T")[0], status:"aguardando", uploaded_by:"cliente", storage_path:path };
     const saved = await db.post("documents", row);
-    if (saved[0]) { setDocs(d => [saved[0], ...d]); toast(`"${f.name}" enviado!`); }
+    if (saved[0]) { setDocs(d => [saved[0], ...d]); toast(`"${f.name}" enviado com sucesso!`); }
+  };
+
+  const download = async doc => {
+    if (!doc.storage_path) { toast("Este ficheiro não tem download disponível."); return; }
+    const url = await db.signedUrl(doc.storage_path);
+    if (url) { window.open(url, "_blank"); }
+    else toast("Erro ao gerar link de download.");
   };
 
   const badge = s => s==="aprovado" ? <span className="bd bg">Aprovado</span> : s==="aguardando" ? <span className="bd ba">Aguardando</span> : <span className="bd bb">Disponível</span>;
@@ -398,7 +429,7 @@ function Docs({ proc, toast }) {
         <div className="uz" onClick={() => ref.current.click()}>
           <Icon name="upload" size={32} />
           <div style={{ fontWeight:600, marginTop:8, fontSize:".9rem" }}>Clique para selecionar ficheiro</div>
-          <div style={{ fontSize:".78rem", marginTop:4 }}>PDF, DOC, JPG — até 20 MB</div>
+          <div style={{ fontSize:".78rem", marginTop:4 }}>PDF, DOC, JPG, PNG — até 20 MB</div>
           <input ref={ref} type="file" style={{ display:"none" }} onChange={e => upload(e.target.files[0])} />
         </div>
       </div>
@@ -415,8 +446,9 @@ function Docs({ proc, toast }) {
                 </div>
                 <div style={{ marginRight:8 }}>{badge(d.status)}</div>
                 <div style={{ display:"flex", gap:".4rem" }}>
-                  <button className="ib"><Icon name="eye" size={14} /></button>
-                  <button className="ib"><Icon name="dl" size={14} /></button>
+                  <button className="ib" onClick={() => download(d)} title="Download">
+                    <Icon name="dl" size={14} />
+                  </button>
                 </div>
               </div>
             ))}
