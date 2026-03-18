@@ -638,7 +638,10 @@ export default function App(){
         <aside className="sb">
           <div className="sbb"><h2>Bono & Lacerda</h2><span>Painel Administrativo</span></div>
           <div className="sbw"><div className="av" style={{width:36,height:36,fontSize:".78rem"}}>RL</div>
-            <div><div className="wn">Dr. Ramom Lacerda</div><div className="wr">OAB/PB 19.165 · Lisboa</div></div>
+            <div>
+              <div className="wn">Dr. Ramom Lacerda</div>
+              <div className="wr">OAB/PB 19.165 · 🇵🇹 Lisboa 65899L · 🇪🇸 Madrid 142952</div>
+            </div>
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
