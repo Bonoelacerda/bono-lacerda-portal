@@ -10,22 +10,27 @@ const db = {
   patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
   // Storage: upload file to Supabase Storage
   upload: async (path, file) => {
+    // Use PUT for upsert (creates or replaces)
     const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type },
+      headers: { 
+        apikey: SUPA_KEY, 
+        Authorization: `Bearer ${SUPA_KEY}`,
+        "Content-Type": file.type,
+        "x-upsert": "true"
+      },
       body: file
     });
+    if (!r.ok) {
+      const err = await r.text();
+      console.error("Upload error:", err);
+    }
     return r.ok;
   },
-  // Storage: get signed download URL
+  // Storage: get public URL directly
   signedUrl: async (path) => {
-    const r = await fetch(`${SUPA_URL}/storage/v1/object/sign/documentos/${path}`, {
-      method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ expiresIn: 31536000 })
-    });
-    const d = await r.json();
-    return d.signedURL ? `${SUPA_URL}/storage/v1${d.signedURL}` : null;
+    // Use public URL directly — bucket is public
+    return `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`;
   }
 };
 
