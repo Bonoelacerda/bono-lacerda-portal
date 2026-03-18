@@ -304,7 +304,7 @@ function Dashboard({ client, proc, steps }) {
             {client.observacao && <div style={{ fontSize:".78rem", color:"#b45309", marginTop:4 }}>{client.observacao}</div>}
           </div>
         )}
-        <div style={{ marginTop:"2rem", fontSize:".82rem", color:"var(--mu)" }}>📞 +351 933 912 776 · ✉️ bonoelacerda@gmail.com</div>
+        <div style={{ marginTop:"2rem", fontSize:".82rem", color:"var(--mu)" }}>📞 +351 21 793 1934 · ✉️ bonoelacerda@gmail.com</div>
       </div>
     </div>
   );
@@ -322,7 +322,7 @@ function Dashboard({ client, proc, steps }) {
           </div>
         </div>
       )}
-      <div className="dg">
+      <div className="dg" style={{ gridTemplateColumns:"1fr 1fr 1fr 1fr" }}>
         <div className="sc">
           <div className="sl">Chave de Acesso</div>
           <div className="sv" style={{ fontSize:".95rem", marginTop:4, letterSpacing:".08em" }}>{client.chave_acesso}</div>
@@ -335,13 +335,21 @@ function Dashboard({ client, proc, steps }) {
           <div className="ss" style={{ marginTop:6 }}>{done} de {steps.length} etapas</div>
         </div>
         <div className="sc">
-          <div className="sl">Última Atualização</div>
-          <div className="sv" style={{ fontSize:"1rem", marginTop:4 }}>{fmtd(proc.last_update)}</div>
+          <div className="sl">Data de Protocolo</div>
+          <div className="sv" style={{ fontSize:"1rem", marginTop:4 }}>{proc.opened_at ? fmtd(proc.opened_at) : "—"}</div>
           <div style={{ marginTop:6 }}>
             <span className={`bd ${proc.status==="concluido"?"bg":proc.status==="aguardando"?"ba":"bb"}`}>
               {proc.status==="concluido"?"Concluído":proc.status==="aguardando"?"Aguardando":"Em andamento"}
             </span>
           </div>
+        </div>
+        <div className="sc">
+          <div className="sl">Local de Processamento</div>
+          <div className="sv" style={{ fontSize:".78rem", lineHeight:1.4, marginTop:4 }}>
+            {proc.arquivo || client.observacao?.includes("IRN") ? 
+              (proc.arquivo || "IRN — Em análise") : "—"}
+          </div>
+          <div className="ss" style={{ marginTop:4 }}>{fmtd(proc.last_update)}</div>
         </div>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
@@ -364,14 +372,30 @@ function Dashboard({ client, proc, steps }) {
         <div style={{ display:"flex", flexDirection:"column", gap:"1.25rem" }}>
           <div className="card">
             <div className="ct">Advogado</div>
-            <div style={{ display:"flex", alignItems:"center", gap:".85rem" }}>
-              <div className="av" style={{ width:48, height:48, fontSize:"1rem", background:"#1d3557", color:"#c9a84c" }}>{proc.lawyer_avatar}</div>
+            <div style={{ display:"flex", alignItems:"center", gap:".85rem", marginBottom:"1rem" }}>
+              <div className="av" style={{ width:48, height:48, fontSize:"1rem", background:"#1d3557", color:"#c9a84c" }}>RL</div>
               <div>
-                <div style={{ fontWeight:600, fontSize:".92rem" }}>{proc.lawyer}</div>
-                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165 · Lisboa 65899L</div>
+                <div style={{ fontWeight:600, fontSize:".92rem" }}>Dr. Ramom Lacerda</div>
+                <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
+                <div style={{ fontSize:".75rem", color:"var(--mu)" }}>🇵🇹 Lisboa — Cédula Prof. 65899L</div>
+                <div style={{ fontSize:".75rem", color:"var(--mu)" }}>🇪🇸 Madrid — Cédula Prof. 142952</div>
                 <div style={{ fontSize:".75rem", color:"var(--ok)", marginTop:3 }}>● Online agora</div>
               </div>
             </div>
+            <div style={{ display:"flex", alignItems:"center", gap:".85rem", paddingTop:".75rem", borderTop:"1px solid var(--bo)" }}>
+              <div className="av" style={{ width:48, height:48, fontSize:"1rem", background:"#1d3557", color:"#c9a84c" }}>LF</div>
+              <div>
+                <div style={{ fontWeight:600, fontSize:".92rem" }}>Dr. Luis Felipe Bono</div>
+                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>OAB/SP 441.255 · OAB/PB 33587A</div>
+                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:1 }}>🇵🇹 Lisboa 67321L · 🇪🇸 Madrid 142951</div>
+                <div style={{ fontSize:".75rem", color:"var(--ok)", marginTop:3 }}>● Online agora</div>
+              </div>
+            </div>
+            {proc?.opened_at && (
+              <div style={{ marginTop:".85rem", paddingTop:".75rem", borderTop:"1px solid var(--bo)", fontSize:".78rem", color:"var(--mu)" }}>
+                📋 Data de protocolo: <strong style={{color:"var(--n)"}}>{fmtd(proc.opened_at)}</strong>
+              </div>
+            )}
           </div>
           {client.artigo && (
             <div className="card">
@@ -384,7 +408,7 @@ function Dashboard({ client, proc, steps }) {
             <div className="ct">Escritório</div>
             <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.9 }}>
               📍 Av João XXI, 72B, LJ E38<br />1000-219 Lisboa, Portugal<br />
-              📞 +351 933 912 776<br />
+              📞 +351 21 793 1934<br />
               ✉️ bonoelacerda@gmail.com
             </div>
           </div>
@@ -548,7 +572,7 @@ function Meetings({ proc, client }) {
     { val:"videochamada", label:"📹 Videochamada", sub:"Google Meet / Zoom" },
     { val:"presencial",   label:"📍 Presencial",   sub:"Lisboa, Portugal" },
     { val:"telefone",     label:"📞 Telefone",     sub:"Ligação direta" },
-    { val:"whatsapp",     label:"💬 WhatsApp",     sub:"+351 933 912 776" },
+    { val:"whatsapp",     label:"💬 WhatsApp",     sub:"+351 21 793 1934" },
   ];
 
   return (
