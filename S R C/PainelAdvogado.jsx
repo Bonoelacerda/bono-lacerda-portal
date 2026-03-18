@@ -12,19 +12,19 @@ const api = {
   upload: async (path, file) => {
     const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type },
+      headers: { 
+        apikey: SUPA_KEY, 
+        Authorization: `Bearer ${SUPA_KEY}`,
+        "Content-Type": file.type,
+        "x-upsert": "true"
+      },
       body: file
     });
+    if (!r.ok) console.error("Upload error:", await r.text());
     return r.ok;
   },
   signedUrl: async (path) => {
-    const r = await fetch(`${SUPA_URL}/storage/v1/object/sign/documentos/${path}`, {
-      method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ expiresIn: 31536000 })
-    });
-    const d = await r.json();
-    return d.signedURL ? `${SUPA_URL}/storage/v1${d.signedURL}` : null;
+    return `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`;
   }
 };
 
