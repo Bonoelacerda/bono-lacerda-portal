@@ -9,6 +9,23 @@ const api = {
   post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
   patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
   del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
+  upload: async (path, file) => {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
+      method: "POST",
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type },
+      body: file
+    });
+    return r.ok;
+  },
+  signedUrl: async (path) => {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/sign/documentos/${path}`, {
+      method: "POST",
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ expiresIn: 31536000 })
+    });
+    const d = await r.json();
+    return d.signedURL ? `${SUPA_URL}/storage/v1${d.signedURL}` : null;
+  }
 };
 
 const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
@@ -222,20 +239,47 @@ function Dash({clients}){
 function Detail({cid,clients,setClients,showToast,onBack}){
   const client=clients.find(c=>c.id===cid);
   const [tab,setTab]=useState("processo");
-  const [steps,setSteps]=useState(client?.steps||[]);
-  const [docs,setDocs]=useState(client?.docs||[]);
-  const [msgs,setMsgs]=useState(client?.msgs||[]);
-  const [meets,setMeets]=useState(client?.meetings||[]);
+  const [steps,setSteps]=useState([]);
+  const [docs,setDocs]=useState([]);
+  const [msgs,setMsgs]=useState([]);
+  const [meets,setMeets]=useState([]);
   const [chatIn,setChatIn]=useState("");
   const [showMtg,setShowMtg]=useState(false);
   const [mf,setMf]=useState({title:"",date:"",time:"10:00",type:"presencial",notes:""});
   const [saving,setSaving]=useState(false);
+  const [ldData,setLdData]=useState(true);
   const fileRef=useRef(); const botRef=useRef();
   useEffect(()=>{botRef.current?.scrollIntoView({behavior:"smooth"})},[msgs]);
+
+  // Load full data when client is opened
+  useEffect(()=>{
+    if(!client) return;
+    const load=async()=>{
+      setLdData(true);
+      const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
+      const proc=procs[0]||null;
+      if(proc){
+        const [ss,dd,mm,mt]=await Promise.all([
+          api.get("process_steps",`?process_id=eq.${proc.id}&order=step_order.asc`),
+          api.get("documents",`?process_id=eq.${proc.id}&order=created_at.desc`),
+          api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
+          api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
+        ]);
+        setSteps(ss); setDocs(dd); setMsgs(mm); setMeets(mt);
+        // Update client proc in state
+        setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
+      }
+      setLdData(false);
+    };
+    load();
+  },[cid]);
+
   if(!client) return null;
   const proc=client.proc;
   const done=steps.filter(s=>s.done).length;
   const pct=steps.length?Math.round(done/steps.length*100):0;
+
+  if(ldData) return <div style={{marginTop:"4rem"}}><div className="ld"><Icon name="spin" size={28}/><span>Carregando dados do cliente…</span></div></div>;
 
   const toggleStep=async s=>{
     const r=await api.patch("process_steps",s.id,{done:!s.done});
@@ -261,17 +305,24 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   };
   const confirmMeet=async m=>{
     await api.patch("meetings",m.id,{status:"confirmado"});
-    setMeets(ms=>ms.map(x=>x.id===m.id?{...x,status:"confirmado"}:x));
+    const updated={...m,status:"confirmado"};
+    // Update local meetings state
+    setMeets(ms=>ms.map(x=>x.id===m.id?updated:x));
+    // Update global clients state so badge updates too
+    setClients(cs=>cs.map(c=>c.id===client.id?{...c,meetings:(c.meetings||[]).map(x=>x.id===m.id?updated:x)}:c));
     await api.post("notifications",{client_id:client.id,text:`Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}.`,icon:"✅",read:false});
     // Ask Claude to create the Google Calendar event
-    const msg = `Cria um evento no Google Calendar (bonoelacerda@gmail.com): Título: "📅 ${m.title} — ${client.name}", Data: ${m.date}T${m.time}:00, fuso horário Europe/Lisbon, duração 1 hora, descrição: "Cliente: ${client.name}\\nChave: ${client.chave_acesso||""}\\nTipo: ${m.type}${m.notes?"\\nNotas: "+m.notes:""}", lembrete 30min popup e 60min email.`;
+    const msg = `Cria um evento no Google Calendar (bonoelacerda@gmail.com): Título: "📅 ${m.title} — ${client.name}", Data: ${m.date}T${m.time}:00, fuso horário Europe/Lisbon, duração 1 hora, descrição: "Cliente: ${client.name}\\nTipo: ${m.type}${m.notes?"\\nNotas: "+m.notes:""}", lembrete 30min popup e 60min email.`;
     if(window.sendPrompt) window.sendPrompt(msg);
-    showToast("✅ Reunião confirmada! A criar evento no Google Calendar…");
+    showToast("✅ Reunião confirmada!");
   };
   const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
   const uploadDoc=async f=>{
     if(!f||!proc) return;
-    const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado"});
+    const path=`${proc.id}/${Date.now()}_${f.name}`;
+    const ok=await api.upload(path,f);
+    if(!ok){showToast("Erro ao enviar ficheiro.");return;}
+    const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
     if(r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
   };
   const notify=async()=>{
@@ -342,8 +393,9 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           {docs.map(d=>(
             <div className="dr" key={d.id}>
               <div className="dic"><Icon name="file" size={16}/></div>
-              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date}</div></div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
+              {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
             </div>
           ))}
           {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"1.5rem",fontSize:".85rem"}}>Nenhum documento ainda.</p>}
@@ -552,23 +604,20 @@ export default function App(){
   const loadClients=async()=>{
     setLoading(true);
     try{
-      const cs=await api.get("clients","?order=created_at.desc");
-      const enriched=await Promise.all(cs.map(async c=>{
+      // Supabase limit is now 10000 — single query gets all clients
+      const allClients=await api.get("clients","?order=created_at.desc&limit=10000");
+      if(!allClients||allClients.error){showToast("Erro ao carregar clientes.");setLoading(false);return;}
+      // Set clients immediately so count shows
+      setClients(allClients.map(c=>({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]})));
+      // Then enrich first 200 with process data in background
+      const enriched=await Promise.all(allClients.map(async(c,i)=>{
+        if(i>=200) return{...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]};
         const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
         const proc=procs[0]||null;
-        let steps=[],docs=[],msgs=[],meetings=[];
-        if(proc){
-          [steps,docs,msgs,meetings]=await Promise.all([
-            api.get("process_steps",`?process_id=eq.${proc.id}&order=step_order.asc`),
-            api.get("documents",`?process_id=eq.${proc.id}&order=created_at.desc`),
-            api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
-            api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
-          ]);
-        }
-        return{...c,proc,steps,docs,msgs,meetings};
+        return{...c,proc,steps:[],docs:[],msgs:[],meetings:[]};
       }));
       setClients(enriched);
-    }catch(e){showToast("Erro ao carregar dados.");}
+    }catch(e){showToast("Erro ao carregar dados: "+e.message);}
     setLoading(false);
   };
 
