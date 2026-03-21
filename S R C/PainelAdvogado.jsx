@@ -345,8 +345,15 @@ function Detail({cid,clients,setClients,showToast,onBack}){
       </div>
 
       <div className="card cp" style={{marginBottom:"1.25rem",display:"flex",gap:"2rem",flexWrap:"wrap",alignItems:"center"}}>
-        {[["Processo",proc?.number||proc?.chave_acesso||"—"],["Tipo",proc?.type||"—"],["Artigo",client.artigo||"—"],["Desde",fmtd(client.since)]].map(([k,v])=>(
-          <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".88rem"}}>{v}</div></div>
+        {[
+          ["Processo", proc?.number || client.chave_acesso || "—"],
+          ["Artigo",   client.artigo || proc?.type || "—"],
+          ["Protocolo",fmtd(proc?.opened_at) || "—"],
+          ["Submissão IRN", proc?.submissao_irn || "—"],
+          ["Local",    proc?.arquivo || "—"],
+          ["Desde",    fmtd(client.since)],
+        ].map(([k,v])=>(
+          <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".85rem",maxWidth:220}}>{v}</div></div>
         ))}
         {client.pendencias&&(
           <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:8,padding:".6rem .9rem"}}>
