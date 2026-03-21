@@ -99,7 +99,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--cr); color:var(--tx); 
 
 /* LAYOUT */
 .al  { display:flex; min-height:100vh; }
-.sb  { width:260px; background:var(--n); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
+.sb  { width:260px; background:var(--n); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; transition:transform .3s; }
 .sbl { padding:1.8rem 1.5rem 1.4rem; border-bottom:1px solid rgba(255,255,255,.07); }
 .sbl h2  { font-family:'Playfair Display',serif; color:#fff; font-size:1.1rem; line-height:1.3; }
 .sbl span { color:var(--g); font-size:.75rem; display:block; letter-spacing:.08em; }
@@ -115,6 +115,62 @@ body { font-family:'DM Sans',sans-serif; background:var(--cr); color:var(--tx); 
 .out { display:flex; align-items:center; gap:.6rem; color:rgba(255,255,255,.4); font-size:.85rem; cursor:pointer; background:none; border:none; font-family:'DM Sans',sans-serif; }
 .out:hover { color:rgba(255,255,255,.8); }
 .mc { margin-left:260px; flex:1; padding:2.5rem; min-height:100vh; animation:up .3s ease; }
+
+/* MOBILE BOTTOM NAV */
+.mob-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--n); border-top:1px solid rgba(255,255,255,.1); z-index:200; padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom)); }
+.mob-nav-inner { display:flex; justify-content:space-around; align-items:center; }
+.mob-ni { display:flex; flex-direction:column; align-items:center; gap:.25rem; padding:.5rem .75rem; color:rgba(255,255,255,.45); font-size:.62rem; font-weight:500; cursor:pointer; border:none; background:none; font-family:'DM Sans',sans-serif; transition:color .15s; min-width:52px; }
+.mob-ni.on { color:var(--g); }
+.mob-ni svg { flex-shrink:0; }
+.mob-hdr { display:none; position:fixed; top:0; left:0; right:0; background:var(--n); z-index:150; padding:.9rem 1.25rem; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,.08); }
+.mob-hdr h2 { font-family:'Playfair Display',serif; color:#fff; font-size:1rem; }
+.mob-hdr span { color:var(--g); font-size:.7rem; display:block; }
+.mob-out { background:none; border:none; color:rgba(255,255,255,.5); cursor:pointer; padding:.25rem; }
+
+/* MOBILE OVERLAY */
+.mob-overlay { display:none; }
+
+@media (max-width: 768px) {
+  /* Hide desktop sidebar */
+  .sb { display:none; }
+  /* Show mobile header and bottom nav */
+  .mob-hdr { display:flex; }
+  .mob-nav { display:block; }
+  /* Adjust main content */
+  .mc { margin-left:0; padding:1rem; padding-top:4.5rem; padding-bottom:5.5rem; }
+  /* Login — stack vertically */
+  .lw { flex-direction:column; }
+  .ll { width:100%; min-height:auto; padding:2rem 1.5rem 1.5rem; }
+  .ll::before, .ll::after { display:none; }
+  .ltag { margin-top:1rem; }
+  .lr { padding:1.5rem 1.25rem; }
+  /* Stats grid — 2 cols on mobile */
+  .dg { grid-template-columns:1fr 1fr; gap:.75rem; }
+  .dg > .sc:last-child { grid-column: span 2; }
+  /* Dashboard grid — stack */
+  .dg ~ div[style*='grid-template-columns'] { display:flex !important; flex-direction:column !important; }
+  /* Cards */
+  .card { padding:1.1rem; border-radius:12px; }
+  /* Page header */
+  .ph h1 { font-size:1.4rem; }
+  .ph p  { margin-bottom:1.25rem; }
+  /* Meetings type grid */
+  .type-grid { grid-template-columns:1fr 1fr; }
+  /* Form 2 cols */
+  .fg2 { grid-template-columns:1fr 1fr; }
+  /* Doc row */
+  .dit { flex-wrap:wrap; gap:.5rem; }
+  /* Chat */
+  .cw { height:calc(100vh - 280px); }
+  /* Chave input */
+  .chave-input { font-size:1.1rem; letter-spacing:.15em; }
+  /* Timeline */
+  .tl { padding-left:1.75rem; }
+  /* Lawyer card row */
+  .av[style*='width:48'] { width:40px !important; height:40px !important; font-size:.85rem !important; }
+  /* Scrollbar */
+  ::-webkit-scrollbar { display:none; }
+}
 
 /* PAGE */
 .ph h1 { font-family:'Playfair Display',serif; font-size:1.75rem; color:var(--n); }
@@ -326,7 +382,7 @@ function Dashboard({ client, proc, steps }) {
         <div className="sc">
           <div className="sl">Chave de Acesso</div>
           <div className="sv" style={{ fontSize:".95rem", marginTop:4, letterSpacing:".08em" }}>{client.chave_acesso}</div>
-          <div className="ss">{proc.type}</div>
+          <div className="ss">{client.artigo || proc.type}</div>
         </div>
         <div className="sc">
           <div className="sl">Progresso</div>
@@ -754,6 +810,19 @@ export default function App() {
     <>
       <style>{css}</style>
       <div className="al">
+
+        {/* Mobile header */}
+        <header className="mob-hdr">
+          <div>
+            <h2>Bono & Lacerda</h2>
+            <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
+          </div>
+          <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
+            <Icon name="logout" size={20} />
+          </button>
+        </header>
+
+        {/* Desktop sidebar */}
         <aside className="sb">
           <div className="sbl">
             <h2>Bono & Lacerda</h2>
@@ -779,6 +848,7 @@ export default function App() {
             </button>
           </div>
         </aside>
+
         <main className="mc">
           {loading ? <Loader text="A carregar o seu processo…" /> : (
             <>
@@ -790,6 +860,22 @@ export default function App() {
             </>
           )}
         </main>
+
+        {/* Mobile bottom nav */}
+        <nav className="mob-nav">
+          <div className="mob-nav-inner">
+            {nav.map(n => (
+              <button key={n.id} className={`mob-ni${tab === n.id ? " on" : ""}`} onClick={() => setTab(n.id)}>
+                <Icon name={n.ic} size={22} />
+                {n.label === "Visão Geral" ? "Início" :
+                 n.label === "Documentos" ? "Docs" :
+                 n.label === "Reuniões" ? "Reuniões" :
+                 n.label === "Notificações" ? "Avisos" : "Chat"}
+              </button>
+            ))}
+          </div>
+        </nav>
+
       </div>
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
     </>
