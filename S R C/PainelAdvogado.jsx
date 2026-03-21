@@ -669,6 +669,128 @@ export default function App(){
         </main>
       </div>
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
+      <ClaudeChat totalClients={clients.length}/>
+    </>
+  );
+}
+
+// ── CLAUDE CHAT ───────────────────────────────────────────────────────────────
+function ClaudeChat({ totalClients }) {
+  const [open,  setOpen]  = useState(false);
+  const [msgs,  setMsgs]  = useState([
+    { role:"assistant", text:"Olá! Sou o Claude, o assistente de IA do escritório Bono & Lacerda. Posso ajudá-lo com actualizações do sistema, dúvidas sobre clientes, geração de documentos ou qualquer outra questão. Como posso ajudar?" }
+  ]);
+  const [input, setInput] = useState("");
+  const [ld,    setLd]    = useState(false);
+  const bot = useRef();
+
+  useEffect(() => { bot.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
+
+  const send = async () => {
+    const txt = input.trim();
+    if (!txt || ld) return;
+    setInput("");
+    const newMsgs = [...msgs, { role:"user", text:txt }];
+    setMsgs(newMsgs);
+    setLd(true);
+    try {
+      const context = `És o assistente de IA do escritório de advocacia Bono & Lacerda Advogados, especializado em imigração e nacionalidade portuguesa. O sistema tem actualmente ${totalClients} clientes cadastrados. Responde sempre em português europeu, de forma profissional e concisa.`;
+      const history = newMsgs.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text }));
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: context,
+          messages: history,
+        })
+      });
+      const d = await r.json();
+      const reply = d.content?.[0]?.text || "Desculpe, não consegui processar a sua mensagem.";
+      setMsgs(m => [...m, { role:"assistant", text:reply }]);
+    } catch(e) {
+      setMsgs(m => [...m, { role:"assistant", text:"Erro de ligação. Por favor tente novamente." }]);
+    }
+    setLd(false);
+  };
+
+  return (
+    <>
+      <style>{`
+        .cl-btn { position:fixed; bottom:2rem; right:2rem; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#1d3557,#c9a84c); border:none; cursor:pointer; box-shadow:0 4px 20px rgba(15,30,53,.35); display:flex; align-items:center; justify-content:center; z-index:1000; transition:transform .2s; }
+        .cl-btn:hover { transform:scale(1.08); }
+        .cl-win { position:fixed; bottom:5.5rem; right:2rem; width:360px; max-height:520px; background:#fff; border-radius:20px; box-shadow:0 8px 40px rgba(15,30,53,.2); display:flex; flex-direction:column; z-index:1000; overflow:hidden; border:1px solid #e2ddd5; animation:up .2s ease; }
+        .cl-hdr { background:linear-gradient(135deg,#0f1e35,#1d3557); padding:1rem 1.25rem; display:flex; align-items:center; gap:.75rem; }
+        .cl-av  { width:36px; height:36px; border-radius:50%; background:rgba(201,168,76,.2); border:1px solid rgba(201,168,76,.4); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; color:#c9a84c; flex-shrink:0; }
+        .cl-hdr-info h4 { color:#fff; font-size:.88rem; font-weight:600; }
+        .cl-hdr-info p  { color:rgba(255,255,255,.5); font-size:.72rem; }
+        .cl-msgs { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:.75rem; min-height:200px; max-height:340px; }
+        .cl-msg  { display:flex; gap:.5rem; }
+        .cl-msg.usr { flex-direction:row-reverse; }
+        .cl-bbl  { max-width:80%; padding:.65rem .9rem; border-radius:14px; font-size:.84rem; line-height:1.5; }
+        .cl-bbl.ai  { background:#f5f0e8; color:#1a1a2e; border-radius:4px 14px 14px 14px; }
+        .cl-bbl.usr { background:#1d3557; color:#fff; border-radius:14px 4px 14px 14px; }
+        .cl-inp { padding:.75rem 1rem; border-top:1px solid #e2ddd5; display:flex; gap:.5rem; }
+        .cl-inp textarea { flex:1; border:1px solid #e2ddd5; border-radius:10px; padding:.5rem .75rem; font-family:'DM Sans',sans-serif; font-size:.84rem; resize:none; outline:none; color:#1a1a2e; background:#fafafa; }
+        .cl-inp textarea:focus { border-color:#c9a84c; }
+        .cl-send { width:36px; height:36px; border-radius:10px; background:#1d3557; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; transition:background .2s; }
+        .cl-send:hover { background:#0f1e35; }
+        .cl-dot  { display:inline-flex; gap:3px; padding:.5rem; }
+        .cl-dot span { width:6px; height:6px; border-radius:50%; background:#c9a84c; animation:bounce .8s infinite; }
+        .cl-dot span:nth-child(2) { animation-delay:.15s; }
+        .cl-dot span:nth-child(3) { animation-delay:.3s; }
+        @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+        @media(max-width:768px){ .cl-win{width:calc(100vw - 2rem);right:1rem;bottom:5rem;} .cl-btn{bottom:5rem;right:1rem;} }
+      `}</style>
+
+      {/* Toggle button */}
+      <button className="cl-btn" onClick={() => setOpen(o => !o)} title="Chat com Claude AI">
+        {open
+          ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.06L2 22l4.94-1.37A9.96 9.96 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/><circle cx="8" cy="12" r="1" fill="#fff"/><circle cx="12" cy="12" r="1" fill="#fff"/><circle cx="16" cy="12" r="1" fill="#fff"/></svg>
+        }
+      </button>
+
+      {/* Chat window */}
+      {open && (
+        <div className="cl-win">
+          <div className="cl-hdr">
+            <div className="cl-av">AI</div>
+            <div className="cl-hdr-info">
+              <h4>Claude AI</h4>
+              <p>Assistente Bono & Lacerda · {totalClients} clientes</p>
+            </div>
+          </div>
+          <div className="cl-msgs">
+            {msgs.map((m, i) => (
+              <div key={i} className={`cl-msg${m.role==="user"?" usr":""}`}>
+                <div className={`cl-bbl${m.role==="user"?" usr":" ai"}`}>{m.text}</div>
+              </div>
+            ))}
+            {ld && (
+              <div className="cl-msg">
+                <div className="cl-bbl ai">
+                  <div className="cl-dot"><span/><span/><span/></div>
+                </div>
+              </div>
+            )}
+            <div ref={bot}/>
+          </div>
+          <div className="cl-inp">
+            <textarea
+              rows={2}
+              placeholder="Escreva a sua mensagem…"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } }}
+            />
+            <button className="cl-send" onClick={send} disabled={ld}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
