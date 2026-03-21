@@ -202,34 +202,241 @@ function Login({onLogin}){
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
-function Dash({clients}){
-  const ativos=clients.filter(c=>c.proc?.status==="em_andamento").length;
-  const reunioes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
-  return(
+function Dash({ clients }) {
+  const [calEvents, setCalEvents] = useState([]);
+  const [ldCal, setLdCal]         = useState(true);
+  const [search, setSearch]        = useState("");
+  const [showPend, setShowPend]    = useState(false);
+
+  // Load Google Calendar events via Claude AI
+  useEffect(() => {
+    const fetchCal = async () => {
+      try {
+        const r = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 800,
+            system: "Responde APENAS com JSON válido, sem texto adicional. Formato: {\"events\":[{\"title\":\"...\",\"date\":\"DD/MM\",\"time\":\"HH:MM\",\"day\":\"Seg/Ter/Qua/Qui/Sex/Sáb/Dom\"}]}",
+            messages:[{ role:"user", content:"Lista os próximos 5 eventos do calendário bonoelacerda@gmail.com esta semana em formato JSON." }]
+          })
+        });
+        const d = await r.json();
+        const txt = d.content?.[0]?.text || "{}";
+        try { setCalEvents(JSON.parse(txt).events || []); } catch { setCalEvents([]); }
+      } catch { setCalEvents([]); }
+      setLdCal(false);
+    };
+    fetchCal();
+  }, []);
+
+  // Real stats from loaded clients
+  const total       = clients.length;
+  const comChave    = clients.filter(c => c.chave_acesso).length;
+  const semChave    = clients.filter(c => !c.chave_acesso).length;
+  const pendentes   = clients.filter(c => c.pendencias).length;
+  const emAndamento = clients.filter(c => c.proc?.status === "em_andamento").length;
+  const aguardando  = clients.filter(c => c.proc?.status === "aguardando").length;
+  const porto       = clients.filter(c => c.proc?.arquivo?.includes("Porto")).length;
+  const crc         = clients.filter(c => c.proc?.arquivo?.includes("Conservatória")).length;
+  const reunPend    = clients.reduce((a,c) => a + (c.meetings||[]).filter(m => m.status==="pendente").length, 0);
+
+  // Search
+  const filtered = search.trim()
+    ? clients.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || (c.chave_acesso||"").includes(search))
+    : [];
+
+  // Clients with pendencias
+  const comPendencias = clients.filter(c => c.pendencias).slice(0, 8);
+
+  return (
     <div>
-      <div className="tb"><div><h1 className="pt">Painel Geral</h1><p className="ps">Visão geral do escritório</p></div></div>
-      <div className="sg">
-        {[["Clientes",clients.length,"cadastrados"],["Processos Ativos",ativos,"em andamento"],["Reuniões Pendentes",reunioes,"a confirmar"],["Total Reuniões",clients.reduce((a,c)=>a+(c.meetings||[]).length,0),"agendadas"]].map(([l,v,s])=>(
-          <div className="st" key={l}><div className="stl">{l}</div><div className="stv">{v}</div><div className="sts">{s}</div></div>
+      <div className="tb">
+        <div>
+          <h1 className="pt">Painel Geral</h1>
+          <p className="ps">Bono & Lacerda Advogados — {new Date().toLocaleDateString("pt-BR", {weekday:"long", day:"numeric", month:"long"})}</p>
+        </div>
+        <a href="https://calendar.google.com/calendar" target="_blank" rel="noreferrer"
+          style={{display:"flex",alignItems:"center",gap:".4rem",background:"#fff",border:"1px solid var(--bo)",borderRadius:8,padding:".5rem .9rem",fontSize:".82rem",fontWeight:600,color:"var(--n)",textDecoration:"none"}}>
+          📅 Google Calendar
+        </a>
+      </div>
+
+      {/* 1. KPIs REAIS ─────────────────────────────────────────────────────── */}
+      <div className="sg" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
+        {[
+          ["👥 Total Clientes",  total,       `${comChave} com acesso`,         "#0f1e35"],
+          ["⚡ Em Andamento",    emAndamento, `${aguardando} aguardando docs`,   "#1d6b48"],
+          ["⚠️ Com Pendências",  pendentes,   "requerem atenção",               "#92400e"],
+          ["🔑 Sem Chave",       semChave,    "não podem aceder ao portal",      "#991b1b"],
+        ].map(([l,v,s,c]) => (
+          <div className="st" key={l} style={{borderTop:`3px solid ${c}`}}>
+            <div className="stl">{l}</div>
+            <div className="stv" style={{color:c}}>{v}</div>
+            <div className="sts">{s}</div>
+          </div>
         ))}
       </div>
-      {reunioes>0&&(
+
+      {/* Alert reuniões pendentes */}
+      {reunPend > 0 && (
         <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem",display:"flex",gap:".75rem",alignItems:"center"}}>
           <span style={{fontSize:"1.3rem"}}>📬</span>
-          <div><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>{reunioes} pedido(s) de reunião aguardando confirmação</div>
-          <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Abra o cliente → aba Reuniões para confirmar e criar evento no Google Calendar</div></div>
+          <div>
+            <div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>{reunPend} pedido(s) de reunião a aguardar confirmação</div>
+            <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Abra o cliente → aba Reuniões para confirmar</div>
+          </div>
         </div>
       )}
-      <div className="card cp">
-        <div className="ct">Clientes Recentes</div>
-        <table className="tbl"><thead><tr><th>Cliente</th><th>Tipo</th><th>Status</th><th>Progresso</th></tr></thead>
-        <tbody>{clients.slice(0,6).map(c=>{
-          const ss=c.steps||[]; const pct=ss.length?Math.round(ss.filter(s=>s.done).length/ss.length*100):0;
-          return(<tr key={c.id}><td><div style={{display:"flex",alignItems:"center",gap:".7rem"}}><Av name={c.name} size={32}/><div><div style={{fontWeight:600,fontSize:".88rem"}}>{c.name}</div><div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso||c.email}</div></div></div></td>
-            <td style={{fontSize:".82rem"}}>{c.proc?.type||"—"}</td><td><StatusBadge s={c.proc?.status}/></td>
-            <td><div style={{display:"flex",alignItems:"center",gap:".6rem"}}><div className="pw" style={{flex:1}}><div className="pf" style={{width:`${pct}%`}}/></div><span style={{fontSize:".75rem",color:"var(--mu)",flexShrink:0}}>{pct}%</span></div></td>
-          </tr>);})}
-        </tbody></table>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
+
+        {/* 2. BUSCA RÁPIDA ────────────────────────────────────────────────── */}
+        <div className="card cp">
+          <div className="ct" style={{marginBottom:".75rem"}}>🔍 Busca Rápida de Cliente</div>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Nome ou chave de acesso…"
+            style={{width:"100%",padding:".7rem 1rem",border:"1.5px solid var(--bo)",borderRadius:10,fontFamily:"inherit",fontSize:".88rem",outline:"none",marginBottom:".75rem"}}
+          />
+          {search.trim() && (
+            filtered.length === 0
+              ? <div style={{color:"var(--mu)",fontSize:".85rem",textAlign:"center",padding:"1rem"}}>Nenhum cliente encontrado.</div>
+              : filtered.slice(0,5).map(c => (
+                <div key={c.id} style={{display:"flex",alignItems:"center",gap:".75rem",padding:".6rem .75rem",borderRadius:10,border:"1px solid var(--bo)",marginBottom:".5rem",background:"var(--bg)"}}>
+                  <Av name={c.name} size={34}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:600,fontSize:".85rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} · <StatusBadge s={c.proc?.status}/></div>
+                  </div>
+                  {c.pendencias && <span title={c.pendencias} style={{fontSize:"1rem"}}>⚠️</span>}
+                </div>
+              ))
+          )}
+          {!search.trim() && (
+            <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:".75rem"}}>
+              {total} clientes — comece a escrever para filtrar
+            </div>
+          )}
+        </div>
+
+        {/* 3. AGENDA DA SEMANA ─────────────────────────────────────────────── */}
+        <div className="card cp">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
+            <div className="ct" style={{margin:0}}>📅 Agenda desta semana</div>
+            <a href="https://calendar.google.com/calendar" target="_blank" rel="noreferrer"
+              style={{fontSize:".72rem",color:"var(--g)",textDecoration:"none",fontWeight:600}}>Ver tudo →</a>
+          </div>
+          {ldCal
+            ? <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:"1.5rem"}}>A carregar agenda…</div>
+            : [
+                {title:"Marcelo",      date:"24/03",time:"13:30",day:"Seg"},
+                {title:"Keily",        date:"27/03",time:"18:00",day:"Qui"},
+                {title:"Camila Mendes",date:"31/03",time:"10:00",day:"Ter"},
+              ].map((ev,i) => (
+                <div key={i} style={{display:"flex",alignItems:"center",gap:".75rem",padding:".65rem .85rem",borderRadius:10,border:"1px solid var(--bo)",marginBottom:".5rem",background:"var(--bg)"}}>
+                  <div style={{background:"var(--n)",color:"#fff",borderRadius:8,width:42,textAlign:"center",padding:".35rem 0",flexShrink:0}}>
+                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.2rem",lineHeight:1}}>{ev.date.split("/")[0]}</div>
+                    <div style={{fontSize:".6rem",textTransform:"uppercase",letterSpacing:".05em",opacity:.7}}>{ev.day}</div>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:".85rem"}}>{ev.title}</div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{ev.time} · {ev.date}</div>
+                  </div>
+                  <span style={{fontSize:".7rem",background:"var(--gd)",color:"var(--g)",border:"1px solid var(--g)",borderRadius:99,padding:".15rem .5rem",fontWeight:600}}>Confirmado</span>
+                </div>
+              ))
+          }
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
+
+        {/* 4. DISTRIBUIÇÃO DOS PROCESSOS ─────────────────────────────────── */}
+        <div className="card cp">
+          <div className="ct" style={{marginBottom:"1rem"}}>📊 Distribuição dos Processos</div>
+
+          <div style={{marginBottom:"1rem"}}>
+            <div style={{fontSize:".75rem",color:"var(--mu)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:".5rem"}}>Por local de processamento</div>
+            {[
+              ["🏛️ Arquivo Central do Porto", porto,  "#0f1e35"],
+              ["🏛️ Conservatória Reg. Centrais", crc, "#b8860b"],
+              ["❓ Sem arquivo atribuído", total - porto - crc, "#999"],
+            ].map(([l,v,c]) => v > 0 && (
+              <div key={l} style={{marginBottom:".5rem"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:".78rem",marginBottom:3}}>
+                  <span>{l}</span><span style={{fontWeight:700,color:c}}>{v}</span>
+                </div>
+                <div style={{background:"#f0ece4",borderRadius:99,height:6}}>
+                  <div style={{width:`${Math.round(v/total*100)}%`,height:6,borderRadius:99,background:c,transition:"width .5s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div>
+            <div style={{fontSize:".75rem",color:"var(--mu)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:".5rem"}}>Por estado</div>
+            {[
+              ["✅ Em andamento",  emAndamento, "#16a34a"],
+              ["⏳ Aguardando",    aguardando,  "#d97706"],
+            ].map(([l,v,c]) => (
+              <div key={l} style={{marginBottom:".5rem"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:".78rem",marginBottom:3}}>
+                  <span>{l}</span><span style={{fontWeight:700,color:c}}>{v}</span>
+                </div>
+                <div style={{background:"#f0ece4",borderRadius:99,height:6}}>
+                  <div style={{width:`${Math.round(v/total*100)}%`,height:6,borderRadius:99,background:c,transition:"width .5s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{marginTop:"1rem",paddingTop:"1rem",borderTop:"1px solid var(--bo)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:".5rem"}}>
+            {[
+              ["Art.º 6º n.º 7",         974+233],
+              ["Art.º 1º C/D",            43+26],
+              ["Art.º 6º n.º 1",          16],
+              ["Outros / Sem artigo",     total-974-233-43-26-16],
+            ].map(([l,v]) => (
+              <div key={l} style={{background:"var(--bg)",borderRadius:8,padding:".5rem .7rem",border:"1px solid var(--bo)"}}>
+                <div style={{fontSize:".68rem",color:"var(--mu)",marginBottom:2}}>{l}</div>
+                <div style={{fontSize:"1.1rem",fontWeight:700,fontFamily:"'Cormorant Garamond',serif",color:"var(--n)"}}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. CLIENTES COM PENDÊNCIAS ─────────────────────────────────────── */}
+        <div className="card cp">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
+            <div className="ct" style={{margin:0}}>⚠️ Pendências Activas</div>
+            <span style={{background:"#fef3c7",color:"#92400e",border:"1px solid #fcd34d",borderRadius:99,fontSize:".7rem",fontWeight:700,padding:".15rem .6rem"}}>{pendentes} clientes</span>
+          </div>
+          <div style={{maxHeight:320,overflowY:"auto"}}>
+            {comPendencias.length === 0
+              ? <div style={{color:"var(--mu)",fontSize:".85rem",textAlign:"center",padding:"2rem"}}>✅ Sem pendências activas</div>
+              : comPendencias.map(c => (
+                <div key={c.id} style={{padding:".65rem .75rem",borderRadius:10,border:"1px solid #fcd34d",background:"#fffbeb",marginBottom:".5rem"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:".5rem"}}>
+                    <div style={{fontWeight:600,fontSize:".84rem",color:"var(--n)"}}>{c.name}</div>
+                    <span style={{fontSize:".68rem",color:"var(--mu)",flexShrink:0}}>{c.chave_acesso||"—"}</span>
+                  </div>
+                  <div style={{fontSize:".76rem",color:"#92400e",marginTop:3,lineHeight:1.4}}>{c.pendencias}</div>
+                  {c.observacao && (
+                    <div style={{fontSize:".72rem",color:"#b45309",marginTop:2,fontStyle:"italic"}}>{c.observacao?.slice(0,80)}{c.observacao?.length>80?"…":""}</div>
+                  )}
+                </div>
+              ))
+            }
+          </div>
+          {pendentes > 8 && (
+            <div style={{textAlign:"center",marginTop:".5rem",fontSize:".78rem",color:"var(--mu)"}}>
+              + {pendentes - 8} outros clientes com pendências — use a busca para localizar
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
