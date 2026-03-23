@@ -1164,9 +1164,8 @@ export default function App(){
     return()=>{clearInterval(hb);ws.close();};
   },[auth]);
 
-  // ── POLLING: verifica reuniões e documentos novos a cada 30s ─────────────────
-  // (mais fiável que WebSocket pois funciona mesmo para clientes não abertos)
-  const lastCheckRef = React.useRef(new Date().toISOString());
+  // ── POLLING: verifica reuniões e documentos novos a cada 10s ─────────────────
+  const lastCheckRef = useRef(new Date().toISOString());
   useEffect(()=>{
     if(!auth) return;
     const poll = async () => {
@@ -1174,32 +1173,26 @@ export default function App(){
         const since = lastCheckRef.current;
         const now   = new Date().toISOString();
 
-        // Novas reuniões desde o último check
-        const newMeets = await api.get('meetings',
-          `?created_at=gt.${since}&order=created_at.desc&limit=50`);
+        // Novas reuniões
+        const newMeets = await api.get('meetings',`?created_at=gt.${since}&order=created_at.desc&limit=50`);
         if(newMeets?.length){
           newMeets.forEach(m=>{
-            // Actualiza o cliente correspondente
             setClients(cs=>cs.map(c=>{
               if(!c.proc||c.proc.id!==m.process_id) return c;
               if((c.meetings||[]).find(x=>x.id===m.id)) return c;
               return{...c,meetings:[...(c.meetings||[]),m]};
             }));
           });
-          showToast(`📅 ${newMeets.length === 1 ? 'Nova reunião solicitada' : `${newMeets.length} novas reuniões`} por cliente${newMeets.length>1?'s':''}!`);
+          showToast(`📅 ${newMeets.length===1?'Nova reunião solicitada':`${newMeets.length} novas reuniões`} por cliente${newMeets.length>1?'s':''}!`);
         }
 
-        // Novos documentos desde o último check
-        const newDocs = await api.get('documents',
-          `?created_at=gt.${since}&order=created_at.desc&limit=50`);
+        // Novos documentos
+        const newDocs = await api.get('documents',`?created_at=gt.${since}&order=created_at.desc&limit=50`);
         if(newDocs?.length){
           newDocs.forEach(d=>{
             setClients(cs=>{
-              const client = cs.find(c=>c.proc&&c.proc.id===d.process_id);
-              if(client){
-                const nome = client.name.split(' ')[0];
-                showToast(`📄 ${nome} enviou um novo documento!`);
-              }
+              const client=cs.find(c=>c.proc&&c.proc.id===d.process_id);
+              if(client) showToast(`📄 ${client.name.split(' ')[0]} enviou um novo documento!`);
               return cs.map(c=>{
                 if(!c.proc||c.proc.id!==d.process_id) return c;
                 if((c.docs||[]).find(x=>x.id===d.id)) return c;
@@ -1212,8 +1205,7 @@ export default function App(){
         lastCheckRef.current = now;
       }catch{}
     };
-
-    const interval = setInterval(poll, 30000); // verifica a cada 30 segundos
+    const interval = setInterval(poll, 10000); // verifica a cada 10 segundos
     return()=>clearInterval(interval);
   },[auth]);
 
