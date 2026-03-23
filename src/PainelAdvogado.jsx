@@ -767,9 +767,48 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   if(ldData) return <div style={{marginTop:"4rem"}}><div className="ld"><Icon name="spin" size={28}/><span>Carregando dados do cliente…</span></div></div>;
 
   const toggleStep=async s=>{
-    const r=await api.patch("process_steps",s.id,{done:!s.done});
-    if(r[0]) setSteps(ss=>ss.map(x=>x.id===s.id?{...x,done:!s.done}:x));
-    showToast("Etapa atualizada!");
+    const newDone = !s.done;
+    const r=await api.patch("process_steps",s.id,{done:newDone});
+    if(!r[0]) return;
+
+    const newSteps = steps.map(x=>x.id===s.id?{...x,done:newDone}:x);
+    setSteps(newSteps);
+
+    // Calcular nova etapa activa (current_step)
+    const STEP_NAMES = {
+      1:'Recebido', 2:'Registado', 3:'Consultas',
+      4:'Documentos', 5:'Análise', 6:'Despacho', 7:'Terminado'
+    };
+    const lastDone = newSteps.filter(x=>x.done).length;
+    const newCurrentStep = Math.min(lastDone + 1, 7);
+
+    // Actualizar current_step no processo
+    await api.patch("processes", proc.id, { current_step: newCurrentStep });
+    setClients(cs=>cs.map(c=>c.id===client.id?{
+      ...c, proc:{...c.proc, current_step:newCurrentStep}
+    }:c));
+
+    // Notificar cliente automaticamente quando uma etapa é concluída
+    if(newDone){
+      const stepName  = s.title || STEP_NAMES[s.step_order] || `Etapa ${s.step_order}`;
+      const nextStep  = STEP_NAMES[newCurrentStep];
+      const isLast    = newCurrentStep > 7 || lastDone === 7;
+
+      const notifText = isLast
+        ? `🎉 O seu processo de nacionalidade foi concluído! Parabéns!`
+        : `✅ Etapa "${stepName}" concluída! O seu processo avançou para a fase "${nextStep || stepName}". Acesse o portal para acompanhar.`;
+
+      await api.post("notifications",{
+        client_id: client.id,
+        text: notifText,
+        icon: isLast ? "🎉" : "✅",
+        read: false
+      });
+
+      showToast(`✅ Etapa "${stepName}" concluída — cliente notificado!`);
+    } else {
+      showToast("Etapa desmarcada.");
+    }
   };
   const sendMsg=async()=>{
     if(!chatIn.trim()||!proc) return;
