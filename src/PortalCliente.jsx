@@ -341,13 +341,27 @@ function Login({ onLogin }) {
 // ── IRN TIMELINE ──────────────────────────────────────────────────────────────
 // As 7 etapas reais do site IRN (nacionalidadeonline.justica.gov.pt)
 const IRN_STEPS = [
-  { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN." },
-  { num:2, label:"Registado",   icon:"📋", desc:"Pedido registado no sistema IRN." },
-  { num:3, label:"Consultas",   icon:"🔍", desc:"IRN a consultar entidades externas." },
-  { num:4, label:"Documentos",  icon:"📄", desc:"Análise da documentação submetida." },
-  { num:5, label:"Análise",     icon:"⚖️",  desc:"Análise jurídica do pedido em curso." },
-  { num:6, label:"Despacho",    icon:"✍️",  desc:"Decisão final em elaboração." },
-  { num:7, label:"Terminado",   icon:"🎉", desc:"Processo concluído." },
+  { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN.",
+    optimista: "O seu pedido chegou ao IRN e está devidamente registado no sistema. Este é o primeiro passo de uma jornada que termina com a sua nacionalidade portuguesa. Tudo começa aqui — e o seu processo já está dentro do sistema!",
+    detalhes:  "Nesta fase, o IRN confirma que recebeu o seu pedido e que toda a documentação foi entregue. A equipa de registo está a verificar os dados iniciais. É completamente normal estar nesta fase — todos os processos passam por ela obrigatoriamente." },
+  { num:2, label:"Registado",   icon:"📋", desc:"Pedido registado no sistema IRN.",
+    optimista: "Excelente notícia! O seu processo foi registado oficialmente e tem agora um número único no sistema do IRN. Está na fila de análise e a avançar!",
+    detalhes:  "O registo significa que o IRN validou a sua candidatura e atribuiu-lhe um número de processo oficial. A partir deste momento, o seu processo está em linha aguardando a sua vez de ser analisado. O IRN segue rigorosamente a ordem de entrada — cada processo protocolado antes do seu será analisado primeiro, garantindo total imparcialidade." },
+  { num:3, label:"Consultas",   icon:"🔍", desc:"IRN a consultar entidades externas.",
+    optimista: "O seu processo está activamente a ser trabalhado! O IRN está a consultar outras entidades oficiais para verificar e confirmar os dados da sua candidatura. Isso significa que há movimento real no seu processo.",
+    detalhes:  "Nesta fase, o IRN contacta entidades como o Arquivo Nacional Torre do Tombo, registos civis, ou outras instituições para verificar os vínculos históricos com Portugal. Estas consultas são essenciais para fundamentar juridicamente a decisão. Quanto mais documentação completa tiver submetido, mais rápidas e favoráveis tendem a ser estas consultas." },
+  { num:4, label:"Documentos",  icon:"📄", desc:"Análise da documentação submetida.",
+    optimista: "O seu processo está a ser analisado a fundo! A equipa do IRN está a examinar toda a documentação que submeteu. Cada documento analisado é mais um passo em direcção ao despacho favorável.",
+    detalhes:  "Nesta etapa, um técnico especializado do IRN revê minuciosamente todos os documentos do seu processo — certidões de nascimento, procurações, passaportes, certificados comunitários e demais comprovativos. A qualidade e completude da documentação que o escritório Bono & Lacerda preparou para si é fundamental para que esta fase decorra sem contratempos." },
+  { num:5, label:"Análise",     icon:"⚖️",  desc:"Análise jurídica do pedido em curso.",
+    optimista: "Estamos muito perto! O IRN está a realizar a análise jurídica final do seu processo. Um jurista especializado está a estudar o seu caso para emitir a decisão. Esta é uma das etapas mais avançadas do processo!",
+    detalhes:  "A análise jurídica é a fase em que um consultor jurídico ou conservador avalia todos os elementos do processo à luz da legislação portuguesa sobre nacionalidade. O escritório Bono & Lacerda acompanha activamente esta fase e está disponível para responder a qualquer pedido de informação adicional do IRN com a máxima celeridade." },
+  { num:6, label:"Despacho",    icon:"✍️",  desc:"Decisão final em elaboração.",
+    optimista: "A linha de chegada está à vista! O Conservador está a elaborar o despacho final do seu processo. Em breve receberá a confirmação oficial da sua nacionalidade portuguesa. Estamos quase lá!",
+    detalhes:  "O despacho é a decisão formal e definitiva do Conservador dos Registos Centrais ou do Arquivo Central do Porto. Nesta fase, o documento oficial de concessão (ou o despacho fundamentado em caso de necessidade de documentação adicional) está a ser redigido. O escritório Bono & Lacerda será notificado assim que o despacho for emitido." },
+  { num:7, label:"Terminado",   icon:"🎉", desc:"Processo concluído.",
+    optimista: "Parabéns! 🎉 O seu processo de nacionalidade portuguesa está concluído! Bem-vindo à família portuguesa! Este momento representa o culminar de toda a sua jornada.",
+    detalhes:  "O processo chegou ao fim com sucesso! Pode agora solicitar a certidão de nascimento portuguesa e, posteriormente, o passaporte português. O escritório Bono & Lacerda irá orientá-lo nos próximos passos para usufruir plenamente dos seus direitos como cidadão português e europeu." },
 ];
 
 function IRNTimeline({ proc, submissao }) {
@@ -436,27 +450,55 @@ function IRNTimeline({ proc, submissao }) {
 
       {/* Active step detail card */}
       {IRN_STEPS.filter(s => s.num === currentStep).map(s => (
-        <div key={s.num} style={{
-          background:"linear-gradient(135deg, rgba(15,30,53,.04), rgba(201,168,76,.06))",
-          border:"1px solid rgba(201,168,76,.2)", borderRadius:12, padding:"1rem 1.25rem",
-          display:"flex", gap:".75rem", alignItems:"flex-start"
-        }}>
-          <div style={{ fontSize:"1.5rem", lineHeight:1 }}>{s.icon}</div>
-          <div>
-            <div style={{ fontWeight:700, fontSize:".9rem", color:"var(--n)", marginBottom:3 }}>
-              Etapa {s.num} de 7 — {s.label}
+        <div key={s.num}>
+          {/* Main status card */}
+          <div style={{
+            background:"linear-gradient(135deg, rgba(15,30,53,.04), rgba(201,168,76,.06))",
+            border:"1px solid rgba(201,168,76,.2)", borderRadius:12, padding:"1rem 1.25rem",
+            display:"flex", gap:".75rem", alignItems:"flex-start", marginBottom:"1rem"
+          }}>
+            <div style={{ fontSize:"1.5rem", lineHeight:1 }}>{s.icon}</div>
+            <div>
+              <div style={{ fontWeight:700, fontSize:".9rem", color:"var(--n)", marginBottom:3 }}>
+                Etapa {s.num} de 7 — {s.label}
+              </div>
+              <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.5 }}>{s.desc}</div>
+              {proc?.arquivo && (
+                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
+                  🏛️ {proc.arquivo}
+                </div>
+              )}
+              {submissaoDate && (
+                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>
+                  📅 Submetido a {new Date(submissaoDate).toLocaleDateString("pt-BR")}
+                </div>
+              )}
             </div>
-            <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.5 }}>{s.desc}</div>
-            {proc?.arquivo && (
-              <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
-                🏛️ {proc.arquivo}
-              </div>
-            )}
-            {submissaoDate && (
-              <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>
-                📅 Submetido a {new Date(submissaoDate).toLocaleDateString("pt-BR")}
-              </div>
-            )}
+          </div>
+
+          {/* Optimistic message */}
+          <div style={{
+            background:"linear-gradient(135deg, rgba(22,163,74,.06), rgba(201,168,76,.08))",
+            border:"1px solid rgba(22,163,74,.2)", borderRadius:12, padding:"1rem 1.25rem",
+            marginBottom:".75rem"
+          }}>
+            <div style={{ display:"flex", gap:".6rem", alignItems:"flex-start", marginBottom:".6rem" }}>
+              <span style={{ fontSize:"1.1rem" }}>✨</span>
+              <div style={{ fontWeight:700, fontSize:".85rem", color:"#14532d" }}>O que isto significa para si</div>
+            </div>
+            <div style={{ fontSize:".82rem", color:"#166534", lineHeight:1.7 }}>{s.optimista}</div>
+          </div>
+
+          {/* Detailed explanation */}
+          <div style={{
+            background:"rgba(248,246,241,.8)", border:"1px solid var(--bo)",
+            borderRadius:12, padding:"1rem 1.25rem"
+          }}>
+            <div style={{ display:"flex", gap:".6rem", alignItems:"flex-start", marginBottom:".6rem" }}>
+              <span style={{ fontSize:"1rem" }}>ℹ️</span>
+              <div style={{ fontWeight:700, fontSize:".82rem", color:"var(--n)" }}>O que acontece nesta fase</div>
+            </div>
+            <div style={{ fontSize:".8rem", color:"var(--mu)", lineHeight:1.75 }}>{s.detalhes}</div>
           </div>
         </div>
       ))}
