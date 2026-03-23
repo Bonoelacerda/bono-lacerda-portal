@@ -1064,7 +1064,7 @@ function Clients({clients,setClients,showToast,openClient}){
 }
 
 // ── ALL MEETINGS ──────────────────────────────────────────────────────────────
-function AllMeetings({clients}){
+function AllMeetings({clients, openClient}){
   const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
   const pendentes=all.filter(m=>m.status==="pendente");
   return(
@@ -1078,7 +1078,12 @@ function AllMeetings({clients}){
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>
+                👤 <strong
+                  onClick={()=>openClient(m.clientId)}
+                  style={{cursor:"pointer",color:"var(--n)",textDecoration:"underline"}}
+                >{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}
+              </div>
               {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
             </div>
             <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
@@ -1091,62 +1096,44 @@ function AllMeetings({clients}){
 
 // ── ALL DOCUMENTS ─────────────────────────────────────────────────────────────
 function AllDocuments({clients, openClient}){
-  const all = clients
-    .flatMap(c=>(c.docs||[]).map(d=>({...d, clientName:c.name, clientId:c.id})))
-    .sort((a,b)=>((b.created_at||"")).localeCompare(a.created_at||""));
-  const novos = all.filter(d=>{
-    const created = new Date(d.created_at||"");
-    const diff = (Date.now() - created.getTime()) / (1000*60*60*24);
-    return diff < 2; // últimas 48h
-  });
-  const fmtSize = b => b>1048576?`${(b/1048576).toFixed(1)} MB`:b>1024?`${(b/1024).toFixed(0)} KB`:`${b||0} B`;
-  const fmtDate = ts => ts ? new Date(ts).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "—";
-
+  const all=clients
+    .flatMap(c=>(c.docs||[]).map(d=>({...d,clientName:c.name,clientId:c.id})))
+    .sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
+  const novos=all.filter(d=>(Date.now()-new Date(d.created_at||"").getTime())<172800000);
+  const fmtSize=b=>b>1048576?`${(b/1048576).toFixed(1)} MB`:b>1024?`${(b/1024).toFixed(0)} KB`:`${b||0} B`;
+  const fmtDate=ts=>ts?new Date(ts).toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}):"—";
+  const extColor={PDF:"#ef4444",DOC:"#3b82f6",DOCX:"#3b82f6",JPG:"#10b981",JPEG:"#10b981",PNG:"#10b981"};
   return(
     <div>
       <div className="tb">
-        <div>
-          <h1 className="pt">Todos os Documentos</h1>
-          <p className="ps">{all.length} documentos · {novos.length} novos nas últimas 48h</p>
-        </div>
+        <div><h1 className="pt">Todos os Documentos</h1><p className="ps">{all.length} documentos · {novos.length} novos nas últimas 48h</p></div>
       </div>
-
       {novos.length>0&&(
         <div style={{background:"#dbeafe",border:"1px solid #93c5fd",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}>
-          <div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>
-            📄 {novos.length} documento(s) novo(s) nas últimas 48h
-          </div>
+          <div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>📄 {novos.length} documento(s) novo(s) nas últimas 48h</div>
         </div>
       )}
-
       <div className="card cp">
         {!all.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento ainda.</p>}
         {all.map(d=>{
-          const isNew = novos.find(n=>n.id===d.id);
-          const ext = (d.file_name||d.name||"").split(".").pop().toUpperCase();
-          const extColor = {PDF:"#ef4444",DOC:"#3b82f6",DOCX:"#3b82f6",JPG:"#10b981",JPEG:"#10b981",PNG:"#10b981"}[ext]||"#6b7280";
+          const isNew=novos.find(n=>n.id===d.id);
+          const ext=(d.file_name||d.name||"").split(".").pop().toUpperCase();
           return(
-            <div key={d.id} style={{
-              display:"flex", alignItems:"center", gap:"1rem", padding:".9rem 0",
-              borderBottom:"1px solid var(--bo)", background: isNew?"rgba(219,234,254,.15)":"transparent"
-            }}>
-              {/* Ext badge */}
-              <div style={{width:44,height:44,borderRadius:10,background:extColor,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:".65rem",fontWeight:700,flexShrink:0}}>
+            <div key={d.id} style={{display:"flex",alignItems:"center",gap:"1rem",padding:".9rem 0",borderBottom:"1px solid var(--bo)",background:isNew?"rgba(219,234,254,.15)":"transparent"}}>
+              <div style={{width:44,height:44,borderRadius:10,background:extColor[ext]||"#6b7280",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:".65rem",fontWeight:700,flexShrink:0}}>
                 {ext||"DOC"}
               </div>
-              {/* Info */}
               <div style={{flex:1,minWidth:0}}>
                 <div style={{fontWeight:600,fontSize:".88rem",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                   {d.file_name||d.name||"Documento"}
                   {isNew&&<span style={{marginLeft:8,background:"#dbeafe",color:"#1d4ed8",fontSize:".65rem",fontWeight:700,padding:"2px 7px",borderRadius:99}}>NOVO</span>}
                 </div>
                 <div style={{fontSize:".76rem",color:"var(--mu)",marginTop:3}}>
-                  👤 <strong style={{cursor:"pointer",color:"var(--n)",textDecoration:"underline"}} onClick={()=>openClient(d.clientId)}>{d.clientName}</strong>
+                  👤 <strong onClick={()=>openClient(d.clientId)} style={{cursor:"pointer",color:"var(--n)",textDecoration:"underline"}}>{d.clientName}</strong>
                   {d.size&&<span> · {fmtSize(d.size)}</span>}
                   <span> · {fmtDate(d.created_at)}</span>
                 </div>
               </div>
-              {/* Download */}
               {d.url&&(
                 <a href={d.url} target="_blank" rel="noopener noreferrer"
                   style={{padding:".45rem .9rem",background:"var(--n)",color:"#fff",borderRadius:8,fontSize:".78rem",fontWeight:600,textDecoration:"none",flexShrink:0}}>
@@ -1244,8 +1231,6 @@ export default function App(){
       try {
         const since = lastCheckRef.current;
         const now   = new Date().toISOString();
-
-        // Novas reuniões
         const newMeets = await api.get('meetings',`?created_at=gt.${since}&order=created_at.desc&limit=50`);
         if(newMeets?.length){
           newMeets.forEach(m=>{
@@ -1257,8 +1242,6 @@ export default function App(){
           });
           showToast(`📅 ${newMeets.length===1?'Nova reunião solicitada':`${newMeets.length} novas reuniões`} por cliente${newMeets.length>1?'s':''}!`);
         }
-
-        // Novos documentos
         const newDocs = await api.get('documents',`?created_at=gt.${since}&order=created_at.desc&limit=50`);
         if(newDocs?.length){
           newDocs.forEach(d=>{
@@ -1273,22 +1256,17 @@ export default function App(){
             });
           });
         }
-
         lastCheckRef.current = now;
       }catch{}
     };
-    const interval = setInterval(poll, 10000); // verifica a cada 10 segundos
+    const interval = setInterval(poll, 10000);
     return()=>clearInterval(interval);
   },[auth]);
 
   const onLogin=()=>{setAuth(true);loadClients();};
   const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
   const novosDoc=clients.reduce((a,c)=>{
-    const docs=(c.docs||[]).filter(d=>{
-      const diff=(Date.now()-new Date(d.created_at||"").getTime())/(1000*60*60*24);
-      return diff<2;
-    });
-    return a+docs.length;
+    return a+(c.docs||[]).filter(d=>(Date.now()-new Date(d.created_at||"").getTime())<172800000).length;
   },0);
   const nav=[
     {id:"dash",     label:"Painel Geral", ic:"dash"},
@@ -1326,7 +1304,7 @@ export default function App(){
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="meetings"?<AllMeetings clients={clients}/>:
+          tab==="meetings"?<AllMeetings clients={clients} openClient={id=>{setOpenC(id);setTab("clients");}}/>:
           tab==="documents"?<AllDocuments clients={clients} openClient={id=>{setOpenC(id);setTab("clients");}}/>:null}
         </main>
       </div>
