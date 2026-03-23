@@ -789,105 +789,48 @@ function Detail({cid,clients,setClients,showToast,onBack}){
     setSaving(false); setShowMtg(false); setMf({title:"",date:"",time:"10:00",type:"presencial",notes:""});
   };
   const confirmMeet=async m=>{
-    showToast("⏳ A criar reunião no Google Meet…");
+    // 1. Confirmar no Supabase imediatamente
+    await api.patch("meetings", m.id, { status: "confirmado" });
+    const updated = { ...m, status: "confirmado" };
+    setMeets(ms => ms.map(x => x.id === m.id ? updated : x));
+    setClients(cs => cs.map(c => c.id === client.id ? {
+      ...c, meetings: (c.meetings||[]).map(x => x.id === m.id ? updated : x)
+    } : c));
 
-    try {
-      // 1. Criar evento Google Calendar com Google Meet link
-      const dateStart = `${m.date}T${m.time}:00`;
-      const [h, min]  = m.time.split(":").map(Number);
-      const endH      = String(h + 1).padStart(2,"0");
-      const dateEnd   = `${m.date}T${endH}:${String(min).padStart(2,"0")}:00`;
+    // 2. Notificação provisória ao cliente
+    await api.post("notifications", {
+      client_id: client.id,
+      text: `✅ Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}. O link do Google Meet será enviado em instantes.`,
+      icon: "📹",
+      read: false
+    });
 
-      const gcalRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${await getGoogleToken()}`
-        },
-        body: JSON.stringify({
-          summary: `📅 ${m.title} — ${client.name}`,
-          description: `Cliente: ${client.name}\nTipo: ${m.type}${m.notes ? "\nNotas: " + m.notes : ""}\n\nPortal Bono & Lacerda`,
-          start: { dateTime: dateStart, timeZone: "Europe/Lisbon" },
-          end:   { dateTime: dateEnd,   timeZone: "Europe/Lisbon" },
-          attendees: [
-            { email: "bonoelacerda@gmail.com", organizer: true },
-            ...(client.email ? [{ email: client.email, displayName: client.name }] : [])
-          ],
-          conferenceData: {
-            createRequest: {
-              conferenceSolutionKey: { type: "hangoutsMeet" },
-              requestId: `meet-${m.id}-${Date.now()}`
-            }
-          },
-          reminders: {
-            useDefault: false,
-            overrides: [
-              { method: "popup", minutes: 30 },
-              { method: "email", minutes: 60 }
-            ]
-          }
-        })
-      });
+    showToast("✅ A criar Google Meet…");
 
-      let meetLink = null;
-      if (gcalRes.ok) {
-        const gcalData = await gcalRes.json();
-        meetLink = gcalData?.conferenceData?.entryPoints?.find(e => e.entryPointType === "video")?.uri
-                || gcalData?.hangoutLink
-                || null;
-      }
-
-      // 2. Actualizar reunião no Supabase com status e link
-      await api.patch("meetings", m.id, {
-        status: "confirmado",
-        meet_link: meetLink || null,
-        calendar_event_id: meetLink ? "created" : null
-      });
-
-      const updated = { ...m, status: "confirmado", meet_link: meetLink };
-      setMeets(ms => ms.map(x => x.id === m.id ? updated : x));
-      setClients(cs => cs.map(c => c.id === client.id ? {
-        ...c, meetings: (c.meetings||[]).map(x => x.id === m.id ? updated : x)
-      } : c));
-
-      // 3. Notificar cliente com link do Meet
-      const notifText = meetLink
-        ? `✅ Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}. Link Google Meet: ${meetLink}`
-        : `✅ Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}.`;
-
-      await api.post("notifications", {
-        client_id: client.id,
-        text: notifText,
-        icon: "📹",
-        read: false
-      });
-
-      showToast(meetLink ? "✅ Reunião confirmada com Google Meet!" : "✅ Reunião confirmada!");
-
-    } catch(err) {
-      // Fallback: confirma sem Meet se der erro
-      await api.patch("meetings", m.id, { status: "confirmado" });
-      setMeets(ms => ms.map(x => x.id === m.id ? { ...x, status: "confirmado" } : x));
-      await api.post("notifications", {
-        client_id: client.id,
-        text: `✅ Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}.`,
-        icon: "✅",
-        read: false
-      });
-      showToast("✅ Reunião confirmada!");
-    }
+    // 3. Pedir ao Claude para criar o evento e guardar o link
+    // Claude tem acesso ao Google Calendar MCP e irá:
+    // - Criar o evento com Google Meet
+    // - Guardar o link no Supabase
+    // - Enviar notificação ao cliente com o link
+    const clientEmail = client.email || "";
+    const cmd = `CRIAR_GOOGLE_MEET|meetingId=${m.id}|clientId=${client.id}|clientName=${client.name}|clientEmail=${clientEmail}|title=${m.title}|date=${m.date}|time=${m.time}|type=${m.type}|notes=${m.notes||""}`;
+    if(window.sendPrompt) window.sendPrompt(cmd);
   };
 
-  // Helper — obtém token Google via endpoint Supabase Edge Function (ou fallback)
-  const getGoogleToken = async () => {
-    // Tenta obter via Supabase stored token
-    try {
-      const r = await fetch(`${SUPA_URL}/functions/v1/google-token`, {
-        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` }
-      });
-      if (r.ok) { const d = await r.json(); return d.access_token; }
-    } catch {}
-    return null;
+  // Helper — guarda meet_link no Supabase e notifica cliente (chamado pelo Claude após criar Meet)
+  window._saveMeetLink = async (meetingId, clientId, meetLink) => {
+    await api.patch("meetings", meetingId, { meet_link: meetLink, calendar_event_id: "created" });
+    setMeets(ms => ms.map(x => x.id === meetingId ? { ...x, meet_link: meetLink } : x));
+    setClients(cs => cs.map(c => c.id === clientId ? {
+      ...c, meetings: (c.meetings||[]).map(x => x.id === meetingId ? { ...x, meet_link: meetLink } : x)
+    } : c));
+    await api.post("notifications", {
+      client_id: clientId,
+      text: `📹 Link do Google Meet disponível: ${meetLink}`,
+      icon: "📹",
+      read: false
+    });
+    showToast("✅ Google Meet criado! Link enviado ao cliente.");
   };
   const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
   const uploadDoc=async f=>{
