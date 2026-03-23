@@ -750,6 +750,56 @@ function Detail({cid,clients,setClients,showToast,onBack}){
 
   const pendentes=meets.filter(m=>m.status==="pendente");
 
+  // ── PENDÊNCIAS KANBAN ──────────────────────────────────────────────────────
+  const [pends, setPends]       = useState([]);
+  const [pendLd, setPendLd]     = useState(false);
+  const [newPend, setNewPend]   = useState("");
+  const [newPrio, setNewPrio]   = useState("media");
+  const [dragId, setDragId]     = useState(null);
+
+  useEffect(() => {
+    if(tab !== "pendencias" || !client.id) return;
+    setPendLd(true);
+    api.get("pendencias_itens", `?client_id=eq.${client.id}&order=created_at.desc`)
+      .then(d => setPends(Array.isArray(d) ? d : []))
+      .finally(() => setPendLd(false));
+  }, [tab, client.id]);
+
+  const addPend = async () => {
+    if(!newPend.trim()) return;
+    const r = await api.post("pendencias_itens", {
+      client_id:   client.id,
+      texto:       newPend.trim(),
+      prioridade:  newPrio,
+      status_pend: "pendente",
+      created_at:  new Date().toISOString(),
+    });
+    if(r[0]) { setPends(p => [r[0], ...p]); setNewPend(""); showToast("Pendência adicionada!"); }
+  };
+
+  const movePend = async (id, novoStatus) => {
+    await api.patch("pendencias_itens", id, { status_pend: novoStatus });
+    setPends(p => p.map(x => x.id === id ? {...x, status_pend: novoStatus} : x));
+    showToast(novoStatus === "resolvido" ? "✅ Marcado como resolvido!" : "🔄 Movido!");
+    if(novoStatus === "resolvido") {
+      await api.post("notifications", {client_id: client.id, text: "Uma pendência do seu processo foi resolvida!", icon: "✅", read: false});
+    }
+  };
+
+  const delPend = async id => {
+    await api.del("pendencias_itens", id);
+    setPends(p => p.filter(x => x.id !== id));
+    showToast("Pendência removida.");
+  };
+
+  const PEND_COLS = [
+    { key: "pendente",      label: "⏳ Pendente",       color: "#92400e", bg: "#fef3c7", border: "#fcd34d" },
+    { key: "em_tratamento", label: "🔄 Em Tratamento",  color: "#1e40af", bg: "#eff6ff", border: "#bfdbfe" },
+    { key: "resolvido",     label: "✅ Resolvido",       color: "#065f46", bg: "#ecfdf5", border: "#6ee7b7" },
+  ];
+  const PRIO_COLORS = { alta: "#dc2626", media: "#d97706", baixa: "#16a34a" };
+  const PRIO_LABELS = { alta: "🔴 Alta", media: "🟡 Média", baixa: "🟢 Baixa" };
+
   return(
     <div>
       <div className="tb">
@@ -789,7 +839,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
       </div>
 
       <div className="tabs">
-        {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["chat","Chat"]].map(([id,label])=>(
+        {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["pendencias","⚠️ Pendências"],["chat","Chat"]].map(([id,label])=>(
           <button key={id} className={`tab${tab===id?" on":""}`} onClick={()=>setTab(id)}>{label}</button>
         ))}
       </div>
@@ -870,6 +920,98 @@ function Detail({cid,clients,setClients,showToast,onBack}){
               </div>
             );
           })}
+        </div>
+      )}
+
+      {tab==="pendencias"&&(
+        <div>
+          {/* Add new pendência */}
+          <div className="card cp" style={{marginBottom:"1.25rem"}}>
+            <div className="ct" style={{margin:0,marginBottom:"1rem"}}>Nova Pendência</div>
+            <div style={{display:"flex",gap:".75rem",flexWrap:"wrap"}}>
+              <input
+                value={newPend} onChange={e=>setNewPend(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&addPend()}
+                placeholder="Descreva a pendência... ex: Falta certidão de nascimento"
+                style={{flex:1,minWidth:200,padding:".55rem .85rem",border:"1px solid var(--bo)",borderRadius:8,background:"var(--bg)",color:"var(--tx)",fontSize:".88rem"}}
+              />
+              <select value={newPrio} onChange={e=>setNewPrio(e.target.value)}
+                style={{padding:".55rem .75rem",border:"1px solid var(--bo)",borderRadius:8,background:"var(--bg)",color:"var(--tx)",fontSize:".85rem"}}>
+                <option value="alta">🔴 Alta</option>
+                <option value="media">🟡 Média</option>
+                <option value="baixa">🟢 Baixa</option>
+              </select>
+              <button className="btn btn-dk" onClick={addPend}><Icon name="plus" size={15}/> Adicionar</button>
+            </div>
+          </div>
+
+          {/* Kanban board */}
+          {pendLd
+            ? <div className="ld"><Icon name="spin" size={22}/><span>A carregar pendências…</span></div>
+            : (
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"1rem"}}>
+              {PEND_COLS.map(col=>{
+                const items = pends.filter(p=>p.status_pend===col.key);
+                return(
+                  <div key={col.key}
+                    onDragOver={e=>{e.preventDefault();}}
+                    onDrop={e=>{e.preventDefault();if(dragId)movePend(dragId,col.key);setDragId(null);}}
+                    style={{background:col.bg,border:`2px solid ${col.border}`,borderRadius:12,padding:"1rem",minHeight:200}}>
+                    {/* Column header */}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem"}}>
+                      <span style={{fontWeight:700,fontSize:".88rem",color:col.color}}>{col.label}</span>
+                      <span style={{background:col.border,color:col.color,borderRadius:999,padding:"2px 10px",fontSize:".75rem",fontWeight:700}}>{items.length}</span>
+                    </div>
+
+                    {/* Cards */}
+                    {items.length===0&&(
+                      <div style={{textAlign:"center",color:"var(--mu)",fontSize:".8rem",padding:"1.5rem 0",opacity:.6}}>
+                        Arrastar pendências aqui
+                      </div>
+                    )}
+                    {items.map(p=>(
+                      <div key={p.id}
+                        draggable
+                        onDragStart={()=>setDragId(p.id)}
+                        onDragEnd={()=>setDragId(null)}
+                        style={{background:"var(--card)",border:"1px solid var(--bo)",borderRadius:10,padding:".85rem",marginBottom:".75rem",cursor:"grab",boxShadow:"0 1px 4px rgba(0,0,0,.07)",borderLeft:`4px solid ${PRIO_COLORS[p.prioridade||"media"]}`}}>
+                        <div style={{fontSize:".85rem",fontWeight:600,color:"var(--tx)",lineHeight:1.4,marginBottom:".5rem"}}>{p.texto}</div>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                          <span style={{fontSize:".72rem",color:PRIO_COLORS[p.prioridade||"media"],fontWeight:600}}>{PRIO_LABELS[p.prioridade||"media"]}</span>
+                          <span style={{fontSize:".7rem",color:"var(--mu)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString("pt-BR"):""}</span>
+                        </div>
+                        {/* Action buttons */}
+                        <div style={{display:"flex",gap:".4rem",marginTop:".6rem",flexWrap:"wrap"}}>
+                          {col.key!=="em_tratamento"&&col.key!=="resolvido"&&(
+                            <button onClick={()=>movePend(p.id,"em_tratamento")}
+                              style={{fontSize:".7rem",padding:"3px 8px",border:"1px solid #bfdbfe",borderRadius:6,background:"#eff6ff",color:"#1e40af",cursor:"pointer"}}>
+                              🔄 Tratar
+                            </button>
+                          )}
+                          {col.key!=="resolvido"&&(
+                            <button onClick={()=>movePend(p.id,"resolvido")}
+                              style={{fontSize:".7rem",padding:"3px 8px",border:"1px solid #6ee7b7",borderRadius:6,background:"#ecfdf5",color:"#065f46",cursor:"pointer"}}>
+                              ✅ Resolver
+                            </button>
+                          )}
+                          {col.key==="resolvido"&&(
+                            <button onClick={()=>movePend(p.id,"pendente")}
+                              style={{fontSize:".7rem",padding:"3px 8px",border:"1px solid #fcd34d",borderRadius:6,background:"#fef3c7",color:"#92400e",cursor:"pointer"}}>
+                              ↩️ Reabrir
+                            </button>
+                          )}
+                          <button onClick={()=>delPend(p.id)}
+                            style={{fontSize:".7rem",padding:"3px 8px",border:"1px solid #fecaca",borderRadius:6,background:"#fef2f2",color:"#dc2626",cursor:"pointer",marginLeft:"auto"}}>
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
