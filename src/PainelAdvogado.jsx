@@ -1358,19 +1358,42 @@ export default function App(){
   },[auth]);
 
   const onLogin=()=>{setAuth(true);loadClients();};
-  const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
-  const novosDoc=clients.reduce((a,c)=>{
+
+  // ── BADGES: desaparecem quando a aba é aberta ─────────────────────────────
+  const [seenMeetingsAt,  setSeenMeetingsAt]  = useState(null);
+  const [seenDocumentsAt, setSeenDocumentsAt] = useState(null);
+
+  const goToTab = (id) => {
+    setTab(id);
+    setOpenC(null);
+    if(id === "meetings")  setSeenMeetingsAt(Date.now());
+    if(id === "documents") setSeenDocumentsAt(Date.now());
+  };
+
+  const pendentes = clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
+
+  // Badge reuniões: conta só reuniões PENDENTES criadas depois de ter visto a aba
+  const badgeMeetings = seenMeetingsAt
+    ? clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>
+        m.status==="pendente" && new Date(m.created_at||0).getTime() > seenMeetingsAt
+      ).length,0)
+    : pendentes;
+
+  // Badge documentos: conta docs das últimas 48h criados depois de ter visto a aba
+  const badgeDocs = clients.reduce((a,c)=>{
     const docs=(c.docs||[]).filter(d=>{
-      const diff=(Date.now()-new Date(d.created_at||"").getTime())/(1000*60*60*24);
-      return diff<2;
+      const t = new Date(d.created_at||0).getTime();
+      const diff = (Date.now()-t)/(1000*60*60*24);
+      return diff < 2 && (!seenDocumentsAt || t > seenDocumentsAt);
     });
     return a+docs.length;
   },0);
+
   const nav=[
     {id:"dash",     label:"Painel Geral", ic:"dash"},
-    {id:"clients",  label:"Clientes",     ic:"users", badge:clients.length},
-    {id:"meetings", label:"Reuniões",     ic:"cal",   badge:pendentes||undefined},
-    {id:"documents",label:"Documentos",   ic:"file",  badge:novosDoc||undefined},
+    {id:"clients",  label:"Clientes",     ic:"users",  badge:clients.length},
+    {id:"meetings", label:"Reuniões",     ic:"cal",    badge:badgeMeetings||undefined},
+    {id:"documents",label:"Documentos",   ic:"file",   badge:badgeDocs||undefined},
   ];
 
   if(!auth) return<><style>{css}</style><Login onLogin={onLogin}/></>;
@@ -1389,7 +1412,7 @@ export default function App(){
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
-              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);}}>
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>goToTab(n.id)}>
                 <Icon name={n.ic} size={16}/>{n.label}
                 {n.badge>0&&<span className="nbdg">{n.badge}</span>}
               </div>
