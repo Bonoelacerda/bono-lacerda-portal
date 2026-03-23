@@ -788,29 +788,27 @@ function Detail({cid,clients,setClients,showToast,onBack}){
         </div>
       </div>
 
-      {/* Dados de Contacto — preenchidos pelo cliente no portal */}
-      {(client.whatsapp||client.address||client.city)&&(
-        <div className="card cp" style={{marginBottom:"1.25rem"}}>
-          <div className="ct" style={{marginBottom:".75rem",fontSize:"1rem"}}>📇 Dados de Contacto</div>
-          <div style={{display:"flex",gap:"2rem",flexWrap:"wrap"}}>
-            {[
-              ["📧 Email",     client.email],
-              ["📞 Telefone",  client.phone],
-              ["💬 WhatsApp",  client.whatsapp],
-              ["🏠 Morada",    client.address],
-              ["🏙️ Cidade",    client.city],
-              ["📍 Região",    client.state],
-              ["📮 Código Postal", client.zip],
-              ["🌍 País",      client.country],
-            ].filter(([,v])=>v).map(([k,v])=>(
-              <div key={k} style={{minWidth:140}}>
-                <div style={{fontSize:".68rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div>
-                <div style={{fontWeight:500,fontSize:".85rem"}}>{v}</div>
-              </div>
-            ))}
-          </div>
+      {/* Dados de Contacto — sempre visível, editável pelo advogado */}
+      <div className="card cp" style={{marginBottom:"1.25rem"}}>
+        <div className="ct" style={{marginBottom:".75rem",fontSize:"1rem"}}>📇 Dados de Contacto</div>
+        <div style={{display:"flex",gap:"2rem",flexWrap:"wrap"}}>
+          {[
+            ["📧 Email",     client.email    || "—"],
+            ["📞 Telefone",  client.phone    || "—"],
+            ["💬 WhatsApp",  client.whatsapp || "—"],
+            ["🏠 Morada",    client.address  || "—"],
+            ["🏙️ Cidade",    client.city     || "—"],
+            ["📍 Região",    client.state    || "—"],
+            ["📮 Código Postal", client.zip  || "—"],
+            ["🌍 País",      client.country  || "—"],
+          ].map(([k,v])=>(
+            <div key={k} style={{minWidth:140}}>
+              <div style={{fontSize:".68rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div>
+              <div style={{fontWeight:500,fontSize:".85rem",color:v==="—"?"var(--mu)":"var(--tx)"}}>{v}</div>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
       <div className="tabs">
         {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["chat","Chat"]].map(([id,label])=>(
