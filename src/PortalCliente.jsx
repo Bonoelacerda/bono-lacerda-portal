@@ -521,13 +521,6 @@ function Dashboard({ client, proc, steps }) {
         <p style={{ color:"var(--mu)", fontSize:".9rem", lineHeight:1.7, maxWidth:400, margin:"0 auto" }}>
           O escritório Bono & Lacerda está a preparar o seu processo.<br />Em breve terá acesso a todas as informações aqui.
         </p>
-        {client.pendencias && (
-          <div style={{ marginTop:"1.5rem", background:"#fef3c7", border:"1px solid #fcd34d", borderRadius:12, padding:"1rem 1.5rem", display:"inline-block", textAlign:"left" }}>
-            <div style={{ fontWeight:600, fontSize:".85rem", color:"#92400e", marginBottom:4 }}>⚠️ Pendência identificada</div>
-            <div style={{ fontSize:".82rem", color:"#92400e" }}>{client.pendencias}</div>
-            {client.observacao && <div style={{ fontSize:".78rem", color:"#b45309", marginTop:4 }}>{client.observacao}</div>}
-          </div>
-        )}
         <div style={{ marginTop:"2rem", fontSize:".82rem", color:"var(--mu)" }}>📞 +351 21 793 1934 · ✉️ bonoelacerda@gmail.com</div>
       </div>
     </div>
@@ -536,16 +529,6 @@ function Dashboard({ client, proc, steps }) {
   return (
     <div>
       <div className="ph"><h1>Olá, {first}! 👋</h1><p>Acompanhe o andamento do seu processo.</p></div>
-      {client.pendencias && (
-        <div style={{ background:"#fef3c7", border:"1px solid #fcd34d", borderRadius:12, padding:"1rem 1.25rem", marginBottom:"1.25rem", display:"flex", gap:"1rem" }}>
-          <span style={{ fontSize:"1.3rem" }}>⚠️</span>
-          <div>
-            <div style={{ fontWeight:600, fontSize:".88rem", color:"#92400e" }}>Pendência no processo</div>
-            <div style={{ fontSize:".82rem", color:"#92400e", marginTop:3 }}>{client.pendencias}</div>
-            {client.observacao && <div style={{ fontSize:".78rem", color:"#b45309", marginTop:4 }}>{client.observacao}</div>}
-          </div>
-        </div>
-      )}
       <div className="dg" style={{ gridTemplateColumns:"1fr 1fr 1fr 1fr" }}>
         <div className="sc">
           <div className="sl">Chave de Acesso</div>
