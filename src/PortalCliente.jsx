@@ -161,6 +161,8 @@ body::before {
   .chave-input { font-size:1.15rem; letter-spacing:.15em; }
   .tl { padding-left:1.75rem; }
   ::-webkit-scrollbar { display:none; }
+  .dashboard-grid { grid-template-columns:1fr !important; }
+  .advogado-grid  { grid-template-columns:1fr !important; }
 }
 
 /* ── COMPONENTS — GLASS CARDS ── */
@@ -640,12 +642,12 @@ function Dashboard({ client, proc, steps }) {
         );
       })()}
 
-      <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
+      <div className="dashboard-grid" style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
         <div className="card">
           <div className="ct">Etapas do Processo IRN</div>
           <IRNTimeline proc={proc} submissao={client.observacao} />
         </div>
-        <div style={{ display:"flex", flexDirection:"column", gap:"1.25rem" }}>
+        <div className="advogado-grid" style={{ display:"grid", gridTemplateColumns:"1fr", gap:"1.25rem" }}>
           <div className="card">
             <div className="ct">Advogados</div>
             <div style={{ display:"flex", alignItems:"center", gap:".85rem", marginBottom:"1rem" }}>
