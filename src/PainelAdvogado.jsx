@@ -1,14 +1,40 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Component } from "react";
+
+// Error Boundary — prevents white screen crashes
+class ErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+  static getDerivedStateFromError(error) { return { hasError: true, error }; }
+  componentDidCatch(error, info) { console.error("ErrorBoundary caught:", error, info); }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{padding:"3rem",textAlign:"center",color:"#92400e",fontFamily:"'Outfit',sans-serif"}}>
+          <div style={{fontSize:"2rem",marginBottom:"1rem"}}>⚠️</div>
+          <h2 style={{fontFamily:"'Cormorant Garamond',serif",color:"#16213e",marginBottom:".5rem"}}>Algo correu mal</h2>
+          <p style={{fontSize:".88rem",marginBottom:"1.5rem",color:"#7a7a95"}}>{this.state.error?.message || "Erro inesperado."}</p>
+          <button onClick={()=>this.setState({hasError:false,error:null})} style={{padding:".6rem 1.5rem",background:"#16213e",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontWeight:600}}>Tentar novamente</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
 
 const api = {
-  get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
-  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
-  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
-  del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
+  get: async (t, q="") => {
+    try {
+      const r = await fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H });
+      const d = await r.json();
+      return Array.isArray(d) ? d : [];
+    } catch(e) { console.error("API get error:", t, e); return []; }
+  },
+  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()).catch(()=>[]),
+  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()).catch(()=>[]),
+  del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }).catch(()=>null),
   upload: async (path, file) => {
     const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
@@ -672,24 +698,29 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   // Load full data when client is opened
   useEffect(()=>{
     if(!client) return;
+    let cancelled=false;
     const load=async()=>{
       setLdData(true);
-      const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
-      const proc=procs[0]||null;
-      if(proc){
-        const [ss,dd,mm,mt]=await Promise.all([
-          api.get("process_steps",`?process_id=eq.${proc.id}&order=step_order.asc`),
-          api.get("documents",`?process_id=eq.${proc.id}&order=created_at.desc`),
-          api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
-          api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
-        ]);
-        setSteps(ss); setDocs(dd); setMsgs(mm); setMeets(mt);
-        // Update client proc in state
-        setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
-      }
-      setLdData(false);
+      try{
+        const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
+        const proc=procs[0]||null;
+        if(proc && !cancelled){
+          const [ss,dd,mm,mt]=await Promise.all([
+            api.get("process_steps",`?process_id=eq.${proc.id}&order=step_order.asc`),
+            api.get("documents",`?process_id=eq.${proc.id}&order=created_at.desc`),
+            api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
+            api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
+          ]);
+          if(!cancelled){
+            setSteps(Array.isArray(ss)?ss:[]); setDocs(Array.isArray(dd)?dd:[]); setMsgs(Array.isArray(mm)?mm:[]); setMeets(Array.isArray(mt)?mt:[]);
+            setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
+          }
+        }
+      }catch(e){console.error("Detail load error:",e);}
+      if(!cancelled) setLdData(false);
     };
     load();
+    return ()=>{cancelled=true;};
   },[cid]);
 
   if(!client) return null;
@@ -762,6 +793,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
     setPendLd(true);
     api.get("pendencias_itens", `?client_id=eq.${client.id}&order=created_at.desc`)
       .then(d => setPends(Array.isArray(d) ? d : []))
+      .catch(() => setPends([]))
       .finally(() => setPendLd(false));
   }, [tab, client.id]);
 
@@ -1174,20 +1206,36 @@ export default function App(){
   const loadClients=async()=>{
     setLoading(true);
     try{
-      // Supabase limit is now 10000 — single query gets all clients
-      const allClients=await api.get("clients","?order=created_at.desc&limit=10000");
-      if(!allClients||allClients.error){showToast("Erro ao carregar clientes.");setLoading(false);return;}
+      // Fetch all clients — paginate if needed (Supabase max_rows may be 1000)
+      let allClients=[];
+      let offset=0;
+      const PAGE=1000;
+      while(true){
+        const page=await api.get("clients",`?order=created_at.desc&limit=${PAGE}&offset=${offset}`);
+        if(!page.length) break;
+        allClients=allClients.concat(page);
+        if(page.length<PAGE) break;
+        offset+=PAGE;
+      }
+      if(!allClients.length){showToast("Nenhum cliente encontrado.");setLoading(false);return;}
       // Set clients immediately so count shows
-      setClients(allClients.map(c=>({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]})));
-      // Then enrich first 200 with process data in background
-      const enriched=await Promise.all(allClients.map(async(c,i)=>{
-        if(i>=200) return{...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]};
-        const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
-        const proc=procs[0]||null;
-        return{...c,proc,steps:[],docs:[],msgs:[],meetings:[]};
-      }));
-      setClients(enriched);
-    }catch(e){showToast("Erro ao carregar dados: "+e.message);}
+      const base=allClients.map(c=>({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]}));
+      setClients(base);
+      // Enrich first 200 with process data in batches of 20 (avoids rate limiting)
+      const ENRICH=200;
+      const BATCH=20;
+      const toEnrich=allClients.slice(0,ENRICH);
+      const enriched=[...base];
+      for(let i=0;i<toEnrich.length;i+=BATCH){
+        const batch=toEnrich.slice(i,i+BATCH);
+        const results=await Promise.all(batch.map(async c=>{
+          const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
+          return{...c,proc:procs[0]||null,steps:[],docs:[],msgs:[],meetings:[]};
+        }));
+        results.forEach((r,j)=>{enriched[i+j]=r;});
+        setClients([...enriched]);
+      }
+    }catch(e){console.error("loadClients error:",e);showToast("Erro ao carregar dados: "+e.message);}
     setLoading(false);
   };
 
@@ -1225,7 +1273,7 @@ export default function App(){
         </aside>
         <main className="mc">
           {loading?<div className="ld"><Icon name="spin" size={28}/><span>Carregando {clients.length} clientes…</span></div>:
-          openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
+          openC?<ErrorBoundary key={openC}><Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/></ErrorBoundary>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
           tab==="meetings"?<AllMeetings clients={clients}/>:null}
