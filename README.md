@@ -17,7 +17,7 @@ Sistema de gestão de processos jurídicos com portal para clientes e painel adm
 
 **Painel do Advogado**
 - E-mail: `bonoelacerda@gmail.com`
-- Senha: `admin123`
+- Senha: `admin123` 
 
 ## Tecnologias
 
