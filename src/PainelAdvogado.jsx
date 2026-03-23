@@ -1117,6 +1117,64 @@ export default function App(){
     setLoading(false);
   };
 
+  // ── REALTIME: notificação automática quando cliente marca reunião ou envia documento ──
+  useEffect(()=>{
+    if(!auth) return;
+    const wsUrl=SUPA_URL.replace('https://','wss://')+'/realtime/v1/websocket?apikey='+SUPA_KEY+'&vsn=1.0.0';
+    const ws=new WebSocket(wsUrl);
+    let hb;
+    ws.onopen=()=>{
+      // Subscreve reuniões
+      ws.send(JSON.stringify({
+        topic:'realtime:public:meetings',event:'phx_join',ref:'1',
+        payload:{config:{broadcast:{self:false},presence:{key:''},postgres_changes:[{event:'INSERT',schema:'public',table:'meetings'}]}}
+      }));
+      // Subscreve documentos
+      ws.send(JSON.stringify({
+        topic:'realtime:public:documents',event:'phx_join',ref:'2',
+        payload:{config:{broadcast:{self:false},presence:{key:''},postgres_changes:[{event:'INSERT',schema:'public',table:'documents'}]}}
+      }));
+      hb=setInterval(()=>ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'})),30000);
+    };
+    ws.onmessage=e=>{
+      try{
+        const msg=JSON.parse(e.data);
+        if(msg.event==='postgres_changes'&&msg.payload?.data?.type==='INSERT'){
+          const rec=msg.payload.data.record;
+          if(!rec) return;
+          const table=msg.payload.data.table||msg.topic?.split(':')?.[2];
+
+          if(table==='meetings'||rec.date){
+            // Nova reunião
+            setClients(cs=>cs.map(c=>{
+              if(!c.proc||c.proc.id!==rec.process_id) return c;
+              if((c.meetings||[]).find(x=>x.id===rec.id)) return c;
+              return{...c,meetings:[...(c.meetings||[]),rec]};
+            }));
+            showToast('📅 Nova reunião solicitada por um cliente!');
+          } else if(table==='documents'||rec.file_name||rec.url){
+            // Novo documento
+            setClients(cs=>cs.map(c=>{
+              if(!c.proc||c.proc.id!==rec.process_id) return c;
+              if((c.docs||[]).find(x=>x.id===rec.id)) return c;
+              return{...c,docs:[...(c.docs||[]),rec]};
+            }));
+            // Find client name for the toast
+            setClients(cs=>{
+              const client=cs.find(c=>c.proc&&c.proc.id===rec.process_id);
+              const nome=client?client.name.split(' ')[0]:'Um cliente';
+              showToast(`📄 ${nome} enviou um novo documento!`);
+              return cs;
+            });
+          }
+        }
+      }catch{}
+    };
+    ws.onerror=()=>{};
+    ws.onclose=()=>clearInterval(hb);
+    return()=>{clearInterval(hb);ws.close();};
+  },[auth]);
+
   const onLogin=()=>{setAuth(true);loadClients();};
   const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
   const nav=[
