@@ -8,30 +8,16 @@ const db = {
   get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
   post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method: "POST", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
   patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
-  // Storage: upload file to Supabase Storage
   upload: async (path, file) => {
-    // Use PUT for upsert (creates or replaces)
     const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
-      headers: { 
-        apikey: SUPA_KEY, 
-        Authorization: `Bearer ${SUPA_KEY}`,
-        "Content-Type": file.type,
-        "x-upsert": "true"
-      },
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type, "x-upsert": "true" },
       body: file
     });
-    if (!r.ok) {
-      const err = await r.text();
-      console.error("Upload error:", err);
-    }
+    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err); }
     return r.ok;
   },
-  // Storage: get public URL directly
-  signedUrl: async (path) => {
-    // Use public URL directly — bucket is public
-    return `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`;
-  }
+  signedUrl: async (path) => `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`,
 };
 
 const MO = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
@@ -39,7 +25,6 @@ const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
 const ini  = n  => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
 function Icon({ name, size = 20 }) {
   const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
   const map = {
@@ -58,254 +43,261 @@ function Icon({ name, size = 20 }) {
     scale:    <svg {...p}><line x1="12" y1="3" x2="12" y2="21"/><path d="M3 7l4 4-4 4"/><path d="M21 7l-4 4 4 4"/><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="15" x2="21" y2="15"/></svg>,
     spin:     <svg {...p} style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
     key:      <svg {...p}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>,
+    clip:     <svg {...p}><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>,
+    img:      <svg {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>,
   };
   return map[name] || null;
 }
 
-// ── CSS ───────────────────────────────────────────────────────────────────────
+/* ── CSS ────────────────────────────────────────────────────────────────── */
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes up   { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-@keyframes rin  { from { transform:translateX(80px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideIn { from { transform:translateX(80px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.5; } }
+@keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+@keyframes breathe { 0%,100% { box-shadow:0 0 0 0 rgba(201,168,76,.25); } 50% { box-shadow:0 0 0 8px rgba(201,168,76,0); } }
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --n:#0f1e35; --nl:#1d3557; --g:#c9a84c; --gd:rgba(201,168,76,.12);
-  --cr:#f5f0e8; --cd:#ede6d8; --tx:#1a1a2e; --mu:#6b7b9a;
-  --bo:#e2ddd5; --ok:#16a34a; --er:#dc2626; --sh:0 4px 24px rgba(15,30,53,.10);
+  --n:#0f1e35; --nl:#1a3050; --nd:#0a1525; --g:#c9a84c; --gl:#d4b96a; --gd:rgba(201,168,76,.10);
+  --cr:#f7f3ec; --cd:#ede8de; --wh:#ffffff; --tx:#1a1a2e; --mu:#7b889e;
+  --bo:#e4dfd6; --ok:#16a34a; --er:#dc2626; --inf:#3b82f6;
+  --sh:0 2px 12px rgba(15,30,53,.06); --sh2:0 8px 32px rgba(15,30,53,.10); --sh3:0 16px 48px rgba(15,30,53,.14);
+  --r:14px; --r2:18px; --r3:24px;
 }
-body { font-family:'DM Sans',sans-serif; background:var(--cr); color:var(--tx); min-height:100vh; }
+html { scroll-behavior:smooth; }
+body { font-family:'DM Sans',sans-serif; background:var(--cr); color:var(--tx); min-height:100vh; -webkit-font-smoothing:antialiased; }
 
-/* LOGIN */
+/* ── LOGIN ── */
 .lw { min-height:100vh; display:flex; }
-.ll { width:42%; background:var(--n); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3rem; position:relative; overflow:hidden; }
-.ll::before { content:''; position:absolute; width:400px; height:400px; border-radius:50%; border:1px solid rgba(201,168,76,.15); top:-100px; left:-100px; }
-.ll::after  { content:''; position:absolute; width:300px; height:300px; border-radius:50%; border:1px solid rgba(201,168,76,.10); bottom:-80px; right:-80px; }
-.logo { display:flex; flex-direction:column; align-items:center; gap:1rem; z-index:1; }
-.logo-ic { width:64px; height:64px; background:var(--gd); border:1px solid var(--g); border-radius:16px; display:flex; align-items:center; justify-content:center; color:var(--g); }
-.logo h1 { font-family:'Playfair Display',serif; color:#fff; font-size:1.8rem; text-align:center; line-height:1.2; }
-.logo p  { color:rgba(255,255,255,.5); font-size:.85rem; letter-spacing:.1em; text-transform:uppercase; text-align:center; }
-.ltag { margin-top:3rem; color:rgba(255,255,255,.35); font-size:.8rem; text-align:center; line-height:1.8; z-index:1; }
-.lr { flex:1; display:flex; align-items:center; justify-content:center; padding:3rem; }
-.lc { width:100%; max-width:420px; animation:up .4s ease; }
-.lc h2 { font-family:'Playfair Display',serif; font-size:2rem; color:var(--n); margin-bottom:.4rem; }
-.lc > p { color:var(--mu); margin-bottom:2rem; font-size:.9rem; }
-.chave-input { width:100%; padding:1rem; border:2px solid var(--bo); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:1.4rem; font-weight:700; letter-spacing:.2em; text-align:center; background:#fff; color:var(--n); outline:none; transition:border-color .2s; }
-.chave-input:focus { border-color:var(--g); }
-.chave-hint { font-size:.78rem; color:var(--mu); text-align:center; margin-top:.6rem; margin-bottom:1.5rem; }
-.btnp { width:100%; padding:.9rem; background:var(--n); color:#fff; border:none; border-radius:10px; font-family:'DM Sans',sans-serif; font-size:.95rem; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.5rem; transition:background .2s; }
-.btnp:hover { background:var(--nl); }
-.btnp:disabled { opacity:.7; cursor:not-allowed; }
-.errmsg { color:var(--er); font-size:.82rem; margin-top:.8rem; text-align:center; }
+.ll { width:44%; background:linear-gradient(160deg, var(--nd) 0%, var(--n) 40%, var(--nl) 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3rem; position:relative; overflow:hidden; }
+.ll::before { content:''; position:absolute; width:500px; height:500px; border-radius:50%; border:1px solid rgba(201,168,76,.08); top:-150px; left:-150px; animation:breathe 4s infinite; }
+.ll::after  { content:''; position:absolute; width:350px; height:350px; border-radius:50%; border:1px solid rgba(201,168,76,.06); bottom:-100px; right:-100px; }
+.ll .deco1 { position:absolute; top:15%; right:10%; width:80px; height:80px; border:1px solid rgba(201,168,76,.1); border-radius:20px; transform:rotate(45deg); }
+.ll .deco2 { position:absolute; bottom:20%; left:8%; width:50px; height:50px; border:1px solid rgba(201,168,76,.08); border-radius:50%; }
+.logo { display:flex; flex-direction:column; align-items:center; gap:1.2rem; z-index:1; }
+.logo-ic { width:72px; height:72px; background:linear-gradient(135deg, rgba(201,168,76,.15), rgba(201,168,76,.05)); border:1.5px solid rgba(201,168,76,.3); border-radius:20px; display:flex; align-items:center; justify-content:center; color:var(--g); backdrop-filter:blur(10px); }
+.logo h1 { font-family:'Playfair Display',serif; color:#fff; font-size:2rem; text-align:center; line-height:1.25; letter-spacing:.01em; }
+.logo p  { color:rgba(255,255,255,.45); font-size:.8rem; letter-spacing:.15em; text-transform:uppercase; text-align:center; }
+.ltag { margin-top:3rem; color:rgba(255,255,255,.3); font-size:.78rem; text-align:center; line-height:2; z-index:1; letter-spacing:.02em; }
+.lr { flex:1; display:flex; align-items:center; justify-content:center; padding:3rem; background:var(--cr); }
+.lc { width:100%; max-width:420px; animation:fadeUp .5s ease; }
+.lc h2 { font-family:'Playfair Display',serif; font-size:2.1rem; color:var(--n); margin-bottom:.35rem; letter-spacing:-.01em; }
+.lc > p { color:var(--mu); margin-bottom:2.5rem; font-size:.9rem; line-height:1.6; }
+.chave-input { width:100%; padding:1.1rem; border:2px solid var(--bo); border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:1.5rem; font-weight:700; letter-spacing:.25em; text-align:center; background:var(--wh); color:var(--n); outline:none; transition:all .25s; }
+.chave-input:focus { border-color:var(--g); box-shadow:0 0 0 4px var(--gd); }
+.chave-hint { font-size:.78rem; color:var(--mu); text-align:center; margin-top:.65rem; margin-bottom:1.75rem; }
+.btnp { width:100%; padding:1rem; background:linear-gradient(135deg, var(--n), var(--nl)); color:#fff; border:none; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:.95rem; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.5rem; transition:all .25s; letter-spacing:.01em; }
+.btnp:hover { background:linear-gradient(135deg, var(--nl), var(--n)); transform:translateY(-1px); box-shadow:var(--sh2); }
+.btnp:active { transform:translateY(0); }
+.btnp:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+.errmsg { color:var(--er); font-size:.82rem; margin-top:.9rem; text-align:center; padding:.6rem; background:rgba(220,38,38,.06); border-radius:8px; }
 
-/* LAYOUT */
+/* ── LAYOUT ── */
 .al  { display:flex; min-height:100vh; }
-.sb  { width:260px; background:var(--n); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; transition:transform .3s; }
-.sbl { padding:1.8rem 1.5rem 1.4rem; border-bottom:1px solid rgba(255,255,255,.07); }
-.sbl h2  { font-family:'Playfair Display',serif; color:#fff; font-size:1.1rem; line-height:1.3; }
-.sbl span { color:var(--g); font-size:.75rem; display:block; letter-spacing:.08em; }
-.sbu { padding:1.2rem 1.5rem; display:flex; align-items:center; gap:.75rem; border-bottom:1px solid rgba(255,255,255,.07); }
-.av  { border-radius:50%; background:var(--g); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--n); flex-shrink:0; }
+.sb  { width:270px; background:linear-gradient(180deg, var(--nd) 0%, var(--n) 100%); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
+.sbl { padding:1.8rem 1.5rem 1.4rem; border-bottom:1px solid rgba(255,255,255,.06); }
+.sbl h2 { font-family:'Playfair Display',serif; color:#fff; font-size:1.15rem; line-height:1.3; }
+.sbl span { color:var(--g); font-size:.72rem; display:block; letter-spacing:.1em; margin-top:2px; }
+.sbu { padding:1.2rem 1.5rem; display:flex; align-items:center; gap:.75rem; border-bottom:1px solid rgba(255,255,255,.06); }
+.av  { border-radius:50%; background:linear-gradient(135deg, var(--g), var(--gl)); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--n); flex-shrink:0; font-size:.85rem; }
 .sbn { font-size:.88rem; font-weight:600; color:#fff; }
-.sbs { font-size:.75rem; color:rgba(255,255,255,.4); }
-.sbnav { flex:1; padding:1rem 0; }
-.ni { display:flex; align-items:center; gap:.75rem; padding:.75rem 1.5rem; color:rgba(255,255,255,.55); font-size:.88rem; font-weight:500; cursor:pointer; transition:all .15s; border-left:3px solid transparent; }
-.ni:hover { color:#fff; background:rgba(255,255,255,.04); }
-.ni.on { color:var(--g); border-left-color:var(--g); background:rgba(201,168,76,.07); }
-.sbf { padding:1rem 1.5rem 1.5rem; border-top:1px solid rgba(255,255,255,.07); }
-.out { display:flex; align-items:center; gap:.6rem; color:rgba(255,255,255,.4); font-size:.85rem; cursor:pointer; background:none; border:none; font-family:'DM Sans',sans-serif; }
-.out:hover { color:rgba(255,255,255,.8); }
-.mc { margin-left:260px; flex:1; padding:2.5rem; min-height:100vh; animation:up .3s ease; }
+.sbs { font-size:.72rem; color:rgba(255,255,255,.35); letter-spacing:.03em; }
+.sbnav { flex:1; padding:1rem 0; overflow-y:auto; }
+.ni { display:flex; align-items:center; gap:.8rem; padding:.8rem 1.5rem; color:rgba(255,255,255,.5); font-size:.88rem; font-weight:500; cursor:pointer; transition:all .2s; border-left:3px solid transparent; position:relative; }
+.ni:hover { color:rgba(255,255,255,.85); background:rgba(255,255,255,.03); }
+.ni.on { color:var(--g); border-left-color:var(--g); background:rgba(201,168,76,.06); font-weight:600; }
+.sbf { padding:1rem 1.5rem 1.5rem; border-top:1px solid rgba(255,255,255,.06); }
+.out { display:flex; align-items:center; gap:.6rem; color:rgba(255,255,255,.35); font-size:.82rem; cursor:pointer; background:none; border:none; font-family:'DM Sans',sans-serif; transition:color .2s; }
+.out:hover { color:rgba(255,255,255,.7); }
+.mc { margin-left:270px; flex:1; padding:2.5rem 3rem; min-height:100vh; animation:fadeUp .35s ease; }
 
-/* MOBILE BOTTOM NAV */
-.mob-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--n); border-top:1px solid rgba(255,255,255,.1); z-index:200; padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom)); }
+/* ── MOBILE ── */
+.mob-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:linear-gradient(180deg, var(--n), var(--nd)); border-top:1px solid rgba(255,255,255,.08); z-index:200; padding:.45rem 0 calc(.45rem + env(safe-area-inset-bottom)); }
 .mob-nav-inner { display:flex; justify-content:space-around; align-items:center; }
-.mob-ni { display:flex; flex-direction:column; align-items:center; gap:.25rem; padding:.5rem .75rem; color:rgba(255,255,255,.45); font-size:.62rem; font-weight:500; cursor:pointer; border:none; background:none; font-family:'DM Sans',sans-serif; transition:color .15s; min-width:52px; }
+.mob-ni { display:flex; flex-direction:column; align-items:center; gap:.2rem; padding:.45rem .7rem; color:rgba(255,255,255,.4); font-size:.6rem; font-weight:500; cursor:pointer; border:none; background:none; font-family:'DM Sans',sans-serif; transition:all .2s; min-width:50px; }
 .mob-ni.on { color:var(--g); }
 .mob-ni svg { flex-shrink:0; }
-.mob-hdr { display:none; position:fixed; top:0; left:0; right:0; background:var(--n); z-index:150; padding:.9rem 1.25rem; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,.08); }
+.mob-hdr { display:none; position:fixed; top:0; left:0; right:0; background:linear-gradient(90deg, var(--nd), var(--n)); z-index:150; padding:.85rem 1.25rem; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(201,168,76,.1); }
 .mob-hdr h2 { font-family:'Playfair Display',serif; color:#fff; font-size:1rem; }
-.mob-hdr span { color:var(--g); font-size:.7rem; display:block; }
-.mob-out { background:none; border:none; color:rgba(255,255,255,.5); cursor:pointer; padding:.25rem; }
-
-/* MOBILE OVERLAY */
-.mob-overlay { display:none; }
+.mob-hdr span { color:var(--g); font-size:.68rem; display:block; letter-spacing:.03em; }
+.mob-out { background:none; border:none; color:rgba(255,255,255,.45); cursor:pointer; padding:.3rem; }
 
 @media (max-width: 768px) {
-  /* Hide desktop sidebar */
   .sb { display:none; }
-  /* Show mobile header and bottom nav */
   .mob-hdr { display:flex; }
   .mob-nav { display:block; }
-  /* Adjust main content */
-  .mc { margin-left:0; padding:1rem; padding-top:4.5rem; padding-bottom:5.5rem; }
-  /* Login — stack vertically */
+  .mc { margin-left:0; padding:1.1rem; padding-top:4.8rem; padding-bottom:5.5rem; }
   .lw { flex-direction:column; }
-  .ll { width:100%; min-height:auto; padding:2rem 1.5rem 1.5rem; }
-  .ll::before, .ll::after { display:none; }
-  .ltag { margin-top:1rem; }
+  .ll { width:100%; min-height:auto; padding:2.5rem 1.5rem 1.5rem; }
+  .ll::before, .ll::after, .ll .deco1, .ll .deco2 { display:none; }
+  .ltag { margin-top:.75rem; }
   .lr { padding:1.5rem 1.25rem; }
-  /* Stats grid — 2 cols on mobile */
-  .dg { grid-template-columns:1fr 1fr; gap:.75rem; }
+  .dg { grid-template-columns:1fr 1fr !important; gap:.75rem !important; }
   .dg > .sc:last-child { grid-column: span 2; }
-  /* Dashboard grid — stack */
-  .dg ~ div[style*='grid-template-columns'] { display:flex !important; flex-direction:column !important; }
-  /* Cards */
-  .card { padding:1.1rem; border-radius:12px; }
-  /* Page header */
-  .ph h1 { font-size:1.4rem; }
-  .ph p  { margin-bottom:1.25rem; }
-  /* Meetings type grid */
+  .card { padding:1.15rem; border-radius:var(--r); }
+  .ph h1 { font-size:1.5rem; }
+  .ph p  { margin-bottom:1rem; }
   .type-grid { grid-template-columns:1fr 1fr; }
-  /* Form 2 cols */
   .fg2 { grid-template-columns:1fr 1fr; }
-  /* Doc row */
   .dit { flex-wrap:wrap; gap:.5rem; }
-  /* Chat */
-  .cw { height:calc(100vh - 280px); }
-  /* Chave input */
-  .chave-input { font-size:1.1rem; letter-spacing:.15em; }
-  /* Timeline */
+  .cw { height:calc(100vh - 300px); }
+  .chave-input { font-size:1.15rem; letter-spacing:.15em; }
   .tl { padding-left:1.75rem; }
-  /* Lawyer card row */
-  .av[style*='width:48'] { width:40px !important; height:40px !important; font-size:.85rem !important; }
-  /* Scrollbar */
   ::-webkit-scrollbar { display:none; }
 }
 
-/* PAGE */
-.ph h1 { font-family:'Playfair Display',serif; font-size:1.75rem; color:var(--n); }
-.ph p  { color:var(--mu); font-size:.9rem; margin-top:.25rem; margin-bottom:2rem; }
-.card { background:#fff; border-radius:16px; padding:1.5rem; box-shadow:var(--sh); border:1px solid var(--bo); }
-.ct   { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--n); margin-bottom:1rem; }
+/* ── COMPONENTS ── */
+.ph h1 { font-family:'Playfair Display',serif; font-size:1.8rem; color:var(--n); letter-spacing:-.01em; }
+.ph p  { color:var(--mu); font-size:.88rem; margin-top:.3rem; margin-bottom:2rem; line-height:1.5; }
+.card { background:var(--wh); border-radius:var(--r2); padding:1.6rem; box-shadow:var(--sh); border:1px solid var(--bo); transition:box-shadow .25s; }
+.card:hover { box-shadow:var(--sh2); }
+.ct { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--n); margin-bottom:1rem; }
 
-/* STATS */
-.dg { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.5rem; }
-.sc { background:#fff; border-radius:14px; padding:1.25rem 1.5rem; border:1px solid var(--bo); box-shadow:var(--sh); }
-.sl { font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mu); margin-bottom:.4rem; }
+/* ── STATS ── */
+.dg { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.75rem; }
+.sc { background:var(--wh); border-radius:var(--r); padding:1.3rem 1.5rem; border:1px solid var(--bo); box-shadow:var(--sh); transition:all .25s; }
+.sc:hover { box-shadow:var(--sh2); transform:translateY(-2px); }
+.sl { font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mu); margin-bottom:.5rem; font-weight:600; }
 .sv { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--n); }
-.ss { font-size:.78rem; color:var(--mu); margin-top:.2rem; }
-.pb  { background:var(--cd); border-radius:99px; height:6px; margin-top:.5rem; }
-.pbf { height:6px; border-radius:99px; background:linear-gradient(90deg,var(--n),var(--g)); transition:width .5s; }
+.ss { font-size:.78rem; color:var(--mu); margin-top:.25rem; }
+.pb  { background:var(--cd); border-radius:99px; height:7px; margin-top:.5rem; overflow:hidden; }
+.pbf { height:7px; border-radius:99px; background:linear-gradient(90deg, var(--n), var(--g), var(--gl)); background-size:200% 100%; animation:shimmer 3s ease infinite; transition:width .8s cubic-bezier(.4,0,.2,1); }
 
-/* BADGES */
-.bd { display:inline-block; padding:.2rem .65rem; border-radius:99px; font-size:.72rem; font-weight:600; }
-.bg { background:#e8faf2; color:#1a8a4a; }
-.ba { background:var(--gd); color:#7a6020; }
-.bb { background:#e8f0ff; color:#2952c5; }
-.br { background:#fee2e2; color:#b91c1c; }
+/* ── BADGES ── */
+.bd { display:inline-flex; align-items:center; padding:.25rem .7rem; border-radius:99px; font-size:.72rem; font-weight:600; letter-spacing:.01em; }
+.bg { background:#e8faf2; color:#15803d; }
+.ba { background:var(--gd); color:#92400e; }
+.bb { background:#eff6ff; color:#2563eb; }
+.br { background:#fef2f2; color:#b91c1c; }
 
-/* TIMELINE */
+/* ── TIMELINE ── */
 .tl { position:relative; padding-left:2rem; }
-.tl::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px; background:var(--cd); }
+.tl::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px; background:linear-gradient(180deg, var(--g), var(--cd)); }
 .ti { position:relative; padding-bottom:1.75rem; }
 .ti:last-child { padding-bottom:0; }
-.td { position:absolute; left:-2rem; top:2px; width:22px; height:22px; border-radius:50%; border:2px solid var(--bo); background:#fff; display:flex; align-items:center; justify-content:center; }
+.td { position:absolute; left:-2rem; top:2px; width:22px; height:22px; border-radius:50%; border:2px solid var(--bo); background:#fff; display:flex; align-items:center; justify-content:center; transition:all .3s; }
 .td.dn { background:var(--n); border-color:var(--n); color:#fff; }
-.td.ac { background:var(--g); border-color:var(--g); box-shadow:0 0 0 4px var(--gd); }
+.td.ac { background:var(--g); border-color:var(--g); box-shadow:0 0 0 4px var(--gd); animation:breathe 3s infinite; }
 .tit { font-weight:600; font-size:.9rem; color:var(--n); }
 .tit.mu { color:var(--mu); font-weight:400; }
 .tdt { font-size:.78rem; color:var(--mu); margin-top:.15rem; }
-.tde { font-size:.82rem; color:var(--mu); margin-top:.3rem; background:var(--cr); padding:.5rem .75rem; border-radius:6px; }
+.tde { font-size:.82rem; color:var(--mu); margin-top:.3rem; background:var(--cr); padding:.5rem .75rem; border-radius:8px; }
 
-/* DOCS */
-.dl  { display:flex; flex-direction:column; gap:.75rem; }
-.dit { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; background:var(--cr); border-radius:10px; border:1px solid var(--bo); }
-.dic { width:38px; height:38px; background:var(--n); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--g); flex-shrink:0; }
+/* ── DOCUMENTS ── */
+.dl  { display:flex; flex-direction:column; gap:.65rem; }
+.dit { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; background:var(--cr); border-radius:12px; border:1px solid var(--bo); transition:all .2s; }
+.dit:hover { background:var(--cd); border-color:var(--g); transform:translateX(4px); }
+.dic { width:40px; height:40px; background:linear-gradient(135deg, var(--n), var(--nl)); border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--g); flex-shrink:0; }
 .dn2 { font-weight:600; font-size:.88rem; color:var(--n); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dm  { font-size:.75rem; color:var(--mu); margin-top:.1rem; }
-.ib  { width:32px; height:32px; border-radius:8px; border:1.5px solid var(--bo); background:#fff; display:flex; align-items:center; justify-content:center; color:var(--mu); cursor:pointer; transition:all .15s; }
-.ib:hover { border-color:var(--g); color:var(--g); }
-.uz  { border:2px dashed var(--bo); border-radius:12px; padding:2.5rem; text-align:center; cursor:pointer; transition:all .2s; color:var(--mu); }
+.dm  { font-size:.73rem; color:var(--mu); margin-top:.15rem; }
+.ib  { width:34px; height:34px; border-radius:10px; border:1.5px solid var(--bo); background:var(--wh); display:flex; align-items:center; justify-content:center; color:var(--mu); cursor:pointer; transition:all .2s; }
+.ib:hover { border-color:var(--g); color:var(--g); background:var(--gd); transform:scale(1.05); }
+.uz  { border:2px dashed var(--bo); border-radius:var(--r2); padding:3rem; text-align:center; cursor:pointer; transition:all .25s; color:var(--mu); position:relative; overflow:hidden; }
 .uz:hover { border-color:var(--g); background:var(--gd); color:var(--n); }
+.uz:hover .uz-icon { transform:translateY(-4px); }
+.uz-icon { transition:transform .25s; }
+.upload-progress { height:4px; background:var(--cd); border-radius:99px; margin-top:1rem; overflow:hidden; }
+.upload-progress-bar { height:4px; background:linear-gradient(90deg, var(--n), var(--g)); border-radius:99px; transition:width .3s; }
 
-/* NOTIFS */
-.nl2 { display:flex; flex-direction:column; gap:.75rem; }
-.ni2 { display:flex; gap:1rem; padding:1rem 1.25rem; border-radius:12px; border:1px solid var(--bo); background:#fff; }
-.ni2.u { background:#fffbf0; border-color:rgba(201,168,76,.3); }
-.ntx { font-size:.88rem; color:var(--n); font-weight:500; }
-.ntm { font-size:.75rem; color:var(--mu); margin-top:.2rem; }
-.ud  { width:8px; height:8px; background:var(--g); border-radius:50%; flex-shrink:0; margin-top:6px; }
+/* ── NOTIFICATIONS ── */
+.nl2 { display:flex; flex-direction:column; gap:.6rem; }
+.ni2 { display:flex; gap:1rem; padding:1.1rem 1.25rem; border-radius:var(--r); border:1px solid var(--bo); background:var(--wh); transition:all .2s; }
+.ni2:hover { box-shadow:var(--sh); }
+.ni2.u { background:linear-gradient(135deg, #fffdf5, #fffbeb); border-color:rgba(201,168,76,.25); }
+.ntx { font-size:.88rem; color:var(--n); font-weight:500; line-height:1.5; }
+.ntm { font-size:.73rem; color:var(--mu); margin-top:.25rem; }
+.ud  { width:8px; height:8px; background:var(--g); border-radius:50%; flex-shrink:0; margin-top:6px; animation:breathe 2s infinite; }
 
-/* MEETINGS */
-.mcard { border:1px solid var(--bo); border-radius:12px; padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:.75rem; background:var(--cr); }
-.mdb  { background:var(--n); color:#fff; border-radius:10px; width:52px; text-align:center; padding:.5rem 0; flex-shrink:0; }
-.mdb .day { font-family:'Playfair Display',serif; font-size:1.6rem; line-height:1; }
-.mdb .mon { font-size:.65rem; text-transform:uppercase; letter-spacing:.06em; opacity:.7; margin-top:2px; }
+/* ── MEETINGS ── */
+.mcard { border:1px solid var(--bo); border-radius:var(--r); padding:1.1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:.65rem; background:var(--wh); transition:all .2s; }
+.mcard:hover { box-shadow:var(--sh); border-color:var(--g); }
+.mdb  { background:linear-gradient(135deg, var(--n), var(--nl)); color:#fff; border-radius:12px; width:56px; text-align:center; padding:.6rem 0; flex-shrink:0; }
+.mdb .day { font-family:'Playfair Display',serif; font-size:1.7rem; line-height:1; }
+.mdb .mon { font-size:.62rem; text-transform:uppercase; letter-spacing:.08em; opacity:.6; margin-top:3px; }
 
-/* FORM */
+/* ── FORMS ── */
 .fg { margin-bottom:1.2rem; }
-.fg label { display:block; font-size:.8rem; font-weight:600; color:var(--n); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.5rem; }
-.fg input, .fg select, .fg textarea { width:100%; padding:.8rem 1rem; border:1.5px solid var(--bo); border-radius:10px; font-family:'DM Sans',sans-serif; font-size:.9rem; color:var(--tx); background:var(--cr); outline:none; transition:border-color .2s; }
-.fg input:focus, .fg select:focus, .fg textarea:focus { border-color:var(--g); background:#fff; }
+.fg label { display:block; font-size:.78rem; font-weight:600; color:var(--n); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.5rem; }
+.fg input, .fg select, .fg textarea { width:100%; padding:.85rem 1rem; border:1.5px solid var(--bo); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:.9rem; color:var(--tx); background:var(--wh); outline:none; transition:all .25s; }
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color:var(--g); box-shadow:0 0 0 3px var(--gd); background:var(--wh); }
 .fg textarea { resize:vertical; min-height:80px; }
 .fg2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.fg-hint { font-size:.72rem; color:var(--mu); margin-top:4px; }
 
-/* CHAT */
+/* ── CHAT ── */
 .cw  { display:flex; flex-direction:column; height:calc(100vh - 230px); min-height:380px; }
 .che { display:flex; align-items:center; gap:.75rem; padding-bottom:1rem; border-bottom:1px solid var(--bo); margin-bottom:1rem; }
 .chi h3 { font-weight:600; font-size:.92rem; color:var(--n); }
-.chi p  { font-size:.75rem; color:var(--ok); }
-.cms { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:.9rem; }
-.mr  { display:flex; gap:.6rem; align-items:flex-end; }
+.chi p  { font-size:.73rem; color:var(--ok); }
+.cms { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:.75rem; padding:.5rem 0; }
+.mr  { display:flex; gap:.5rem; align-items:flex-end; animation:fadeUp .2s ease; }
 .mr.mi { flex-direction:row-reverse; }
-.mb  { max-width:68%; padding:.75rem 1rem; border-radius:16px; font-size:.88rem; line-height:1.5; }
-.mb.th { background:var(--cr); color:var(--tx); border-bottom-left-radius:4px; }
-.mb.mi { background:var(--n); color:#fff; border-bottom-right-radius:4px; }
-.mtime { font-size:.7rem; color:var(--mu); margin-top:.2rem; }
-.cir { display:flex; gap:.75rem; padding-top:1rem; border-top:1px solid var(--bo); }
-.cin { flex:1; padding:.75rem 1rem; border:1.5px solid var(--bo); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:.9rem; outline:none; resize:none; color:var(--tx); }
-.cin:focus { border-color:var(--g); }
-.bsend { width:44px; height:44px; background:var(--n); border:none; border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--g); cursor:pointer; flex-shrink:0; }
-.bsend:hover { background:var(--nl); }
-.chat-reply-notice { background:rgba(201,168,76,.08); border:1px solid rgba(201,168,76,.25); border-radius:10px; padding:.65rem 1rem; text-align:center; font-size:.78rem; color:#92400e; margin-bottom:.75rem; }
+.mb  { max-width:72%; padding:.8rem 1.1rem; border-radius:var(--r2); font-size:.88rem; line-height:1.55; position:relative; }
+.mb.th { background:var(--cr); color:var(--tx); border-bottom-left-radius:4px; border:1px solid var(--bo); }
+.mb.mi { background:linear-gradient(135deg, var(--n), var(--nl)); color:#fff; border-bottom-right-radius:4px; }
+.mtime { font-size:.68rem; color:var(--mu); margin-top:.2rem; }
+.cir { display:flex; gap:.6rem; padding-top:1rem; border-top:1px solid var(--bo); }
+.cin { flex:1; padding:.8rem 1rem; border:1.5px solid var(--bo); border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:.9rem; outline:none; resize:none; color:var(--tx); transition:all .2s; }
+.cin:focus { border-color:var(--g); box-shadow:0 0 0 3px var(--gd); }
+.bsend { width:46px; height:46px; background:linear-gradient(135deg, var(--n), var(--nl)); border:none; border-radius:var(--r); display:flex; align-items:center; justify-content:center; color:var(--g); cursor:pointer; flex-shrink:0; transition:all .2s; }
+.bsend:hover { transform:scale(1.05); box-shadow:var(--sh2); }
+.chat-reply-notice { background:linear-gradient(135deg, rgba(201,168,76,.06), rgba(201,168,76,.03)); border:1px solid rgba(201,168,76,.18); border-radius:12px; padding:.7rem 1rem; text-align:center; font-size:.78rem; color:#92400e; margin-bottom:.5rem; }
 
-/* IRN TIMELINE — RESPONSIVE */
+/* ── IRN TRACKER ── */
 .irn-track { display:flex; align-items:flex-start; margin-bottom:1.5rem; overflow-x:auto; padding-bottom:.5rem; }
 .irn-step  { display:flex; flex-direction:column; align-items:center; flex:1; min-width:55px; position:relative; }
-.irn-line  { position:absolute; top:18px; right:50%; width:100%; height:2px; background:#e2ddd5; z-index:0; }
-.irn-line.lit { background:var(--g); }
+.irn-line  { position:absolute; top:18px; right:50%; width:100%; height:3px; background:var(--cd); z-index:0; border-radius:2px; }
+.irn-line.lit { background:linear-gradient(90deg, var(--g), var(--gl)); }
 .irn-circle-wrap { display:flex; flex-direction:column; align-items:center; z-index:1; position:relative; }
-.irn-circle { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700; transition:all .3s; background:#f5f0e8; color:#bbb; border:2px solid #e2ddd5; }
-.irn-circle.done   { background:var(--g); color:var(--n); border:none; }
-.irn-circle.active { background:var(--n); color:var(--g); border:2px solid var(--g); box-shadow:0 0 0 4px rgba(201,168,76,.2); }
+.irn-circle { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700; transition:all .4s cubic-bezier(.4,0,.2,1); background:var(--cr); color:#bbb; border:2px solid var(--cd); }
+.irn-circle.done   { background:linear-gradient(135deg, var(--g), var(--gl)); color:var(--n); border:none; box-shadow:0 2px 8px rgba(201,168,76,.3); }
+.irn-circle.active { background:var(--n); color:var(--g); border:2px solid var(--g); box-shadow:0 0 0 5px rgba(201,168,76,.15); animation:breathe 3s infinite; }
 .irn-label { font-size:.68rem; margin-top:6px; text-align:center; color:var(--mu); line-height:1.3; }
-.irn-label.done   { color:var(--g); }
+.irn-label.done   { color:var(--g); font-weight:600; }
 .irn-label.active { color:var(--n); font-weight:700; }
 .irn-dot { display:block; font-size:.6rem; color:var(--g); font-weight:700; margin-top:2px; }
 
 @media (max-width:600px) {
   .irn-track { flex-direction:column; overflow-x:visible; padding-bottom:0; gap:0; }
   .irn-step  { flex-direction:row; flex:unset; width:100%; min-width:unset; align-items:flex-start; padding:.5rem 0; }
-  .irn-line  { position:absolute; top:0; right:unset; left:17px; width:2px; height:100%; }
+  .irn-line  { position:absolute; top:0; right:unset; left:17px; width:3px; height:100%; }
   .irn-circle-wrap { flex-direction:row; gap:.75rem; align-items:center; }
   .irn-label { text-align:left; margin-top:0; font-size:.82rem; }
   .irn-dot   { display:inline; margin-left:.4rem; }
 }
 
-/* TYPE SELECTOR */
+/* ── MEETING TYPES ── */
 .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-top:.25rem; }
-.type-opt  { border:2px solid var(--bo); border-radius:10px; padding:.75rem 1rem; cursor:pointer; transition:all .15s; background:#fff; }
-.type-opt.sel { border-color:var(--g); background:var(--gd); }
+.type-opt  { border:2px solid var(--bo); border-radius:12px; padding:.85rem 1rem; cursor:pointer; transition:all .2s; background:var(--wh); }
+.type-opt:hover { border-color:var(--g); background:rgba(201,168,76,.03); }
+.type-opt.sel { border-color:var(--g); background:var(--gd); box-shadow:0 0 0 3px rgba(201,168,76,.1); }
 .type-opt h4 { font-weight:600; font-size:.88rem; color:var(--n); }
-.type-opt p  { font-size:.75rem; color:var(--mu); margin-top:2px; }
+.type-opt p  { font-size:.73rem; color:var(--mu); margin-top:3px; }
 
-/* UTILS */
-.ld { display:flex; align-items:center; justify-content:center; min-height:200px; flex-direction:column; gap:1rem; color:var(--mu); font-size:.9rem; }
-.toast { position:fixed; bottom:2rem; right:2rem; background:var(--n); color:#fff; padding:.9rem 1.4rem; border-radius:12px; font-size:.88rem; z-index:9999; box-shadow:0 12px 48px rgba(15,30,53,.16); border-left:3px solid var(--g); animation:rin .3s ease; }
-::-webkit-scrollbar { width:4px; } ::-webkit-scrollbar-thumb { background:var(--bo); border-radius:99px; }
+/* ── MISC ── */
+.ld { display:flex; align-items:center; justify-content:center; min-height:200px; flex-direction:column; gap:1rem; color:var(--mu); font-size:.88rem; }
+.toast { position:fixed; bottom:2rem; right:2rem; background:linear-gradient(135deg, var(--n), var(--nl)); color:#fff; padding:1rem 1.5rem; border-radius:var(--r); font-size:.88rem; z-index:9999; box-shadow:var(--sh3); border-left:3px solid var(--g); animation:slideIn .35s ease; backdrop-filter:blur(8px); }
+::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:var(--bo); border-radius:99px; } ::-webkit-scrollbar-thumb:hover { background:var(--mu); }
+.empty-state { text-align:center; padding:3rem 2rem; color:var(--mu); }
+.empty-state .emoji { font-size:2.5rem; margin-bottom:1rem; display:block; }
+.empty-state .title { font-family:'Playfair Display',serif; font-size:1.15rem; color:var(--n); margin-bottom:.5rem; }
+.empty-state .desc { font-size:.85rem; line-height:1.6; max-width:320px; margin:0 auto; }
 `;
 
-// ── Small components ──────────────────────────────────────────────────────────
+/* ── TOAST ── */
 function Toast({ msg, onClose }) {
   useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, []);
-  return <div className="toast">✓ {msg}</div>;
+  return <div className="toast">{msg}</div>;
 }
+
 function Loader({ text = "Carregando…" }) {
   return <div className="ld"><Icon name="spin" size={28} /><span>{text}</span></div>;
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
+/* ── LOGIN ────────────────────────────────────────────────────────────── */
 function Login({ onLogin }) {
   const [chave, setChave] = useState("");
   const [err,   setErr]   = useState("");
@@ -333,8 +325,10 @@ function Login({ onLogin }) {
   return (
     <div className="lw">
       <div className="ll">
+        <div className="deco1" />
+        <div className="deco2" />
         <div className="logo">
-          <div className="logo-ic"><Icon name="scale" size={28} /></div>
+          <div className="logo-ic"><Icon name="scale" size={30} /></div>
           <h1>Bono & Lacerda<br />Advogados</h1>
           <p>Portal do Cliente</p>
         </div>
@@ -343,7 +337,7 @@ function Login({ onLogin }) {
       <div className="lr">
         <div className="lc">
           <h2>Bem-vindo</h2>
-          <p>Insira a sua chave de acesso para acompanhar o processo.</p>
+          <p>Insira a sua chave de acesso para acompanhar o seu processo em tempo real.</p>
           <input
             className="chave-input"
             placeholder="XXXX-XXXX-XXXX"
@@ -352,7 +346,7 @@ function Login({ onLogin }) {
             onChange={e => setChave(fmt(e.target.value))}
             onKeyDown={e => e.key === "Enter" && go()}
           />
-          <p className="chave-hint">A sua chave foi enviada pelo escritório Bono & Lacerda</p>
+          <p className="chave-hint">A chave foi enviada pelo escritório Bono & Lacerda</p>
           <button className="btnp" onClick={go} disabled={busy}>
             {busy ? <><Icon name="spin" size={16} /> A verificar…</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
           </button>
@@ -363,8 +357,7 @@ function Login({ onLogin }) {
   );
 }
 
-// ── IRN TIMELINE ──────────────────────────────────────────────────────────────
-// As 7 etapas reais do site IRN (nacionalidadeonline.justica.gov.pt)
+/* ── IRN STEPS ────────────────────────────────────────────────────────── */
 const IRN_STEPS = [
   { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN.",
     optimista: "O seu pedido chegou ao IRN e está devidamente registado no sistema. Este é o primeiro passo de uma jornada que termina com a sua nacionalidade portuguesa. Tudo começa aqui — e o seu processo já está dentro do sistema!",
@@ -385,34 +378,25 @@ const IRN_STEPS = [
     optimista: "A linha de chegada está à vista! O Conservador está a elaborar o despacho final do seu processo. Em breve receberá a confirmação oficial da sua nacionalidade portuguesa. Estamos quase lá!",
     detalhes:  "O despacho é a decisão formal e definitiva do Conservador dos Registos Centrais ou do Arquivo Central do Porto. Nesta fase, o documento oficial de concessão (ou o despacho fundamentado em caso de necessidade de documentação adicional) está a ser redigido. O escritório Bono & Lacerda será notificado assim que o despacho for emitido." },
   { num:7, label:"Terminado",   icon:"🎉", desc:"Processo concluído.",
-    optimista: "Parabéns! 🎉 O seu processo de nacionalidade portuguesa está concluído! Bem-vindo à família portuguesa! Este momento representa o culminar de toda a sua jornada.",
+    optimista: "Parabéns! O seu processo de nacionalidade portuguesa está concluído! Bem-vindo à família portuguesa! Este momento representa o culminar de toda a sua jornada.",
     detalhes:  "O processo chegou ao fim com sucesso! Pode agora solicitar a certidão de nascimento portuguesa e, posteriormente, o passaporte português. O escritório Bono & Lacerda irá orientá-lo nos próximos passos para usufruir plenamente dos seus direitos como cidadão português e europeu." },
 ];
 
+/* ── IRN TIMELINE ─────────────────────────────────────────────────────── */
 function IRNTimeline({ proc, submissao }) {
-  // Map process status/fonte to IRN step
   const getStep = () => {
     if (!proc) return 0;
     const status = (proc.status || '').toLowerCase();
-    const sub    = (proc.submissao_irn || submissao || '');
-    const arquivo = (proc.arquivo || '');
-
+    const sub = (proc.submissao_irn || submissao || '');
     if (status === 'concluido') return 7;
-    if (status === 'aguardando') return 1; // Correção pendente = ainda no início
-    // Has submissão IRN = at least step 2 (Registado)
-    if (sub) {
-      // Check numeroProcessoIRN hints for further steps
-      // Default: submitted = step 2 Registado, em análise = step 5
-      const fonte = (proc.type || '').toLowerCase();
-      if (status === 'em_andamento' && sub) return 2;
-    }
+    if (status === 'aguardando') return 1;
+    if (sub && status === 'em_andamento') return 2;
     return 1;
   };
 
   const currentStep = proc?.current_step || getStep();
   const submissaoText = proc?.submissao_irn || submissao || '';
 
-  // Parse submissao date: "IRN-17066/2023 de 2023/12/29"
   let submissaoDate = '';
   if (submissaoText) {
     const match = submissaoText.match(/de (\d{4}\/\d{2}\/\d{2})/);
@@ -421,22 +405,19 @@ function IRNTimeline({ proc, submissao }) {
 
   return (
     <div>
-      {/* Submission info */}
       {submissaoText && (
-        <div style={{ background:"rgba(201,168,76,.08)", border:"1px solid rgba(201,168,76,.25)", borderRadius:10, padding:".65rem 1rem", marginBottom:"1.25rem", fontSize:".8rem", color:"var(--n)" }}>
-          <span style={{ color:"var(--mu)", marginRight:6 }}>📌 Submissão:</span>
+        <div style={{ background:"linear-gradient(135deg, rgba(201,168,76,.06), rgba(201,168,76,.03))", border:"1px solid rgba(201,168,76,.2)", borderRadius:12, padding:".7rem 1.1rem", marginBottom:"1.25rem", fontSize:".8rem", color:"var(--n)" }}>
+          <span style={{ color:"var(--mu)", marginRight:6 }}>Submissão:</span>
           <strong>{submissaoText}</strong>
         </div>
       )}
 
-      {/* Step track — horizontal desktop, vertical mobile */}
       <div className="irn-track">
         {IRN_STEPS.map((s, i) => {
           const done   = s.num < currentStep;
           const active = s.num === currentStep;
           return (
             <div key={s.num} className="irn-step">
-              {/* Connector — desktop horizontal, mobile vertical */}
               {i > 0 && <div className={`irn-line${done || active ? " lit" : ""}`} />}
               <div className="irn-circle-wrap">
                 <div className={`irn-circle${done ? " done" : active ? " active" : ""}`}>
@@ -452,57 +433,51 @@ function IRNTimeline({ proc, submissao }) {
         })}
       </div>
 
-      {/* Active step detail card */}
       {IRN_STEPS.filter(s => s.num === currentStep).map(s => (
         <div key={s.num}>
-          {/* Main status card */}
           <div style={{
-            background:"linear-gradient(135deg, rgba(15,30,53,.04), rgba(201,168,76,.06))",
-            border:"1px solid rgba(201,168,76,.2)", borderRadius:12, padding:"1rem 1.25rem",
-            display:"flex", gap:".75rem", alignItems:"flex-start", marginBottom:"1rem"
+            background:"linear-gradient(135deg, rgba(15,30,53,.03), rgba(201,168,76,.05))",
+            border:"1px solid rgba(201,168,76,.18)", borderRadius:14, padding:"1.1rem 1.3rem",
+            display:"flex", gap:".85rem", alignItems:"flex-start", marginBottom:"1rem"
           }}>
-            <div style={{ fontSize:"1.5rem", lineHeight:1 }}>{s.icon}</div>
+            <div style={{ fontSize:"1.6rem", lineHeight:1 }}>{s.icon}</div>
             <div>
-              <div style={{ fontWeight:700, fontSize:".9rem", color:"var(--n)", marginBottom:3 }}>
+              <div style={{ fontWeight:700, fontSize:".9rem", color:"var(--n)", marginBottom:4 }}>
                 Etapa {s.num} de 7 — {s.label}
               </div>
-              <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.5 }}>{s.desc}</div>
+              <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.55 }}>{s.desc}</div>
               {proc?.arquivo && (
-                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
-                  🏛️ {proc.arquivo}
+                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:5 }}>
+                  {proc.arquivo}
                 </div>
               )}
               {submissaoDate && (
                 <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>
-                  📅 Submetido a {new Date(submissaoDate).toLocaleDateString("pt-BR")}
+                  Submetido a {new Date(submissaoDate).toLocaleDateString("pt-BR")}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Optimistic message */}
           <div style={{
-            background:"linear-gradient(135deg, rgba(22,163,74,.06), rgba(201,168,76,.08))",
-            border:"1px solid rgba(22,163,74,.2)", borderRadius:12, padding:"1rem 1.25rem",
+            background:"linear-gradient(135deg, rgba(22,163,74,.04), rgba(201,168,76,.06))",
+            border:"1px solid rgba(22,163,74,.15)", borderRadius:14, padding:"1.1rem 1.3rem",
             marginBottom:".75rem"
           }}>
             <div style={{ display:"flex", gap:".6rem", alignItems:"flex-start", marginBottom:".6rem" }}>
-              <span style={{ fontSize:"1.1rem" }}>✨</span>
               <div style={{ fontWeight:700, fontSize:".85rem", color:"#14532d" }}>O que isto significa para si</div>
             </div>
-            <div style={{ fontSize:".82rem", color:"#166534", lineHeight:1.7 }}>{s.optimista}</div>
+            <div style={{ fontSize:".82rem", color:"#166534", lineHeight:1.75 }}>{s.optimista}</div>
           </div>
 
-          {/* Detailed explanation */}
           <div style={{
-            background:"rgba(248,246,241,.8)", border:"1px solid var(--bo)",
-            borderRadius:12, padding:"1rem 1.25rem"
+            background:"rgba(248,246,241,.7)", border:"1px solid var(--bo)",
+            borderRadius:14, padding:"1.1rem 1.3rem"
           }}>
             <div style={{ display:"flex", gap:".6rem", alignItems:"flex-start", marginBottom:".6rem" }}>
-              <span style={{ fontSize:"1rem" }}>ℹ️</span>
               <div style={{ fontWeight:700, fontSize:".82rem", color:"var(--n)" }}>O que acontece nesta fase</div>
             </div>
-            <div style={{ fontSize:".8rem", color:"var(--mu)", lineHeight:1.75 }}>{s.detalhes}</div>
+            <div style={{ fontSize:".8rem", color:"var(--mu)", lineHeight:1.8 }}>{s.detalhes}</div>
           </div>
         </div>
       ))}
@@ -510,63 +485,62 @@ function IRNTimeline({ proc, submissao }) {
   );
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+/* ── DASHBOARD ────────────────────────────────────────────────────────── */
 function Dashboard({ client, proc, steps }) {
   const done = steps.filter(s => s.done).length;
-
-  // Progress based on current_step — etapa activa conta como parcialmente completa
-  // Etapa 1/7 = 7%, Etapa 2/7 = 21%, ..., Etapa 7/7 = 100%
   const totalSteps  = 7;
   const currentStep = proc?.current_step || 1;
-  // Each completed step = 1 full step. Active step = 0.5 (half credit, visually motivating)
   const completedFull = Math.max(0, currentStep - 1);
   const pct = Math.round(((completedFull + 0.5) / totalSteps) * 100);
-  // Labels for step name
   const stepNames = {1:'Recebido',2:'Registado',3:'Consultas',4:'Documentos',5:'Análise',6:'Despacho',7:'Terminado'};
   const stepName  = stepNames[currentStep] || '';
-
   const first = client.name.split(" ")[0];
 
   if (!proc) return (
     <div>
-      <div className="ph"><h1>Olá, {first}! 👋</h1><p>O seu processo está a ser preparado.</p></div>
-      <div className="card" style={{ textAlign:"center", padding:"3rem 2rem" }}>
-        <div style={{ fontSize:"3rem", marginBottom:"1rem" }}>⏳</div>
+      <div className="ph"><h1>Olá, {first}!</h1><p>O seu processo está a ser preparado pelo escritório.</p></div>
+      <div className="card" style={{ textAlign:"center", padding:"3.5rem 2rem" }}>
+        <div style={{ width:80, height:80, borderRadius:"50%", background:"var(--gd)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"2.5rem", margin:"0 auto 1.25rem" }}>⏳</div>
         <div style={{ fontFamily:"Playfair Display,serif", fontSize:"1.3rem", color:"var(--n)", marginBottom:".75rem" }}>Processo em preparação</div>
-        <p style={{ color:"var(--mu)", fontSize:".9rem", lineHeight:1.7, maxWidth:400, margin:"0 auto" }}>
+        <p style={{ color:"var(--mu)", fontSize:".88rem", lineHeight:1.7, maxWidth:420, margin:"0 auto" }}>
           O escritório Bono & Lacerda está a preparar o seu processo.<br />Em breve terá acesso a todas as informações aqui.
         </p>
-        <div style={{ marginTop:"2rem", fontSize:".82rem", color:"var(--mu)" }}>📞 +351 21 793 1934 · ✉️ bonoelacerda@gmail.com</div>
+        <div style={{ marginTop:"2rem", padding:".75rem 1.25rem", background:"var(--cr)", borderRadius:12, display:"inline-block", fontSize:".82rem", color:"var(--mu)" }}>
+          +351 21 793 1934 · bonoelacerda@gmail.com
+        </div>
       </div>
     </div>
   );
 
   return (
     <div>
-      <div className="ph"><h1>Olá, {first}! 👋</h1><p>Acompanhe o andamento do seu processo.</p></div>
-      <div className="dg" style={{ gridTemplateColumns:"1fr 1fr 1fr 1fr" }}>
-        <div className="sc">
-          <div className="sl">Chave de Acesso</div>
-          <div className="sv" style={{ fontSize:".95rem", marginTop:4, letterSpacing:".08em" }}>{client.chave_acesso}</div>
-          <div className="ss">{client.artigo || proc.type}</div>
-        </div>
-        <div className="sc">
-          <div className="sl">Progresso</div>
-          <div style={{ display:"flex", alignItems:"baseline", gap:".4rem", marginTop:4 }}>
-            <div className="sv">{pct}%</div>
-            <div style={{ fontSize:".72rem", color:"var(--mu)", fontWeight:400 }}>concluído</div>
+      <div className="ph"><h1>Olá, {first}!</h1><p>Acompanhe o andamento do seu processo em tempo real.</p></div>
+
+      {/* Hero progress card */}
+      <div style={{ background:"linear-gradient(135deg, var(--n) 0%, var(--nl) 100%)", borderRadius:"var(--r3)", padding:"2rem 2.5rem", marginBottom:"1.75rem", color:"#fff", position:"relative", overflow:"hidden" }}>
+        <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", border:"1px solid rgba(201,168,76,.1)" }} />
+        <div style={{ position:"absolute", bottom:-30, left:"60%", width:120, height:120, borderRadius:"50%", border:"1px solid rgba(201,168,76,.06)" }} />
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", position:"relative", zIndex:1 }}>
+          <div>
+            <div style={{ fontSize:".72rem", textTransform:"uppercase", letterSpacing:".12em", color:"rgba(201,168,76,.7)", marginBottom:".5rem", fontWeight:600 }}>Progresso do Processo</div>
+            <div style={{ fontSize:"3rem", fontFamily:"'Playfair Display',serif", fontWeight:700, lineHeight:1 }}>{pct}%</div>
+            <div style={{ fontSize:".85rem", color:"rgba(255,255,255,.6)", marginTop:".4rem" }}>Etapa {currentStep} de {totalSteps} — {stepName}</div>
           </div>
-          <div className="pb" style={{ marginTop:6 }}>
-            <div className="pbf" style={{ width:`${pct}%`, transition:"width .6s ease" }} />
-          </div>
-          <div className="ss" style={{ marginTop:6 }}>
-            Etapa {currentStep} de {totalSteps} — {stepName}
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontSize:".72rem", textTransform:"uppercase", letterSpacing:".1em", color:"rgba(201,168,76,.7)", marginBottom:".4rem", fontWeight:600 }}>{client.artigo || proc.type}</div>
+            <div style={{ fontSize:".82rem", color:"rgba(255,255,255,.5)" }}>Chave: {client.chave_acesso}</div>
           </div>
         </div>
+        <div style={{ marginTop:"1.25rem", background:"rgba(255,255,255,.12)", borderRadius:99, height:10, overflow:"hidden", position:"relative", zIndex:1 }}>
+          <div style={{ height:10, borderRadius:99, background:"linear-gradient(90deg, var(--g), var(--gl))", width:`${pct}%`, transition:"width 1s cubic-bezier(.4,0,.2,1)", boxShadow:"0 0 12px rgba(201,168,76,.4)" }} />
+        </div>
+      </div>
+
+      <div className="dg" style={{ gridTemplateColumns:"1fr 1fr 1fr" }}>
         <div className="sc">
           <div className="sl">Data de Protocolo</div>
-          <div className="sv" style={{ fontSize:"1rem", marginTop:4 }}>{proc.opened_at ? fmtd(proc.opened_at) : "—"}</div>
-          <div style={{ marginTop:6 }}>
+          <div className="sv" style={{ fontSize:"1.1rem", marginTop:4 }}>{proc.opened_at ? fmtd(proc.opened_at) : "—"}</div>
+          <div style={{ marginTop:8 }}>
             <span className={`bd ${proc.status==="concluido"?"bg":proc.status==="aguardando"?"ba":"bb"}`}>
               {proc.status==="concluido"?"Concluído":proc.status==="aguardando"?"Aguardando":"Em andamento"}
             </span>
@@ -574,22 +548,24 @@ function Dashboard({ client, proc, steps }) {
         </div>
         <div className="sc">
           <div className="sl">Local de Processamento</div>
-          <div className="sv" style={{ fontSize:".78rem", lineHeight:1.4, marginTop:4 }}>
-            {proc.arquivo || client.observacao?.includes("IRN") ? 
-              (proc.arquivo || "IRN — Em análise") : "—"}
+          <div style={{ fontWeight:600, fontSize:".88rem", color:"var(--n)", marginTop:6, lineHeight:1.4 }}>
+            {proc.arquivo || (client.observacao?.includes("IRN") ? "IRN — Em análise" : "—")}
           </div>
-          <div className="ss" style={{ marginTop:4 }}>{fmtd(proc.last_update)}</div>
+          <div className="ss" style={{ marginTop:6 }}>{fmtd(proc.last_update)}</div>
+        </div>
+        <div className="sc">
+          <div className="sl">Artigo</div>
+          <div style={{ fontWeight:700, fontSize:"1rem", color:"var(--n)", marginTop:6 }}>{client.artigo || proc.type || "—"}</div>
+          <div className="ss" style={{ marginTop:4 }}>Nacionalidade Portuguesa</div>
         </div>
       </div>
 
-      {/* ── PREVISÃO DE JULGAMENTO ─────────────────────────────────────── */}
+      {/* Prazo estimado */}
       {(() => {
         const artigo = (client.artigo || proc.type || '').toLowerCase();
         const arquivo = (proc.arquivo || '').toLowerCase();
         const protocolo = proc.opened_at || '';
 
-        // Tabela de prazos IRN (actualizada Janeiro/Fevereiro 2026)
-        // Formato: { artigo_key, arquivo_key, julgando_desde, fonte }
         const PRAZOS = [
           { match: a => a.includes('6') && (a.includes('n.º 7') || a.includes('no 7') || a.includes('n7')),
             porto:  { julgando: '2ª quinzena de maio de 2022',     fonte: 'ACP — Jan/2026' },
@@ -610,52 +586,45 @@ function Dashboard({ client, proc, steps }) {
 
         const isPorto  = arquivo.includes('porto');
         const isLisboa = arquivo.includes('central') || arquivo.includes('conservatória') || arquivo.includes('conservatoria') || arquivo.includes('lisboa');
-
         const prazo = PRAZOS.find(p => p.match(artigo));
         if (!prazo) return null;
-
         const info = isPorto ? prazo.porto : isLisboa ? prazo.lisboa : null;
         if (!info || info.julgando === '—') return null;
 
-        // Calculate approximate wait: compare protocolo with julgando date
         const isLate = protocolo && new Date(protocolo) < new Date('2022-06-01');
         const isRecent = protocolo && new Date(protocolo) > new Date('2024-06-01');
 
         return (
-          <div style={{ background:"linear-gradient(135deg, rgba(29,53,87,.04) 0%, rgba(201,168,76,.06) 100%)", border:"1px solid rgba(201,168,76,.3)", borderRadius:14, padding:"1.1rem 1.4rem", marginBottom:"1.25rem" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:".9rem" }}>
-              <span style={{ fontSize:"1.2rem" }}>⏱️</span>
-              <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"1.05rem", fontWeight:600, color:"var(--n)" }}>
+          <div style={{ background:"linear-gradient(135deg, rgba(29,53,87,.03) 0%, rgba(201,168,76,.05) 100%)", border:"1px solid rgba(201,168,76,.2)", borderRadius:"var(--r2)", padding:"1.3rem 1.5rem", marginBottom:"1.5rem" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:"1rem" }}>
+              <span style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.05rem", fontWeight:600, color:"var(--n)" }}>
                 Previsão de Análise pelo IRN
               </span>
-              <span style={{ marginLeft:"auto", fontSize:".7rem", color:"var(--mu)", background:"var(--bo)", padding:"2px 8px", borderRadius:99 }}>{info.fonte}</span>
+              <span style={{ marginLeft:"auto", fontSize:".68rem", color:"var(--mu)", background:"var(--wh)", padding:"3px 10px", borderRadius:99, border:"1px solid var(--bo)" }}>{info.fonte}</span>
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem" }}>
-              <div style={{ background:"rgba(255,255,255,.6)", borderRadius:10, padding:".75rem 1rem", border:"1px solid var(--bo)" }}>
-                <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--mu)", marginBottom:4 }}>📅 O seu processo entrou em</div>
-                <div style={{ fontWeight:700, fontSize:".95rem", color:"var(--n)" }}>
-                  {protocolo ? fmtd(protocolo) : "—"}
-                </div>
+              <div style={{ background:"var(--wh)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid var(--bo)" }}>
+                <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--mu)", marginBottom:5, fontWeight:600 }}>O seu processo entrou em</div>
+                <div style={{ fontWeight:700, fontSize:".95rem", color:"var(--n)" }}>{protocolo ? fmtd(protocolo) : "—"}</div>
                 <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || proc.type}</div>
               </div>
-              <div style={{ background:"rgba(201,168,76,.08)", borderRadius:10, padding:".75rem 1rem", border:"1px solid rgba(201,168,76,.3)" }}>
-                <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"#92400e", marginBottom:4 }}>⚖️ IRN a analisar processos de</div>
-                <div style={{ fontWeight:700, fontSize:".95rem", color:"#92400e" }}>
-                  {info.julgando}
-                </div>
+              <div style={{ background:"rgba(201,168,76,.06)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid rgba(201,168,76,.2)" }}>
+                <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"#92400e", marginBottom:5, fontWeight:600 }}>IRN a analisar processos de</div>
+                <div style={{ fontWeight:700, fontSize:".95rem", color:"#92400e" }}>{info.julgando}</div>
                 <div style={{ fontSize:".75rem", color:"#b45309", marginTop:3 }}>
                   {isPorto ? "Arquivo Central do Porto" : "Conservatória dos Registos Centrais"}
                 </div>
               </div>
             </div>
-            <div style={{ marginTop:".85rem", fontSize:".78rem", color:"var(--mu)", lineHeight:1.6, padding:".65rem .9rem", background:"rgba(255,255,255,.5)", borderRadius:8, border:"1px solid var(--bo)" }}>
-              💡 <strong style={{color:"var(--n)"}}>O que isto significa:</strong> O IRN analisa os processos pela ordem de entrada. Actualmente estão a analisar processos que entraram na <strong style={{color:"var(--n)"}}>{info.julgando}</strong>. Quanto mais próxima for a sua data de protocolo desta data, mais perto está da análise do seu processo.
+            <div style={{ marginTop:"1rem", fontSize:".78rem", color:"var(--mu)", lineHeight:1.65, padding:".7rem 1rem", background:"var(--wh)", borderRadius:10, border:"1px solid var(--bo)" }}>
+              <strong style={{color:"var(--n)"}}>O que isto significa:</strong> O IRN analisa os processos pela ordem de entrada. Actualmente estão a analisar processos que entraram na <strong style={{color:"var(--n)"}}>{info.julgando}</strong>.
               {isLate && <span style={{color:"var(--ok)",fontWeight:600}}> O seu processo está na fila para análise em breve!</span>}
               {isRecent && <span style={{color:"#92400e"}}> O seu processo é mais recente e aguarda que os anteriores sejam analisados primeiro.</span>}
             </div>
           </div>
         );
       })()}
+
       <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
         <div className="card">
           <div className="ct">Etapas do Processo IRN</div>
@@ -663,45 +632,37 @@ function Dashboard({ client, proc, steps }) {
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:"1.25rem" }}>
           <div className="card">
-            <div className="ct">Advogado</div>
+            <div className="ct">Advogados</div>
             <div style={{ display:"flex", alignItems:"center", gap:".85rem", marginBottom:"1rem" }}>
-              <div className="av" style={{ width:48, height:48, fontSize:"1rem", background:"#1d3557", color:"#c9a84c" }}>RL</div>
+              <div className="av" style={{ width:48, height:48, fontSize:".95rem" }}>RL</div>
               <div>
                 <div style={{ fontWeight:600, fontSize:".92rem" }}>Dr. Ramom Lacerda</div>
-                <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
-                <div style={{ fontSize:".75rem", color:"var(--mu)" }}>🇵🇹 Lisboa — Cédula Prof. 65899L</div>
-                <div style={{ fontSize:".75rem", color:"var(--mu)" }}>🇪🇸 Madrid — Cédula Prof. 142952</div>
-                <div style={{ fontSize:".75rem", color:"var(--ok)", marginTop:3 }}>● Online agora</div>
+                <div style={{ fontSize:".73rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
+                <div style={{ fontSize:".73rem", color:"var(--mu)" }}>Lisboa — Cédula 65899L · Madrid — 142952</div>
+                <div style={{ fontSize:".73rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
-            <div style={{ display:"flex", alignItems:"center", gap:".85rem", paddingTop:".75rem", borderTop:"1px solid var(--bo)" }}>
-              <div className="av" style={{ width:48, height:48, fontSize:"1rem", background:"#1d3557", color:"#c9a84c" }}>LF</div>
+            <div style={{ display:"flex", alignItems:"center", gap:".85rem", paddingTop:".85rem", borderTop:"1px solid var(--bo)" }}>
+              <div className="av" style={{ width:48, height:48, fontSize:".95rem" }}>LF</div>
               <div>
                 <div style={{ fontWeight:600, fontSize:".92rem" }}>Dr. Luis Felipe Bono</div>
-                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>OAB/SP 441.255 · OAB/PB 33587A</div>
-                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:1 }}>🇵🇹 Lisboa 67321L · 🇪🇸 Madrid 142951</div>
-                <div style={{ fontSize:".75rem", color:"var(--ok)", marginTop:3 }}>● Online agora</div>
+                <div style={{ fontSize:".73rem", color:"var(--mu)", marginTop:2 }}>OAB/SP 441.255 · OAB/PB 33587A</div>
+                <div style={{ fontSize:".73rem", color:"var(--mu)", marginTop:1 }}>Lisboa 67321L · Madrid 142951</div>
+                <div style={{ fontSize:".73rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
             {proc?.opened_at && (
-              <div style={{ marginTop:".85rem", paddingTop:".75rem", borderTop:"1px solid var(--bo)", fontSize:".78rem", color:"var(--mu)" }}>
-                📋 Data de protocolo: <strong style={{color:"var(--n)"}}>{fmtd(proc.opened_at)}</strong>
+              <div style={{ marginTop:".9rem", paddingTop:".8rem", borderTop:"1px solid var(--bo)", fontSize:".78rem", color:"var(--mu)" }}>
+                Data de protocolo: <strong style={{color:"var(--n)"}}>{fmtd(proc.opened_at)}</strong>
               </div>
             )}
           </div>
-          {client.artigo && (
-            <div className="card">
-              <div className="ct">Artigo</div>
-              <div style={{ fontSize:"1.1rem", fontWeight:700, color:"var(--n)" }}>{client.artigo}</div>
-              <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>Nacionalidade Portuguesa</div>
-            </div>
-          )}
           <div className="card">
             <div className="ct">Escritório</div>
-            <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.9 }}>
-              📍 Av João XXI, 72B, LJ E38<br />1000-219 Lisboa, Portugal<br />
-              📞 +351 21 793 1934<br />
-              ✉️ bonoelacerda@gmail.com
+            <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:2 }}>
+              Av João XXI, 72B, LJ E38<br />1000-219 Lisboa, Portugal<br />
+              +351 21 793 1934<br />
+              bonoelacerda@gmail.com
             </div>
           </div>
         </div>
@@ -710,10 +671,12 @@ function Dashboard({ client, proc, steps }) {
   );
 }
 
-// ── DOCUMENTOS ────────────────────────────────────────────────────────────────
+/* ── DOCUMENTS ────────────────────────────────────────────────────────── */
 function Docs({ proc, toast }) {
   const [docs, setDocs] = useState([]);
   const [ld,   setLd]   = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const ref = useRef();
 
   useEffect(() => {
@@ -723,15 +686,18 @@ function Docs({ proc, toast }) {
 
   const upload = async f => {
     if (!f) return;
-    // Upload file to Supabase Storage
+    if (f.size > 20 * 1024 * 1024) { toast("Ficheiro demasiado grande. Máximo 20 MB."); return; }
+    setUploading(true);
     const path = `${proc.id}/${Date.now()}_${f.name}`;
     const ok = await db.upload(path, f);
-    if (!ok) { toast("Erro ao enviar ficheiro. Tente novamente."); return; }
-    // Save metadata in documents table
+    if (!ok) { toast("Erro ao enviar ficheiro. Tente novamente."); setUploading(false); return; }
     const row = { process_id:proc.id, name:f.name, size:`${(f.size/1024).toFixed(0)} KB`, date:new Date().toISOString().split("T")[0], status:"aguardando", uploaded_by:"cliente", storage_path:path };
     const saved = await db.post("documents", row);
     if (saved[0]) { setDocs(d => [saved[0], ...d]); toast(`"${f.name}" enviado com sucesso!`); }
+    setUploading(false);
   };
+
+  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) upload(f); };
 
   const download = async doc => {
     if (!doc.storage_path) { toast("Este ficheiro não tem download disponível."); return; }
@@ -744,18 +710,39 @@ function Docs({ proc, toast }) {
 
   return (
     <div>
-      <div className="ph"><h1>Documentos</h1><p>Envie e visualize documentos do seu processo.</p></div>
+      <div className="ph"><h1>Documentos</h1><p>Envie e consulte documentos do seu processo.</p></div>
       <div className="card" style={{ marginBottom:"1.25rem" }}>
         <div className="ct">Enviar Documento</div>
-        <div className="uz" onClick={() => ref.current.click()}>
-          <Icon name="upload" size={32} />
-          <div style={{ fontWeight:600, marginTop:8, fontSize:".9rem" }}>Clique para selecionar ficheiro</div>
-          <div style={{ fontSize:".78rem", marginTop:4 }}>PDF, DOC, JPG, PNG — até 20 MB</div>
+        <div
+          className="uz"
+          onClick={() => ref.current.click()}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          style={dragOver ? { borderColor:"var(--g)", background:"var(--gd)" } : {}}
+        >
+          {uploading ? (
+            <>
+              <Icon name="spin" size={32} />
+              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem" }}>A enviar ficheiro…</div>
+            </>
+          ) : (
+            <>
+              <div className="uz-icon"><Icon name="upload" size={36} /></div>
+              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem", color:"var(--n)" }}>
+                {dragOver ? "Solte o ficheiro aqui" : "Arraste um ficheiro ou clique para selecionar"}
+              </div>
+              <div style={{ fontSize:".78rem", marginTop:6, color:"var(--mu)" }}>PDF, DOC, JPG, PNG — até 20 MB</div>
+            </>
+          )}
           <input ref={ref} type="file" style={{ display:"none" }} onChange={e => upload(e.target.files[0])} />
         </div>
       </div>
       <div className="card">
-        <div className="ct">Todos os Documentos</div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
+          <div className="ct" style={{ margin:0 }}>Todos os Documentos</div>
+          {docs.length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"var(--cr)", padding:".25rem .65rem", borderRadius:99 }}>{docs.length} ficheiro{docs.length!==1?"s":""}</span>}
+        </div>
         {ld ? <Loader /> : (
           <div className="dl">
             {docs.map(d => (
@@ -766,14 +753,18 @@ function Docs({ proc, toast }) {
                   <div className="dm">{d.size} · {d.date} · {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
                 </div>
                 <div style={{ marginRight:8 }}>{badge(d.status)}</div>
-                <div style={{ display:"flex", gap:".4rem" }}>
-                  <button className="ib" onClick={() => download(d)} title="Download">
-                    <Icon name="dl" size={14} />
-                  </button>
-                </div>
+                <button className="ib" onClick={() => download(d)} title="Download">
+                  <Icon name="dl" size={14} />
+                </button>
               </div>
             ))}
-            {!docs.length && <p style={{ textAlign:"center", color:"var(--mu)", padding:"2rem", fontSize:".88rem" }}>Nenhum documento ainda.</p>}
+            {!docs.length && (
+              <div className="empty-state">
+                <span className="emoji">📁</span>
+                <div className="title">Nenhum documento</div>
+                <div className="desc">Envie o seu primeiro documento usando a área acima.</div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -781,7 +772,7 @@ function Docs({ proc, toast }) {
   );
 }
 
-// ── NOTIFICAÇÕES ──────────────────────────────────────────────────────────────
+/* ── NOTIFICATIONS ────────────────────────────────────────────────────── */
 function Notifs({ client }) {
   const [ns, setNs] = useState([]);
   const [ld, setLd] = useState(true);
@@ -795,24 +786,38 @@ function Notifs({ client }) {
     setNs(ns => ns.map(n => ({ ...n, read:true })));
   };
 
+  const unread = ns.filter(n => !n.read).length;
+
   return (
     <div>
-      <div className="ph"><h1>Notificações</h1><p>Atualizações do seu processo.</p></div>
+      <div className="ph"><h1>Notificações</h1><p>Atualizações sobre o seu processo.</p></div>
       <div className="card">
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
-          <div className="ct" style={{ margin:0 }}>Todas as notificações</div>
-          <button onClick={markAll} style={{ fontSize:".8rem", color:"var(--g)", background:"none", border:"none", cursor:"pointer" }}>Marcar todas como lidas</button>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:".6rem" }}>
+            <div className="ct" style={{ margin:0 }}>Todas as notificações</div>
+            {unread > 0 && <span style={{ background:"var(--g)", color:"var(--n)", fontSize:".68rem", fontWeight:700, padding:".15rem .5rem", borderRadius:99, minWidth:20, textAlign:"center" }}>{unread}</span>}
+          </div>
+          {unread > 0 && <button onClick={markAll} style={{ fontSize:".78rem", color:"var(--g)", background:"var(--gd)", border:"1px solid rgba(201,168,76,.2)", borderRadius:8, padding:".4rem .8rem", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontWeight:600, transition:"all .2s" }}>Marcar como lidas</button>}
         </div>
         {ld ? <Loader /> : (
           <div className="nl2">
             {ns.map(n => (
               <div key={n.id} className={`ni2${!n.read?" u":""}`}>
-                <div style={{ fontSize:"1.3rem" }}>{n.icon}</div>
-                <div style={{ flex:1 }}><div className="ntx">{n.text}</div><div className="ntm">{fmtd(n.created_at)}</div></div>
+                <div style={{ fontSize:"1.3rem", width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", background:!n.read?"var(--gd)":"var(--cr)", borderRadius:10, flexShrink:0 }}>{n.icon}</div>
+                <div style={{ flex:1 }}>
+                  <div className="ntx">{n.text}</div>
+                  <div className="ntm">{fmtd(n.created_at)}</div>
+                </div>
                 {!n.read && <div className="ud" />}
               </div>
             ))}
-            {!ns.length && <p style={{ textAlign:"center", color:"var(--mu)", padding:"2rem", fontSize:".88rem" }}>Nenhuma notificação.</p>}
+            {!ns.length && (
+              <div className="empty-state">
+                <span className="emoji">🔔</span>
+                <div className="title">Sem notificações</div>
+                <div className="desc">Quando houver atualizações no seu processo, aparecerão aqui.</div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -820,7 +825,7 @@ function Notifs({ client }) {
   );
 }
 
-// ── REUNIÕES ──────────────────────────────────────────────────────────────────
+/* ── MEETINGS ─────────────────────────────────────────────────────────── */
 function Meetings({ proc, client }) {
   const [ms,    setMs]    = useState([]);
   const [ld,    setLd]    = useState(true);
@@ -854,17 +859,17 @@ function Meetings({ proc, client }) {
   };
 
   const statusBadge = s => {
-    if (s === "confirmado") return <span className="bd bg">✓ Confirmado</span>;
+    if (s === "confirmado") return <span className="bd bg">Confirmado</span>;
     if (s === "cancelado")  return <span className="bd br">Cancelado</span>;
     if (s === "recusado")   return <span className="bd br">Recusado</span>;
-    return <span className="bd ba">⏳ Aguardando confirmação</span>;
+    return <span className="bd ba">Aguardando</span>;
   };
 
   const TYPES = [
-    { val:"videochamada", label:"📹 Videochamada", sub:"Google Meet / Zoom" },
-    { val:"presencial",   label:"📍 Presencial",   sub:"Lisboa, Portugal" },
-    { val:"telefone",     label:"📞 Telefone",     sub:"Ligação direta" },
-    { val:"whatsapp",     label:"💬 WhatsApp",     sub:"+351 21 793 1934" },
+    { val:"videochamada", label:"Videochamada", icon:"📹", sub:"Google Meet / Zoom" },
+    { val:"presencial",   label:"Presencial",   icon:"📍", sub:"Lisboa, Portugal" },
+    { val:"telefone",     label:"Telefone",     icon:"📞", sub:"Ligação direta" },
+    { val:"whatsapp",     label:"WhatsApp",     icon:"💬", sub:"+351 21 793 1934" },
   ];
 
   return (
@@ -873,13 +878,13 @@ function Meetings({ proc, client }) {
       <div className="card" style={{ marginBottom:"1.25rem" }}>
         <div className="ct">Solicitar Nova Reunião</div>
         {sent ? (
-          <div style={{ textAlign:"center", padding:"2rem 1rem" }}>
-            <div style={{ fontSize:"3rem", marginBottom:"1rem" }}>✅</div>
+          <div style={{ textAlign:"center", padding:"3rem 1.5rem" }}>
+            <div style={{ width:72, height:72, borderRadius:"50%", background:"#e8faf2", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"2rem", margin:"0 auto 1.25rem" }}>✅</div>
             <div style={{ fontFamily:"Playfair Display,serif", fontSize:"1.2rem", color:"var(--n)", marginBottom:".5rem" }}>Pedido enviado!</div>
-            <p style={{ color:"var(--mu)", fontSize:".88rem", lineHeight:1.7, marginBottom:"1.5rem" }}>
+            <p style={{ color:"var(--mu)", fontSize:".88rem", lineHeight:1.7, marginBottom:"1.5rem", maxWidth:340, margin:"0 auto 1.5rem" }}>
               O escritório irá confirmar em breve.<br />Receberá uma notificação assim que confirmado.
             </p>
-            <button className="btnp" style={{ width:"auto", padding:".7rem 1.5rem" }} onClick={() => setSent(false)}>
+            <button className="btnp" style={{ width:"auto", padding:".75rem 2rem", display:"inline-flex" }} onClick={() => setSent(false)}>
               Solicitar outra reunião
             </button>
           </div>
@@ -904,7 +909,7 @@ function Meetings({ proc, client }) {
               <div className="type-grid">
                 {TYPES.map(t => (
                   <div key={t.val} className={`type-opt${form.type===t.val?" sel":""}`} onClick={() => setForm(f => ({...f, type:t.val}))}>
-                    <h4>{t.label}</h4>
+                    <h4>{t.icon} {t.label}</h4>
                     <p>{t.sub}</p>
                   </div>
                 ))}
@@ -915,7 +920,7 @@ function Meetings({ proc, client }) {
               <textarea value={form.notes} onChange={e => setForm(f => ({...f, notes:e.target.value}))} placeholder="Descreva o assunto ou dúvidas que quer esclarecer…" />
             </div>
             <button className="btnp" onClick={submit} disabled={busy || !form.date}>
-              {busy ? <><Icon name="spin" size={16} /> A enviar…</> : "📅 Enviar Pedido de Reunião"}
+              {busy ? <><Icon name="spin" size={16} /> A enviar…</> : "Enviar Pedido de Reunião"}
             </button>
           </>
         )}
@@ -923,7 +928,11 @@ function Meetings({ proc, client }) {
       <div className="card">
         <div className="ct">As Minhas Reuniões</div>
         {ld ? <Loader /> : ms.length === 0 ? (
-          <p style={{ textAlign:"center", color:"var(--mu)", padding:"2rem", fontSize:".88rem" }}>Nenhuma reunião agendada ainda.</p>
+          <div className="empty-state">
+            <span className="emoji">📅</span>
+            <div className="title">Nenhuma reunião</div>
+            <div className="desc">Solicite a sua primeira reunião usando o formulário acima.</div>
+          </div>
         ) : ms.map(m => {
           const d = new Date((m.date || "") + "T12:00:00");
           return (
@@ -934,14 +943,14 @@ function Meetings({ proc, client }) {
               </div>
               <div style={{ flex:1 }}>
                 <div style={{ fontWeight:600, fontSize:".9rem" }}>{m.title}</div>
-                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:3 }}>
-                  ⏰ {m.time} · {m.type==="videochamada"?"📹 Videochamada":m.type==="presencial"?"📍 Presencial":m.type==="whatsapp"?"💬 WhatsApp":"📞 Telefone"}
+                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
+                  {m.time} · {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
                 </div>
-                {m.notes && <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>📝 {m.notes}</div>}
+                {m.notes && <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4, fontStyle:"italic" }}>{m.notes}</div>}
               </div>
               {statusBadge(m.status)}
               {m.status === "pendente" && (
-                <button onClick={() => cancel(m.id)} style={{ background:"none", border:"none", color:"var(--mu)", fontSize:".75rem", cursor:"pointer", marginLeft:8 }}>✕</button>
+                <button onClick={() => cancel(m.id)} style={{ background:"none", border:"1px solid var(--bo)", borderRadius:8, color:"var(--mu)", fontSize:".72rem", cursor:"pointer", padding:".35rem .6rem", fontFamily:"'DM Sans',sans-serif", transition:"all .2s" }} onMouseOver={e => e.target.style.borderColor="var(--er)"} onMouseOut={e => e.target.style.borderColor="var(--bo)"}>Cancelar</button>
               )}
             </div>
           );
@@ -951,7 +960,7 @@ function Meetings({ proc, client }) {
   );
 }
 
-// ── CHAT ──────────────────────────────────────────────────────────────────────
+/* ── CHAT ─────────────────────────────────────────────────────────────── */
 function Chat({ client, proc }) {
   const [msgs,       setMsgs]       = useState([]);
   const [input,      setInput]      = useState("");
@@ -969,10 +978,7 @@ function Chat({ client, proc }) {
   const send = async () => {
     if (!input.trim() || !proc) return;
     const saved = await db.post("messages", { process_id:proc.id, from_role:"client", text:input });
-    if (saved[0]) {
-      setMsgs(m => [...m, saved[0]]);
-      setJustSent(true);
-    }
+    if (saved[0]) { setMsgs(m => [...m, saved[0]]); setJustSent(true); }
     setInput("");
   };
 
@@ -984,7 +990,7 @@ function Chat({ client, proc }) {
       <div className="card">
         <div className="cw">
           <div className="che">
-            <div className="av" style={{ width:38, height:38, fontSize:".8rem", background:"#1d3557", color:"#c9a84c" }}>{proc?.lawyer_avatar || "RL"}</div>
+            <div className="av" style={{ width:40, height:40, fontSize:".8rem" }}>{proc?.lawyer_avatar || "RL"}</div>
             <div className="chi">
               <h3>{proc?.lawyer || "Dr. Ramom Lacerda"}</h3>
               <p>● Bono & Lacerda Advogados</p>
@@ -992,9 +998,8 @@ function Chat({ client, proc }) {
           </div>
           {ld ? <Loader /> : (
             <div className="cms">
-              {/* Aviso de tempo de resposta — aparece sempre no topo */}
               <div className="chat-reply-notice">
-                🕐 A nossa equipa responde normalmente em até <strong>24 horas úteis</strong>. Estamos aqui para si!
+                A nossa equipa responde normalmente em até <strong>24 horas úteis</strong>
               </div>
               {msgs.map(m => (
                 <div key={m.id} className={`mr${m.from_role==="client"?" mi":""}`}>
@@ -1004,11 +1009,16 @@ function Chat({ client, proc }) {
                   </div>
                 </div>
               ))}
-              {!msgs.length && <p style={{ textAlign:"center", color:"var(--mu)", padding:"2rem", fontSize:".88rem" }}>Diga olá! 👋<br/><span style={{fontSize:".8rem"}}>Envie a sua mensagem e respondemos em breve.</span></p>}
-              {/* Confirmação após envio */}
+              {!msgs.length && (
+                <div className="empty-state" style={{ padding:"2.5rem 1rem" }}>
+                  <span className="emoji">💬</span>
+                  <div className="title">Inicie a conversa</div>
+                  <div className="desc">Envie a sua mensagem e respondemos em breve.</div>
+                </div>
+              )}
               {justSent && clientMsgsCount >= 1 && (
                 <div style={{ textAlign:"center", padding:".5rem", fontSize:".78rem", color:"var(--ok)", fontWeight:600 }}>
-                  ✅ Mensagem enviada! Responderemos em até 24h úteis.
+                  Mensagem enviada! Responderemos em até 24h úteis.
                 </div>
               )}
               <div ref={bot} />
@@ -1026,7 +1036,7 @@ function Chat({ client, proc }) {
   );
 }
 
-// ── PERFIL ────────────────────────────────────────────────────────────────────
+/* ── PROFILE ──────────────────────────────────────────────────────────── */
 function Perfil({ client, toast, onUpdate }) {
   const [form,   setForm]   = useState({
     email:    client.email    || "",
@@ -1047,22 +1057,16 @@ function Perfil({ client, toast, onUpdate }) {
     if (!form.email.trim()) { toast("Por favor insira um email válido."); return; }
     setSaving(true);
     const payload = {
-      email:    form.email.trim(),
-      phone:    form.phone.trim(),
-      whatsapp: form.whatsapp.trim(),
-      address:  form.address.trim(),
-      city:     form.city.trim(),
-      state:    form.state.trim(),
-      zip:      form.zip.trim(),
-      country:  form.country.trim(),
+      email: form.email.trim(), phone: form.phone.trim(), whatsapp: form.whatsapp.trim(),
+      address: form.address.trim(), city: form.city.trim(), state: form.state.trim(),
+      zip: form.zip.trim(), country: form.country.trim(),
     };
     const r = await db.patch("clients", client.id, payload);
-    if (r[0]) { onUpdate({ ...client, ...payload }); setSaved(true); toast("✅ Dados actualizados com sucesso!"); }
+    if (r[0]) { onUpdate({ ...client, ...payload }); setSaved(true); toast("Dados actualizados com sucesso!"); }
     else toast("Erro ao guardar. Tente novamente.");
     setSaving(false);
   };
 
-  // State/region label changes by country
   const stateLabel = ["Brasil"].includes(form.country) ? "Estado"
     : ["Portugal","Espanha","França","Itália","Alemanha"].includes(form.country) ? "Região / Distrito"
     : ["EUA","Canadá","Austrália","México"].includes(form.country) ? "Estado / Província"
@@ -1088,57 +1092,53 @@ function Perfil({ client, toast, onUpdate }) {
 
   return (
     <div>
-      <div className="ph">
-        <h1>Meu Perfil</h1>
-        <p>Mantenha os seus dados de contacto actualizados.</p>
-      </div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:"1.25rem", maxWidth:560 }}>
+      <div className="ph"><h1>Meu Perfil</h1><p>Mantenha os seus dados de contacto actualizados.</p></div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:"1.25rem", maxWidth:580 }}>
 
-        {/* Identity card */}
-        <div className="card" style={{ padding:"1.5rem", display:"flex", alignItems:"center", gap:"1.25rem" }}>
-          <div className="av" style={{ width:64, height:64, fontSize:"1.4rem", flexShrink:0 }}>{ini(client.name)}</div>
+        {/* User card */}
+        <div className="card" style={{ padding:"1.5rem", display:"flex", alignItems:"center", gap:"1.25rem", background:"linear-gradient(135deg, var(--wh) 0%, var(--cr) 100%)" }}>
+          <div className="av" style={{ width:68, height:68, fontSize:"1.5rem", flexShrink:0 }}>{ini(client.name)}</div>
           <div>
-            <div style={{ fontWeight:700, fontSize:"1.1rem", color:"var(--n)" }}>{client.name}</div>
-            <div style={{ fontSize:".82rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || "Nacionalidade Portuguesa"}</div>
-            <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>🔑 {client.chave_acesso}</div>
+            <div style={{ fontWeight:700, fontSize:"1.15rem", color:"var(--n)" }}>{client.name}</div>
+            <div style={{ fontSize:".82rem", color:"var(--mu)", marginTop:4 }}>{client.artigo || "Nacionalidade Portuguesa"}</div>
+            <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:3, display:"flex", alignItems:"center", gap:".4rem" }}>
+              <Icon name="key" size={12} /> {client.chave_acesso}
+            </div>
           </div>
         </div>
 
         {/* Contact form */}
-        <div className="card" style={{ padding:"1.5rem" }}>
-          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.05rem", color:"var(--n)", marginBottom:"1.25rem", fontWeight:600 }}>
+        <div className="card" style={{ padding:"1.75rem" }}>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.1rem", color:"var(--n)", marginBottom:"1.5rem", fontWeight:600, paddingBottom:".75rem", borderBottom:"1px solid var(--bo)" }}>
             Dados de Contacto
           </div>
 
-          <div className="fg" style={{ marginBottom:"1rem" }}>
-            <label>📧 Email</label>
+          <div className="fg" style={{ marginBottom:"1.1rem" }}>
+            <label>Email</label>
             <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="o.seu@email.com" />
-            <div style={{ fontSize:".72rem", color:"var(--mu)", marginTop:4 }}>Usado para comunicações do escritório</div>
+            <div className="fg-hint">Usado para comunicações do escritório</div>
           </div>
 
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem", marginBottom:"1rem" }}>
-            <div className="fg">
-              <label>📞 Telefone</label>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem", marginBottom:"1.1rem" }}>
+            <div className="fg" style={{ marginBottom:0 }}>
+              <label>Telefone</label>
               <input type="tel" value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+55 11 99999-9999" />
             </div>
-            <div className="fg">
-              <label>💬 WhatsApp</label>
+            <div className="fg" style={{ marginBottom:0 }}>
+              <label>WhatsApp</label>
               <input type="tel" value={form.whatsapp} onChange={e => set("whatsapp", e.target.value)} placeholder="+55 11 99999-9999" />
-              <div style={{ fontSize:".72rem", color:"var(--mu)", marginTop:4 }}>Pode ser diferente do telefone</div>
+              <div className="fg-hint">Pode ser diferente do telefone</div>
             </div>
           </div>
 
-          {/* Address section */}
-          <div style={{ borderTop:"1px solid var(--bo)", paddingTop:"1rem", marginTop:".5rem", marginBottom:"1rem" }}>
-            <div style={{ fontSize:".72rem", fontWeight:600, color:"var(--mu)", textTransform:"uppercase", letterSpacing:".07em", marginBottom:".85rem" }}>
-              📍 Endereço
+          <div style={{ borderTop:"1px solid var(--bo)", paddingTop:"1.25rem", marginTop:".5rem", marginBottom:"1.1rem" }}>
+            <div style={{ fontSize:".72rem", fontWeight:700, color:"var(--mu)", textTransform:"uppercase", letterSpacing:".08em", marginBottom:"1rem" }}>
+              Endereço
             </div>
 
-            {/* Country first — affects labels below */}
-            <div className="fg" style={{ marginBottom:"1rem" }}>
-              <label>🌍 País</label>
-              <select value={form.country} onChange={e => set("country", e.target.value)}
-                style={{ width:"100%", padding:".65rem .9rem", border:"1.5px solid var(--bo)", borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontSize:".9rem", color:"var(--tx)", background:"var(--bg)", outline:"none" }}>
+            <div className="fg" style={{ marginBottom:"1.1rem" }}>
+              <label>País</label>
+              <select value={form.country} onChange={e => set("country", e.target.value)}>
                 {COUNTRIES.map(c => c === "---"
                   ? <option key="---" disabled>──────────────</option>
                   : <option key={c} value={c}>{c}</option>
@@ -1146,49 +1146,50 @@ function Perfil({ client, toast, onUpdate }) {
               </select>
             </div>
 
-            <div className="fg" style={{ marginBottom:"1rem" }}>
+            <div className="fg" style={{ marginBottom:"1.1rem" }}>
               <label>Rua / Avenida</label>
               <input type="text" value={form.address} onChange={e => set("address", e.target.value)} placeholder="Nome da rua, número, complemento" />
             </div>
 
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem", marginBottom:"1rem" }}>
-              <div className="fg">
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem", marginBottom:"1.1rem" }}>
+              <div className="fg" style={{ marginBottom:0 }}>
                 <label>Cidade</label>
                 <input type="text" value={form.city} onChange={e => set("city", e.target.value)} placeholder="Cidade" />
               </div>
-              <div className="fg">
+              <div className="fg" style={{ marginBottom:0 }}>
                 <label>{stateLabel}</label>
                 <input type="text" value={form.state} onChange={e => set("state", e.target.value)} placeholder={stateLabel} />
               </div>
             </div>
 
-            <div className="fg">
+            <div className="fg" style={{ marginBottom:0 }}>
               <label>{zipLabel}</label>
-              <input type="text" value={form.zip} onChange={e => set("zip", e.target.value)} placeholder="Código postal" style={{ maxWidth:200 }} />
+              <input type="text" value={form.zip} onChange={e => set("zip", e.target.value)} placeholder="Código postal" style={{ maxWidth:220 }} />
             </div>
           </div>
 
           <button onClick={save} disabled={saving} style={{
-            width:"100%", padding:".85rem", background: saved ? "var(--ok)" : "var(--n)",
-            color:"#fff", border:"none", borderRadius:12, fontFamily:"'DM Sans',sans-serif",
+            width:"100%", padding:".9rem", background: saved ? "var(--ok)" : "linear-gradient(135deg, var(--n), var(--nl))",
+            color:"#fff", border:"none", borderRadius:14, fontFamily:"'DM Sans',sans-serif",
             fontSize:".95rem", fontWeight:600, cursor: saving ? "not-allowed" : "pointer",
-            transition:"all .2s", display:"flex", alignItems:"center", justifyContent:"center", gap:".6rem", opacity: saving ? .7 : 1,
+            transition:"all .25s", display:"flex", alignItems:"center", justifyContent:"center", gap:".6rem",
+            opacity: saving ? .6 : 1,
           }}>
             {saving ? <><Icon name="spin" size={16} /> A guardar…</>
             : saved  ? <><Icon name="check" size={16} /> Dados guardados!</>
-            :           <>💾 Guardar alterações</>}
+            :           <>Guardar alterações</>}
           </button>
         </div>
 
-        <div style={{ background:"rgba(201,168,76,.06)", border:"1px solid rgba(201,168,76,.2)", borderRadius:12, padding:"1rem 1.25rem", fontSize:".8rem", color:"var(--mu)", lineHeight:1.7 }}>
-          <strong style={{ color:"var(--n)" }}>ℹ️ Nota:</strong> As suas informações são confidenciais e utilizadas exclusivamente pelo escritório Bono & Lacerda para comunicações relacionadas com o seu processo.
+        <div style={{ background:"linear-gradient(135deg, rgba(201,168,76,.05), rgba(201,168,76,.02))", border:"1px solid rgba(201,168,76,.15)", borderRadius:"var(--r)", padding:"1rem 1.25rem", fontSize:".8rem", color:"var(--mu)", lineHeight:1.7 }}>
+          <strong style={{ color:"var(--n)" }}>Nota:</strong> As suas informações são confidenciais e utilizadas exclusivamente pelo escritório Bono & Lacerda para comunicações relacionadas com o seu processo.
         </div>
       </div>
     </div>
   );
 }
 
-// ── APP ───────────────────────────────────────────────────────────────────────
+/* ── APP ──────────────────────────────────────────────────────────────── */
 export default function App() {
   const [client,  setClient]  = useState(null);
   const [proc,    setProc]    = useState(null);
@@ -1226,7 +1227,6 @@ export default function App() {
       <style>{css}</style>
       <div className="al">
 
-        {/* Mobile header */}
         <header className="mob-hdr">
           <div>
             <h2>Bono & Lacerda</h2>
@@ -1237,14 +1237,13 @@ export default function App() {
           </button>
         </header>
 
-        {/* Desktop sidebar */}
         <aside className="sb">
           <div className="sbl">
             <h2>Bono & Lacerda</h2>
             <span>Portal do Cliente</span>
           </div>
           <div className="sbu">
-            <div className="av" style={{ width:38, height:38, fontSize:".8rem" }}>{ini(client.name)}</div>
+            <div className="av" style={{ width:40, height:40, fontSize:".82rem" }}>{ini(client.name)}</div>
             <div>
               <div className="sbn">{client.name}</div>
               <div className="sbs">{client.chave_acesso}</div>
@@ -1277,7 +1276,6 @@ export default function App() {
           )}
         </main>
 
-        {/* Mobile bottom nav */}
         <nav className="mob-nav">
           <div className="mob-nav-inner">
             {nav.map(n => (
