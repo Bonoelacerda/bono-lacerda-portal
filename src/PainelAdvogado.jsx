@@ -1,40 +1,14 @@
-import { useState, useEffect, useRef, Component } from "react";
-
-// Error Boundary — prevents white screen crashes
-class ErrorBoundary extends Component {
-  constructor(props) { super(props); this.state = { hasError: false, error: null }; }
-  static getDerivedStateFromError(error) { return { hasError: true, error }; }
-  componentDidCatch(error, info) { console.error("ErrorBoundary caught:", error, info); }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{padding:"3rem",textAlign:"center",color:"#92400e",fontFamily:"'Outfit',sans-serif"}}>
-          <div style={{fontSize:"2rem",marginBottom:"1rem"}}>⚠️</div>
-          <h2 style={{fontFamily:"'Cormorant Garamond',serif",color:"#16213e",marginBottom:".5rem"}}>Algo correu mal</h2>
-          <p style={{fontSize:".88rem",marginBottom:"1.5rem",color:"#7a7a95"}}>{this.state.error?.message || "Erro inesperado."}</p>
-          <button onClick={()=>this.setState({hasError:false,error:null})} style={{padding:".6rem 1.5rem",background:"#16213e",color:"#fff",border:"none",borderRadius:10,cursor:"pointer",fontFamily:"inherit",fontWeight:600}}>Tentar novamente</button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+import { useState, useEffect, useRef } from "react";
 
 const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
 
 const api = {
-  get: async (t, q="") => {
-    try {
-      const r = await fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H });
-      const d = await r.json();
-      return Array.isArray(d) ? d : [];
-    } catch(e) { console.error("API get error:", t, e); return []; }
-  },
-  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()).catch(()=>[]),
-  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()).catch(()=>[]),
-  del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }).catch(()=>null),
+  get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
+  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
+  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
+  del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
   upload: async (path, file) => {
     const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
@@ -55,11 +29,9 @@ const api = {
 };
 
 const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-const ini  = n => typeof n === "string" ? n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase() : "??";
+const ini  = n => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}) : "";
-// Safe render: ensures value is never an object passed as React child (prevents error #310)
-const safe = v => (v === null || v === undefined) ? "—" : (typeof v === "object" ? JSON.stringify(v) : v);
 
 function Icon({ name, size=18 }) {
   const p = { width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:"2", strokeLinecap:"round", strokeLinejoin:"round" };
@@ -334,10 +306,10 @@ function Dash({ clients }) {
               ? <div style={{color:"var(--mu)",fontSize:".85rem",textAlign:"center",padding:"1rem"}}>Nenhum cliente encontrado.</div>
               : filtered.slice(0,5).map(c => (
                 <div key={c.id} style={{display:"flex",alignItems:"center",gap:".75rem",padding:".6rem .75rem",borderRadius:10,border:"1px solid var(--bo)",marginBottom:".5rem",background:"var(--bg)"}}>
-                  <Av name={c.name||""} size={34}/>
+                  <Av name={c.name} size={34}/>
                   <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontWeight:600,fontSize:".85rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{safe(c.name)}</div>
-                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{safe(c.chave_acesso || "Sem chave")} · <StatusBadge s={c.proc?.status}/></div>
+                    <div style={{fontWeight:600,fontSize:".85rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} · <StatusBadge s={c.proc?.status}/></div>
                   </div>
                   {c.pendencias && <span title={c.pendencias} style={{fontSize:"1rem"}}>⚠️</span>}
                 </div>
@@ -451,9 +423,9 @@ function Dash({ clients }) {
                     <div style={{fontWeight:600,fontSize:".84rem",color:"var(--n)"}}>{c.name}</div>
                     <span style={{fontSize:".68rem",color:"var(--mu)",flexShrink:0}}>{c.chave_acesso||"—"}</span>
                   </div>
-                  <div style={{fontSize:".76rem",color:"#92400e",marginTop:3,lineHeight:1.4}}>{safe(c.pendencias)}</div>
+                  <div style={{fontSize:".76rem",color:"#92400e",marginTop:3,lineHeight:1.4}}>{c.pendencias}</div>
                   {c.observacao && (
-                    <div style={{fontSize:".72rem",color:"#b45309",marginTop:2,fontStyle:"italic"}}>{safe(typeof c.observacao === "string" ? c.observacao.slice(0,80) : c.observacao)}{typeof c.observacao === "string" && c.observacao.length>80?"…":""}</div>
+                    <div style={{fontSize:".72rem",color:"#b45309",marginTop:2,fontStyle:"italic"}}>{c.observacao?.slice(0,80)}{c.observacao?.length>80?"…":""}</div>
                   )}
                 </div>
               ))
@@ -700,29 +672,24 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   // Load full data when client is opened
   useEffect(()=>{
     if(!client) return;
-    let cancelled=false;
     const load=async()=>{
       setLdData(true);
-      try{
-        const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
-        const proc=procs[0]||null;
-        if(proc && !cancelled){
-          const [ss,dd,mm,mt]=await Promise.all([
-            api.get("process_steps",`?process_id=eq.${proc.id}&order=step_order.asc`),
-            api.get("documents",`?process_id=eq.${proc.id}&order=created_at.desc`),
-            api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
-            api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
-          ]);
-          if(!cancelled){
-            setSteps(Array.isArray(ss)?ss:[]); setDocs(Array.isArray(dd)?dd:[]); setMsgs(Array.isArray(mm)?mm:[]); setMeets(Array.isArray(mt)?mt:[]);
-            setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
-          }
-        }
-      }catch(e){console.error("Detail load error:",e);}
-      if(!cancelled) setLdData(false);
+      const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
+      const proc=procs[0]||null;
+      if(proc){
+        const [ss,dd,mm,mt]=await Promise.all([
+          api.get("process_steps",`?process_id=eq.${proc.id}&order=step_order.asc`),
+          api.get("documents",`?process_id=eq.${proc.id}&order=created_at.desc`),
+          api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
+          api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
+        ]);
+        setSteps(ss); setDocs(dd); setMsgs(mm); setMeets(mt);
+        // Update client proc in state
+        setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
+      }
+      setLdData(false);
     };
     load();
-    return ()=>{cancelled=true;};
   },[cid]);
 
   if(!client) return null;
@@ -783,65 +750,14 @@ function Detail({cid,clients,setClients,showToast,onBack}){
 
   const pendentes=meets.filter(m=>m.status==="pendente");
 
-  // ── PENDÊNCIAS KANBAN ──────────────────────────────────────────────────────
-  const [pends, setPends]       = useState([]);
-  const [pendLd, setPendLd]     = useState(false);
-  const [newPend, setNewPend]   = useState("");
-  const [newPrio, setNewPrio]   = useState("media");
-  const [dragId, setDragId]     = useState(null);
-
-  useEffect(() => {
-    if(tab !== "pendencias" || !client.id) return;
-    setPendLd(true);
-    api.get("pendencias_itens", `?client_id=eq.${client.id}&order=created_at.desc`)
-      .then(d => setPends(Array.isArray(d) ? d : []))
-      .catch(() => setPends([]))
-      .finally(() => setPendLd(false));
-  }, [tab, client.id]);
-
-  const addPend = async () => {
-    if(!newPend.trim()) return;
-    const r = await api.post("pendencias_itens", {
-      client_id:   client.id,
-      texto:       newPend.trim(),
-      prioridade:  newPrio,
-      status_pend: "pendente",
-      created_at:  new Date().toISOString(),
-    });
-    if(r[0]) { setPends(p => [r[0], ...p]); setNewPend(""); showToast("Pendência adicionada!"); }
-  };
-
-  const movePend = async (id, novoStatus) => {
-    await api.patch("pendencias_itens", id, { status_pend: novoStatus });
-    setPends(p => p.map(x => x.id === id ? {...x, status_pend: novoStatus} : x));
-    showToast(novoStatus === "resolvido" ? "✅ Marcado como resolvido!" : "🔄 Movido!");
-    if(novoStatus === "resolvido") {
-      await api.post("notifications", {client_id: client.id, text: "Uma pendência do seu processo foi resolvida!", icon: "✅", read: false});
-    }
-  };
-
-  const delPend = async id => {
-    await api.del("pendencias_itens", id);
-    setPends(p => p.filter(x => x.id !== id));
-    showToast("Pendência removida.");
-  };
-
-  const PEND_COLS = [
-    { key: "pendente",      label: "⏳ Pendente",       color: "#92400e", bg: "#fef3c7", border: "#fcd34d" },
-    { key: "em_tratamento", label: "🔄 Em Tratamento",  color: "#1e40af", bg: "#eff6ff", border: "#bfdbfe" },
-    { key: "resolvido",     label: "✅ Resolvido",       color: "#065f46", bg: "#ecfdf5", border: "#6ee7b7" },
-  ];
-  const PRIO_COLORS = { alta: "#dc2626", media: "#d97706", baixa: "#16a34a" };
-  const PRIO_LABELS = { alta: "🔴 Alta", media: "🟡 Média", baixa: "🟢 Baixa" };
-
   return(
     <div>
       <div className="tb">
         <div style={{display:"flex",alignItems:"center",gap:"1rem"}}>
           <button className="btn btn-gh" onClick={onBack}>← Voltar</button>
-          <Av name={client.name||""} size={44}/>
-          <div><h1 className="pt" style={{fontSize:"1.6rem"}}>{safe(client.name)}</h1>
-          <p className="ps">{safe(client.chave_acesso||client.email)} · {safe(client.phone)}</p></div>
+          <Av name={client.name} size={44}/>
+          <div><h1 className="pt" style={{fontSize:"1.6rem"}}>{client.name}</h1>
+          <p className="ps">{client.chave_acesso||client.email} · {client.phone||"—"}</p></div>
         </div>
         <div style={{display:"flex",gap:".6rem",alignItems:"center"}}>
           <StatusBadge s={proc?.status}/>
@@ -858,12 +774,12 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           ["Local",    proc?.arquivo || "—"],
           ["Desde",    fmtd(client.since)],
         ].map(([k,v])=>(
-          <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".85rem",maxWidth:220}}>{safe(v)}</div></div>
+          <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".85rem",maxWidth:220}}>{v}</div></div>
         ))}
         {client.pendencias&&(
           <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:8,padding:".6rem .9rem"}}>
-            <div style={{fontWeight:600,fontSize:".78rem",color:"#92400e"}}>⚠️ {safe(client.pendencias)}</div>
-            {client.observacao&&<div style={{fontSize:".75rem",color:"#b45309",marginTop:2}}>{safe(client.observacao)}</div>}
+            <div style={{fontWeight:600,fontSize:".78rem",color:"#92400e"}}>⚠️ {client.pendencias}</div>
+            {client.observacao&&<div style={{fontSize:".75rem",color:"#b45309",marginTop:2}}>{client.observacao}</div>}
           </div>
         )}
         <div style={{marginLeft:"auto",minWidth:160}}>
@@ -873,7 +789,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
       </div>
 
       <div className="tabs">
-        {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["pendencias","⚠️ Pendências"],["chat","Chat"]].map(([id,label])=>(
+        {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["chat","Chat"]].map(([id,label])=>(
           <button key={id} className={`tab${tab===id?" on":""}`} onClick={()=>setTab(id)}>{label}</button>
         ))}
       </div>
@@ -885,7 +801,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           {steps.map(s=>(
             <div className="sr" key={s.id}>
               <div className={`sc2${s.done?" dn":""}`} onClick={()=>toggleStep(s)}>{s.done&&<Icon name="check" size={12}/>}</div>
-              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".9rem",color:s.done?"var(--tx)":"var(--mu)"}}>{safe(s.title)}</div><div style={{fontSize:".75rem",color:"var(--mu)",marginTop:1}}>{safe(s.date)}</div></div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".9rem",color:s.done?"var(--tx)":"var(--mu)"}}>{s.title}</div><div style={{fontSize:".75rem",color:"var(--mu)",marginTop:1}}>{s.date}</div></div>
               <span className={`bd${s.done?" bg":" bgr"}`}>{s.done?"Concluído":"Pendente"}</span>
             </div>
           ))}
@@ -905,7 +821,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           {docs.map(d=>(
             <div className="dr" key={d.id}>
               <div className="dic"><Icon name="file" size={16}/></div>
-              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{safe(d.name)}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{safe(d.size)} · {safe(d.date)} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
             </div>
@@ -934,9 +850,9 @@ function Detail({cid,clients,setClients,showToast,onBack}){
               <div className="mcard" key={m.id} style={{borderColor:isPending?"#fcd34d":"var(--bo)",background:isPending?"#fffbf0":"var(--bg)"}}>
                 <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
                 <div style={{flex:1}}>
-                  <div style={{fontWeight:600,fontSize:".9rem"}}>{safe(m.title)}</div>
-                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>⏰ {safe(m.time)} · {m.type==="videochamada"?"📹 Video":m.type==="whatsapp"?"💬 WhatsApp":m.type==="presencial"?"📍 Presencial":"📞 Tel"}</div>
-                  {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {safe(m.notes)}</div>}
+                  <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
+                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>⏰ {m.time} · {m.type==="videochamada"?"📹 Video":m.type==="whatsapp"?"💬 WhatsApp":m.type==="presencial"?"📍 Presencial":"📞 Tel"}</div>
+                  {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
                 </div>
                 <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
                   {isPending?(
@@ -946,7 +862,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
                     </>
                   ):(
                     <>
-                      <span className={`bd${m.status==="confirmado"?" bg":m.status==="recusado"?" br":" bgr"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="recusado"?"Recusado":safe(m.status)}</span>
+                      <span className={`bd${m.status==="confirmado"?" bg":m.status==="recusado"?" br":" bgr"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="recusado"?"Recusado":m.status}</span>
                       <button className="ib d" onClick={()=>delMeeting(m.id)}><Icon name="trash" size={13}/></button>
                     </>
                   )}
@@ -957,98 +873,6 @@ function Detail({cid,clients,setClients,showToast,onBack}){
         </div>
       )}
 
-      {tab==="pendencias"&&(
-        <div>
-          {/* Add new pendência */}
-          <div className="card cp" style={{marginBottom:"1.25rem"}}>
-            <div className="ct" style={{margin:0,marginBottom:"1rem"}}>Nova Pendência</div>
-            <div style={{display:"flex",gap:".75rem",flexWrap:"wrap"}}>
-              <input
-                value={newPend} onChange={e=>setNewPend(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&addPend()}
-                placeholder="Descreva a pendência... ex: Falta certidão de nascimento"
-                style={{flex:1,minWidth:200,padding:".55rem .85rem",border:"1px solid var(--bo)",borderRadius:8,background:"var(--bg)",color:"var(--tx)",fontSize:".88rem"}}
-              />
-              <select value={newPrio} onChange={e=>setNewPrio(e.target.value)}
-                style={{padding:".55rem .75rem",border:"1px solid var(--bo)",borderRadius:8,background:"var(--bg)",color:"var(--tx)",fontSize:".85rem"}}>
-                <option value="alta">🔴 Alta</option>
-                <option value="media">🟡 Média</option>
-                <option value="baixa">🟢 Baixa</option>
-              </select>
-              <button className="btn btn-dk" onClick={addPend}><Icon name="plus" size={15}/> Adicionar</button>
-            </div>
-          </div>
-
-          {/* Kanban board */}
-          {pendLd
-            ? <div className="ld"><Icon name="spin" size={22}/><span>A carregar pendências…</span></div>
-            : (
-            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"1rem"}}>
-              {PEND_COLS.map(col=>{
-                const items = pends.filter(p=>p.status_pend===col.key);
-                return(
-                  <div key={col.key}
-                    onDragOver={e=>{e.preventDefault();}}
-                    onDrop={e=>{e.preventDefault();if(dragId)movePend(dragId,col.key);setDragId(null);}}
-                    style={{background:col.bg,border:`2px solid ${col.border}`,borderRadius:12,padding:"1rem",minHeight:200}}>
-                    {/* Column header */}
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1rem"}}>
-                      <span style={{fontWeight:700,fontSize:".88rem",color:col.color}}>{col.label}</span>
-                      <span style={{background:col.border,color:col.color,borderRadius:999,padding:"2px 10px",fontSize:".75rem",fontWeight:700}}>{items.length}</span>
-                    </div>
-
-                    {/* Cards */}
-                    {items.length===0&&(
-                      <div style={{textAlign:"center",color:"var(--mu)",fontSize:".8rem",padding:"1.5rem 0",opacity:.6}}>
-                        Arrastar pendências aqui
-                      </div>
-                    )}
-                    {items.map(p=>(
-                      <div key={p.id}
-                        draggable
-                        onDragStart={()=>setDragId(p.id)}
-                        onDragEnd={()=>setDragId(null)}
-                        style={{background:"var(--card)",border:"1px solid var(--bo)",borderRadius:10,padding:".85rem",marginBottom:".75rem",cursor:"grab",boxShadow:"0 1px 4px rgba(0,0,0,.07)",borderLeft:`4px solid ${PRIO_COLORS[p.prioridade||"media"]}`}}>
-                        <div style={{fontSize:".85rem",fontWeight:600,color:"var(--tx)",lineHeight:1.4,marginBottom:".5rem"}}>{safe(p.texto)}</div>
-                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                          <span style={{fontSize:".72rem",color:PRIO_COLORS[p.prioridade||"media"],fontWeight:600}}>{PRIO_LABELS[p.prioridade||"media"]}</span>
-                          <span style={{fontSize:".7rem",color:"var(--mu)"}}>{p.created_at?new Date(p.created_at).toLocaleDateString("pt-BR"):""}</span>
-                        </div>
-                        {/* Action buttons */}
-                        <div style={{display:"flex",gap:".4rem",marginTop:".6rem",flexWrap:"wrap"}}>
-                          {col.key!=="em_tratamento"&&col.key!=="resolvido"&&(
-                            <button onClick={()=>movePend(p.id,"em_tratamento")}
-                              style={{fontSize:".7rem",padding:"3px 8px",border:"1px solid #bfdbfe",borderRadius:6,background:"#eff6ff",color:"#1e40af",cursor:"pointer"}}>
-                              🔄 Tratar
-                            </button>
-                          )}
-                          {col.key!=="resolvido"&&(
-                            <button onClick={()=>movePend(p.id,"resolvido")}
-                              style={{fontSize:".7rem",padding:"3px 8px",border:"1px solid #6ee7b7",borderRadius:6,background:"#ecfdf5",color:"#065f46",cursor:"pointer"}}>
-                              ✅ Resolver
-                            </button>
-                          )}
-                          {col.key==="resolvido"&&(
-                            <button onClick={()=>movePend(p.id,"pendente")}
-                              style={{fontSize:".7rem",padding:"3px 8px",border:"1px solid #fcd34d",borderRadius:6,background:"#fef3c7",color:"#92400e",cursor:"pointer"}}>
-                              ↩️ Reabrir
-                            </button>
-                          )}
-                          <button onClick={()=>delPend(p.id)}
-                            style={{fontSize:".7rem",padding:"3px 8px",border:"1px solid #fecaca",borderRadius:6,background:"#fef2f2",color:"#dc2626",cursor:"pointer",marginLeft:"auto"}}>
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
       {tab==="chat"&&(
         <div className="card cp">
           <div className="ct">Chat com {client.name}</div>
@@ -1056,7 +880,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
             <div className="cms">
               {msgs.map(m=>(
                 <div key={m.id} className={`mr${m.from_role==="lawyer"?" mi":""}`}>
-                  <div><div className={`mb${m.from_role==="lawyer"?" mi":" th"}`}>{safe(m.text)}</div>
+                  <div><div className={`mb${m.from_role==="lawyer"?" mi":" th"}`}>{m.text}</div>
                   <div className="mt2" style={{textAlign:m.from_role==="lawyer"?"right":"left"}}>{fmtt(m.created_at)}</div></div>
                 </div>
               ))}
@@ -1138,9 +962,9 @@ function Clients({clients,setClients,showToast,openClient}){
           <thead><tr><th>Cliente</th><th>Chave / Email</th><th>Tipo</th><th>Status</th><th></th></tr></thead>
           <tbody>{filtered.map(c=>(
             <tr key={c.id}>
-              <td><div style={{display:"flex",alignItems:"center",gap:".75rem"}}><Av name={c.name||""} size={34}/><div><div style={{fontWeight:600,fontSize:".88rem"}}>{safe(c.name)}</div></div></div></td>
-              <td style={{fontSize:".82rem",color:"var(--mu)",letterSpacing:".05em"}}>{safe(c.chave_acesso||c.email||"—")}</td>
-              <td style={{fontSize:".85rem"}}>{safe(c.proc?.type||"—")}</td>
+              <td><div style={{display:"flex",alignItems:"center",gap:".75rem"}}><Av name={c.name} size={34}/><div><div style={{fontWeight:600,fontSize:".88rem"}}>{c.name}</div></div></div></td>
+              <td style={{fontSize:".82rem",color:"var(--mu)",letterSpacing:".05em"}}>{c.chave_acesso||c.email||"—"}</td>
+              <td style={{fontSize:".85rem"}}>{c.proc?.type||"—"}</td>
               <td><StatusBadge s={c.proc?.status}/></td>
               <td><div style={{display:"flex",gap:".4rem"}}>
                 <button className="btn btn-gh" style={{padding:".4rem .8rem",fontSize:".78rem"}} onClick={()=>openClient(c.id)}><Icon name="arrow" size={13}/> Abrir</button>
@@ -1183,9 +1007,9 @@ function AllMeetings({clients}){
           <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)"}}>
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
-              <div style={{fontWeight:600,fontSize:".9rem"}}>{safe(m.title)}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{safe(m.clientName)}</strong> · ⏰ {safe(m.time)} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {safe(m.type)}</div>
-              {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {safe(m.notes)}</div>}
+              <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
             </div>
             <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
           </div>
@@ -1208,36 +1032,20 @@ export default function App(){
   const loadClients=async()=>{
     setLoading(true);
     try{
-      // Fetch all clients — paginate if needed (Supabase max_rows may be 1000)
-      let allClients=[];
-      let offset=0;
-      const PAGE=1000;
-      while(true){
-        const page=await api.get("clients",`?order=created_at.desc&limit=${PAGE}&offset=${offset}`);
-        if(!page.length) break;
-        allClients=allClients.concat(page);
-        if(page.length<PAGE) break;
-        offset+=PAGE;
-      }
-      if(!allClients.length){showToast("Nenhum cliente encontrado.");setLoading(false);return;}
+      // Supabase limit is now 10000 — single query gets all clients
+      const allClients=await api.get("clients","?order=created_at.desc&limit=10000");
+      if(!allClients||allClients.error){showToast("Erro ao carregar clientes.");setLoading(false);return;}
       // Set clients immediately so count shows
-      const base=allClients.map(c=>({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]}));
-      setClients(base);
-      // Enrich first 200 with process data in batches of 20 (avoids rate limiting)
-      const ENRICH=200;
-      const BATCH=20;
-      const toEnrich=allClients.slice(0,ENRICH);
-      const enriched=[...base];
-      for(let i=0;i<toEnrich.length;i+=BATCH){
-        const batch=toEnrich.slice(i,i+BATCH);
-        const results=await Promise.all(batch.map(async c=>{
-          const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
-          return{...c,proc:procs[0]||null,steps:[],docs:[],msgs:[],meetings:[]};
-        }));
-        results.forEach((r,j)=>{enriched[i+j]=r;});
-        setClients([...enriched]);
-      }
-    }catch(e){console.error("loadClients error:",e);showToast("Erro ao carregar dados: "+e.message);}
+      setClients(allClients.map(c=>({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]})));
+      // Then enrich first 200 with process data in background
+      const enriched=await Promise.all(allClients.map(async(c,i)=>{
+        if(i>=200) return{...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]};
+        const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
+        const proc=procs[0]||null;
+        return{...c,proc,steps:[],docs:[],msgs:[],meetings:[]};
+      }));
+      setClients(enriched);
+    }catch(e){showToast("Erro ao carregar dados: "+e.message);}
     setLoading(false);
   };
 
@@ -1275,10 +1083,10 @@ export default function App(){
         </aside>
         <main className="mc">
           {loading?<div className="ld"><Icon name="spin" size={28}/><span>Carregando {clients.length} clientes…</span></div>:
-          openC?<ErrorBoundary key={openC}><Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/></ErrorBoundary>:
-          tab==="dash"?<ErrorBoundary key="dash"><Dash clients={clients}/></ErrorBoundary>:
-          tab==="clients"?<ErrorBoundary key="clients"><Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/></ErrorBoundary>:
-          tab==="meetings"?<ErrorBoundary key="meetings"><AllMeetings clients={clients}/></ErrorBoundary>:null}
+          openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
+          tab==="dash"?<Dash clients={clients}/>:
+          tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
+          tab==="meetings"?<AllMeetings clients={clients}/>:null}
         </main>
       </div>
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
