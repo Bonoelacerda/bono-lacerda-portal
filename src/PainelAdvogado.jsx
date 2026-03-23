@@ -531,7 +531,7 @@ function WhatsAppNotify({ client, proc, showToast }) {
   const [open,    setOpen]    = useState(false);
   const [sel,     setSel]     = useState(null);
   const [msg,     setMsg]     = useState("");
-  const [phone,   setPhone]   = useState(client.phone || "");
+  const [phone,   setPhone]   = useState(client.whatsapp || client.phone || "");
 
   const selectTemplate = (t) => {
     setSel(t.id);
@@ -757,7 +757,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           <button className="btn btn-gh" onClick={onBack}>← Voltar</button>
           <Av name={client.name} size={44}/>
           <div><h1 className="pt" style={{fontSize:"1.6rem"}}>{client.name}</h1>
-          <p className="ps">{client.chave_acesso||client.email} · {client.phone||"—"}</p></div>
+          <p className="ps">{client.chave_acesso||client.email} · {client.whatsapp||client.phone||"—"}</p></div>
         </div>
         <div style={{display:"flex",gap:".6rem",alignItems:"center"}}>
           <StatusBadge s={proc?.status}/>
@@ -787,6 +787,30 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           <div className="pw" style={{height:8}}><div className="pf" style={{width:`${pct}%`,height:8}}/></div>
         </div>
       </div>
+
+      {/* Dados de Contacto — preenchidos pelo cliente no portal */}
+      {(client.whatsapp||client.address||client.city)&&(
+        <div className="card cp" style={{marginBottom:"1.25rem"}}>
+          <div className="ct" style={{marginBottom:".75rem",fontSize:"1rem"}}>📇 Dados de Contacto</div>
+          <div style={{display:"flex",gap:"2rem",flexWrap:"wrap"}}>
+            {[
+              ["📧 Email",     client.email],
+              ["📞 Telefone",  client.phone],
+              ["💬 WhatsApp",  client.whatsapp],
+              ["🏠 Morada",    client.address],
+              ["🏙️ Cidade",    client.city],
+              ["📍 Região",    client.state],
+              ["📮 Código Postal", client.zip],
+              ["🌍 País",      client.country],
+            ].filter(([,v])=>v).map(([k,v])=>(
+              <div key={k} style={{minWidth:140}}>
+                <div style={{fontSize:".68rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div>
+                <div style={{fontWeight:500,fontSize:".85rem"}}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="tabs">
         {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["chat","Chat"]].map(([id,label])=>(
