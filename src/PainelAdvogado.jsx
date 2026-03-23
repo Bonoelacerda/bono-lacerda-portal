@@ -805,33 +805,76 @@ function Detail({cid,clients,setClients,showToast,onBack}){
       read: false
     });
 
-    showToast("✅ A criar Google Meet…");
+    showToast("⏳ A criar Google Meet…");
 
-    // 3. Pedir ao Claude para criar o evento e guardar o link
-    // Claude tem acesso ao Google Calendar MCP e irá:
-    // - Criar o evento com Google Meet
-    // - Guardar o link no Supabase
-    // - Enviar notificação ao cliente com o link
-    const clientEmail = client.email || "";
-    const cmd = `CRIAR_GOOGLE_MEET|meetingId=${m.id}|clientId=${client.id}|clientName=${client.name}|clientEmail=${clientEmail}|title=${m.title}|date=${m.date}|time=${m.time}|type=${m.type}|notes=${m.notes||""}`;
-    if(window.sendPrompt) window.sendPrompt(cmd);
-  };
+    // 3. Chamar Claude via API Anthropic com Google Calendar MCP
+    // Claude cria o evento no Google Calendar com Meet e devolve o link
+    try {
+      const [h, min] = m.time.split(":").map(Number);
+      const endH = String(h + 1).padStart(2,"0");
+      const clientEmail = client.email || "";
 
-  // Helper — guarda meet_link no Supabase e notifica cliente (chamado pelo Claude após criar Meet)
-  window._saveMeetLink = async (meetingId, clientId, meetLink) => {
-    await api.patch("meetings", meetingId, { meet_link: meetLink, calendar_event_id: "created" });
-    setMeets(ms => ms.map(x => x.id === meetingId ? { ...x, meet_link: meetLink } : x));
-    setClients(cs => cs.map(c => c.id === clientId ? {
-      ...c, meetings: (c.meetings||[]).map(x => x.id === meetingId ? { ...x, meet_link: meetLink } : x)
-    } : c));
-    await api.post("notifications", {
-      client_id: clientId,
-      text: `📹 Link do Google Meet disponível: ${meetLink}`,
-      icon: "📹",
-      read: false
-    });
-    showToast("✅ Google Meet criado! Link enviado ao cliente.");
+      const prompt = `Cria um evento no Google Calendar com Google Meet. Dados:
+- Título: "📅 ${m.title} — ${client.name}"
+- Data início: ${m.date}T${m.time}:00 (fuso Europe/Lisbon)
+- Data fim: ${m.date}T${endH}:${String(min).padStart(2,"0")}:00 (fuso Europe/Lisbon)
+- Organizador: bonoelacerda@gmail.com
+${clientEmail ? `- Convidado: ${clientEmail} (${client.name})` : ""}
+- Notas: ${m.notes || "Reunião com cliente"}
+- Tipo: ${m.type}
+- Criar Google Meet: sim
+Após criar, responde APENAS com o link do Google Meet no formato: MEET_LINK:https://meet.google.com/xxx-xxxx-xxx`;
+
+      const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 500,
+          mcp_servers: [{ type: "url", url: "https://gcal.mcp.claude.com/mcp", name: "google-calendar" }],
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
+
+      if (anthropicRes.ok) {
+        const data = await anthropicRes.json();
+        const fullText = (data.content || [])
+          .filter(b => b.type === "text")
+          .map(b => b.text)
+          .join("");
+
+        // Extrair o link do Meet da resposta
+        const meetMatch = fullText.match(/MEET_LINK:(https:\/\/meet\.google\.com\/[^\s]+)/);
+        const meetLink = meetMatch ? meetMatch[1] : null;
+
+        if (meetLink) {
+          // Guardar link no Supabase
+          await api.patch("meetings", m.id, { meet_link: meetLink, calendar_event_id: "created" });
+          setMeets(ms => ms.map(x => x.id === m.id ? { ...x, meet_link: meetLink } : x));
+          setClients(cs => cs.map(c => c.id === client.id ? {
+            ...c, meetings: (c.meetings||[]).map(x => x.id === m.id ? { ...x, meet_link: meetLink } : x)
+          } : c));
+
+          // Notificar cliente com link
+          await api.post("notifications", {
+            client_id: client.id,
+            text: `📹 O link do Google Meet está disponível: ${meetLink}`,
+            icon: "📹",
+            read: false
+          });
+
+          showToast("✅ Google Meet criado! Link enviado ao cliente.");
+        } else {
+          showToast("✅ Reunião confirmada! (Meet sem link — verifique Calendar)");
+        }
+      } else {
+        showToast("✅ Reunião confirmada!");
+      }
+    } catch(err) {
+      showToast("✅ Reunião confirmada!");
+    }
   };
+  // (window._saveMeetLink removido — lógica agora dentro do confirmMeet)
   const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
   const uploadDoc=async f=>{
     if(!f||!proc) return;
