@@ -512,7 +512,18 @@ function IRNTimeline({ proc, submissao }) {
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function Dashboard({ client, proc, steps }) {
   const done = steps.filter(s => s.done).length;
-  const pct  = steps.length ? Math.round(done / steps.length * 100) : 0;
+
+  // Progress based on current_step — etapa activa conta como parcialmente completa
+  // Etapa 1/7 = 7%, Etapa 2/7 = 21%, ..., Etapa 7/7 = 100%
+  const totalSteps  = 7;
+  const currentStep = proc?.current_step || 1;
+  // Each completed step = 1 full step. Active step = 0.5 (half credit, visually motivating)
+  const completedFull = Math.max(0, currentStep - 1);
+  const pct = Math.round(((completedFull + 0.5) / totalSteps) * 100);
+  // Labels for step name
+  const stepNames = {1:'Recebido',2:'Registado',3:'Consultas',4:'Documentos',5:'Análise',6:'Despacho',7:'Terminado'};
+  const stepName  = stepNames[currentStep] || '';
+
   const first = client.name.split(" ")[0];
 
   if (!proc) return (
@@ -540,9 +551,16 @@ function Dashboard({ client, proc, steps }) {
         </div>
         <div className="sc">
           <div className="sl">Progresso</div>
-          <div className="sv">{pct}%</div>
-          <div className="pb"><div className="pbf" style={{ width:`${pct}%` }} /></div>
-          <div className="ss" style={{ marginTop:6 }}>{done} de {steps.length} etapas</div>
+          <div style={{ display:"flex", alignItems:"baseline", gap:".4rem", marginTop:4 }}>
+            <div className="sv">{pct}%</div>
+            <div style={{ fontSize:".72rem", color:"var(--mu)", fontWeight:400 }}>concluído</div>
+          </div>
+          <div className="pb" style={{ marginTop:6 }}>
+            <div className="pbf" style={{ width:`${pct}%`, transition:"width .6s ease" }} />
+          </div>
+          <div className="ss" style={{ marginTop:6 }}>
+            Etapa {currentStep} de {totalSteps} — {stepName}
+          </div>
         </div>
         <div className="sc">
           <div className="sl">Data de Protocolo</div>
