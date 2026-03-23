@@ -1139,7 +1139,7 @@ function Clients({clients,setClients,showToast,openClient}){
 }
 
 // ── ALL MEETINGS ──────────────────────────────────────────────────────────────
-function AllMeetings({clients}){
+function AllMeetings({clients, openClient}){
   const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
   const pendentes=all.filter(m=>m.status==="pendente");
   return(
@@ -1153,7 +1153,7 @@ function AllMeetings({clients}){
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong style={{cursor:"pointer",color:"var(--n)",textDecoration:"underline"}} onClick={()=>openClient&&openClient(m.clientId)}>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
               {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
               {m.meet_link&&<a href={m.meet_link} target="_blank" rel="noopener noreferrer" style={{display:"inline-flex",alignItems:"center",gap:4,marginTop:6,fontSize:".75rem",fontWeight:600,color:"#1d4ed8",background:"#dbeafe",padding:"3px 10px",borderRadius:99,textDecoration:"none"}}>📹 Google Meet</a>}
             </div>
@@ -1425,7 +1425,7 @@ export default function App(){
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="meetings"?<AllMeetings clients={clients}/>:
+          tab==="meetings"?<AllMeetings clients={clients} openClient={id=>{setOpenC(id);setTab("clients");}}/>:
           tab==="documents"?<AllDocuments clients={clients} openClient={id=>{setOpenC(id);setTab("clients");}}/>:null}
         </main>
       </div>
