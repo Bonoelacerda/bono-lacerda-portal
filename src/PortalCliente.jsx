@@ -257,6 +257,30 @@ body { font-family:'DM Sans',sans-serif; background:var(--cr); color:var(--tx); 
 .cin:focus { border-color:var(--g); }
 .bsend { width:44px; height:44px; background:var(--n); border:none; border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--g); cursor:pointer; flex-shrink:0; }
 .bsend:hover { background:var(--nl); }
+.chat-reply-notice { background:rgba(201,168,76,.08); border:1px solid rgba(201,168,76,.25); border-radius:10px; padding:.65rem 1rem; text-align:center; font-size:.78rem; color:#92400e; margin-bottom:.75rem; }
+
+/* IRN TIMELINE — RESPONSIVE */
+.irn-track { display:flex; align-items:flex-start; margin-bottom:1.5rem; overflow-x:auto; padding-bottom:.5rem; }
+.irn-step  { display:flex; flex-direction:column; align-items:center; flex:1; min-width:55px; position:relative; }
+.irn-line  { position:absolute; top:18px; right:50%; width:100%; height:2px; background:#e2ddd5; z-index:0; }
+.irn-line.lit { background:var(--g); }
+.irn-circle-wrap { display:flex; flex-direction:column; align-items:center; z-index:1; position:relative; }
+.irn-circle { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700; transition:all .3s; background:#f5f0e8; color:#bbb; border:2px solid #e2ddd5; }
+.irn-circle.done   { background:var(--g); color:var(--n); border:none; }
+.irn-circle.active { background:var(--n); color:var(--g); border:2px solid var(--g); box-shadow:0 0 0 4px rgba(201,168,76,.2); }
+.irn-label { font-size:.68rem; margin-top:6px; text-align:center; color:var(--mu); line-height:1.3; }
+.irn-label.done   { color:var(--g); }
+.irn-label.active { color:var(--n); font-weight:700; }
+.irn-dot { display:block; font-size:.6rem; color:var(--g); font-weight:700; margin-top:2px; }
+
+@media (max-width:600px) {
+  .irn-track { flex-direction:column; overflow-x:visible; padding-bottom:0; gap:0; }
+  .irn-step  { flex-direction:row; flex:unset; width:100%; min-width:unset; align-items:flex-start; padding:.5rem 0; }
+  .irn-line  { position:absolute; top:0; right:unset; left:17px; width:2px; height:100%; }
+  .irn-circle-wrap { flex-direction:row; gap:.75rem; align-items:center; }
+  .irn-label { text-align:left; margin-top:0; font-size:.82rem; }
+  .irn-dot   { display:inline; margin-left:.4rem; }
+}
 
 /* TYPE SELECTOR */
 .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-top:.25rem; }
@@ -404,45 +428,24 @@ function IRNTimeline({ proc, submissao }) {
         </div>
       )}
 
-      {/* Horizontal step track — desktop */}
-      <div style={{ display:"flex", alignItems:"flex-start", gap:0, marginBottom:"1.5rem", overflowX:"auto", paddingBottom:".5rem" }}>
+      {/* Step track — horizontal desktop, vertical mobile */}
+      <div className="irn-track">
         {IRN_STEPS.map((s, i) => {
-          const done    = s.num < currentStep;
-          const active  = s.num === currentStep;
-          const future  = s.num > currentStep;
+          const done   = s.num < currentStep;
+          const active = s.num === currentStep;
           return (
-            <div key={s.num} style={{ display:"flex", flexDirection:"column", alignItems:"center", flex:1, minWidth:60, position:"relative" }}>
-              {/* Connector line */}
-              {i > 0 && (
-                <div style={{
-                  position:"absolute", top:18, right:"50%", width:"100%", height:2,
-                  background: done || active ? "var(--g)" : "#e2ddd5",
-                  zIndex:0
-                }}/>
-              )}
-              {/* Circle */}
-              <div style={{
-                width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center",
-                fontSize:".85rem", fontWeight:700, zIndex:1, position:"relative", transition:"all .3s",
-                background: done ? "var(--g)" : active ? "var(--n)" : "#f5f0e8",
-                color: done ? "var(--n)" : active ? "var(--g)" : "#bbb",
-                border: active ? "2px solid var(--g)" : done ? "none" : "2px solid #e2ddd5",
-                boxShadow: active ? "0 0 0 4px rgba(201,168,76,.2)" : "none",
-              }}>
-                {done ? "✓" : s.num}
+            <div key={s.num} className="irn-step">
+              {/* Connector — desktop horizontal, mobile vertical */}
+              {i > 0 && <div className={`irn-line${done || active ? " lit" : ""}`} />}
+              <div className="irn-circle-wrap">
+                <div className={`irn-circle${done ? " done" : active ? " active" : ""}`}>
+                  {done ? "✓" : s.num}
+                </div>
+                <div className={`irn-label${active ? " active" : done ? " done" : ""}`}>
+                  {s.label}
+                  {active && <span className="irn-dot">● actual</span>}
+                </div>
               </div>
-              {/* Label */}
-              <div style={{
-                fontSize:".68rem", marginTop:6, textAlign:"center", fontWeight: active ? 700 : 400,
-                color: done ? "var(--g)" : active ? "var(--n)" : "var(--mu)",
-                lineHeight:1.3
-              }}>
-                {s.label}
-              </div>
-              {/* Active indicator */}
-              {active && (
-                <div style={{ fontSize:".6rem", color:"var(--g)", fontWeight:700, marginTop:2 }}>● actual</div>
-              )}
             </div>
           );
         })}
@@ -931,9 +934,10 @@ function Meetings({ proc, client }) {
 
 // ── CHAT ──────────────────────────────────────────────────────────────────────
 function Chat({ client, proc }) {
-  const [msgs,  setMsgs]  = useState([]);
-  const [input, setInput] = useState("");
-  const [ld,    setLd]    = useState(true);
+  const [msgs,       setMsgs]       = useState([]);
+  const [input,      setInput]      = useState("");
+  const [ld,         setLd]         = useState(true);
+  const [justSent,   setJustSent]   = useState(false);
   const bot = useRef();
 
   useEffect(() => {
@@ -946,9 +950,14 @@ function Chat({ client, proc }) {
   const send = async () => {
     if (!input.trim() || !proc) return;
     const saved = await db.post("messages", { process_id:proc.id, from_role:"client", text:input });
-    if (saved[0]) setMsgs(m => [...m, saved[0]]);
+    if (saved[0]) {
+      setMsgs(m => [...m, saved[0]]);
+      setJustSent(true);
+    }
     setInput("");
   };
+
+  const clientMsgsCount = msgs.filter(m => m.from_role === "client").length;
 
   return (
     <div>
@@ -964,6 +973,10 @@ function Chat({ client, proc }) {
           </div>
           {ld ? <Loader /> : (
             <div className="cms">
+              {/* Aviso de tempo de resposta — aparece sempre no topo */}
+              <div className="chat-reply-notice">
+                🕐 A nossa equipa responde normalmente em até <strong>24 horas úteis</strong>. Estamos aqui para si!
+              </div>
               {msgs.map(m => (
                 <div key={m.id} className={`mr${m.from_role==="client"?" mi":""}`}>
                   <div>
@@ -972,13 +985,19 @@ function Chat({ client, proc }) {
                   </div>
                 </div>
               ))}
-              {!msgs.length && <p style={{ textAlign:"center", color:"var(--mu)", padding:"2rem", fontSize:".88rem" }}>Diga olá! 👋</p>}
+              {!msgs.length && <p style={{ textAlign:"center", color:"var(--mu)", padding:"2rem", fontSize:".88rem" }}>Diga olá! 👋<br/><span style={{fontSize:".8rem"}}>Envie a sua mensagem e respondemos em breve.</span></p>}
+              {/* Confirmação após envio */}
+              {justSent && clientMsgsCount >= 1 && (
+                <div style={{ textAlign:"center", padding:".5rem", fontSize:".78rem", color:"var(--ok)", fontWeight:600 }}>
+                  ✅ Mensagem enviada! Responderemos em até 24h úteis.
+                </div>
+              )}
               <div ref={bot} />
             </div>
           )}
           <div className="cir">
             <textarea className="cin" rows={1} placeholder="Digite a sua mensagem…" value={input}
-              onChange={e => setInput(e.target.value)}
+              onChange={e => { setInput(e.target.value); setJustSent(false); }}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <button className="bsend" onClick={send}><Icon name="send" size={16} /></button>
           </div>
