@@ -534,6 +534,81 @@ function Dashboard({ client, proc, steps }) {
           <div className="ss" style={{ marginTop:4 }}>{fmtd(proc.last_update)}</div>
         </div>
       </div>
+
+      {/* ── PREVISÃO DE JULGAMENTO ─────────────────────────────────────── */}
+      {(() => {
+        const artigo = (client.artigo || proc.type || '').toLowerCase();
+        const arquivo = (proc.arquivo || '').toLowerCase();
+        const protocolo = proc.opened_at || '';
+
+        // Tabela de prazos IRN (actualizada Janeiro/Fevereiro 2026)
+        // Formato: { artigo_key, arquivo_key, julgando_desde, fonte }
+        const PRAZOS = [
+          { match: a => a.includes('6') && (a.includes('n.º 7') || a.includes('no 7') || a.includes('n7')),
+            porto:  { julgando: '2ª quinzena de maio de 2022',     fonte: 'ACP — Jan/2026' },
+            lisboa: { julgando: '1ª quinzena de maio de 2021',     fonte: 'CRC Lisboa — Fev/2026' } },
+          { match: a => a.includes('6') && (a.includes('n.º 1') || a.includes('no 1') || a.includes('n1')),
+            porto:  { julgando: '2ª quinzena de setembro de 2023', fonte: 'ACP — Jan/2026' },
+            lisboa: { julgando: '1ª quinzena de janeiro de 2024',  fonte: 'CRC Lisboa — Fev/2026' } },
+          { match: a => a.includes('6') && (a.includes('n.º 2') || a.includes('no 2') || a.includes('n2')),
+            porto:  { julgando: '1ª quinzena de setembro de 2025', fonte: 'ACP — Jan/2026' },
+            lisboa: { julgando: '2ª quinzena de fevereiro de 2026',fonte: 'CRC Lisboa — Fev/2026' } },
+          { match: a => a.includes('1') && (a.includes('alínea d') || a.includes('alinea d') || a.includes('1.º d') || a.includes('1o d')),
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de fevereiro de 2026',fonte: 'CRC Lisboa — Fev/2026' } },
+          { match: a => a.includes('1') && (a.includes('alínea c') || a.includes('alinea c') || a.includes('inscrição') || a.includes('inscricao')),
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'CRC Lisboa — Fev/2026' } },
+        ];
+
+        const isPorto  = arquivo.includes('porto');
+        const isLisboa = arquivo.includes('central') || arquivo.includes('conservatória') || arquivo.includes('conservatoria') || arquivo.includes('lisboa');
+
+        const prazo = PRAZOS.find(p => p.match(artigo));
+        if (!prazo) return null;
+
+        const info = isPorto ? prazo.porto : isLisboa ? prazo.lisboa : null;
+        if (!info || info.julgando === '—') return null;
+
+        // Calculate approximate wait: compare protocolo with julgando date
+        const isLate = protocolo && new Date(protocolo) < new Date('2022-06-01');
+        const isRecent = protocolo && new Date(protocolo) > new Date('2024-06-01');
+
+        return (
+          <div style={{ background:"linear-gradient(135deg, rgba(29,53,87,.04) 0%, rgba(201,168,76,.06) 100%)", border:"1px solid rgba(201,168,76,.3)", borderRadius:14, padding:"1.1rem 1.4rem", marginBottom:"1.25rem" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:".9rem" }}>
+              <span style={{ fontSize:"1.2rem" }}>⏱️</span>
+              <span style={{ fontFamily:"'Cormorant Garamond',serif", fontSize:"1.05rem", fontWeight:600, color:"var(--n)" }}>
+                Previsão de Análise pelo IRN
+              </span>
+              <span style={{ marginLeft:"auto", fontSize:".7rem", color:"var(--mu)", background:"var(--bo)", padding:"2px 8px", borderRadius:99 }}>{info.fonte}</span>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem" }}>
+              <div style={{ background:"rgba(255,255,255,.6)", borderRadius:10, padding:".75rem 1rem", border:"1px solid var(--bo)" }}>
+                <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--mu)", marginBottom:4 }}>📅 O seu processo entrou em</div>
+                <div style={{ fontWeight:700, fontSize:".95rem", color:"var(--n)" }}>
+                  {protocolo ? fmtd(protocolo) : "—"}
+                </div>
+                <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || proc.type}</div>
+              </div>
+              <div style={{ background:"rgba(201,168,76,.08)", borderRadius:10, padding:".75rem 1rem", border:"1px solid rgba(201,168,76,.3)" }}>
+                <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"#92400e", marginBottom:4 }}>⚖️ IRN a analisar processos de</div>
+                <div style={{ fontWeight:700, fontSize:".95rem", color:"#92400e" }}>
+                  {info.julgando}
+                </div>
+                <div style={{ fontSize:".75rem", color:"#b45309", marginTop:3 }}>
+                  {isPorto ? "Arquivo Central do Porto" : "Conservatória dos Registos Centrais"}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop:".85rem", fontSize:".78rem", color:"var(--mu)", lineHeight:1.6, padding:".65rem .9rem", background:"rgba(255,255,255,.5)", borderRadius:8, border:"1px solid var(--bo)" }}>
+              💡 <strong style={{color:"var(--n)"}}>O que isto significa:</strong> O IRN analisa os processos pela ordem de entrada. Actualmente estão a analisar processos que entraram na <strong style={{color:"var(--n)"}}>{info.julgando}</strong>. Quanto mais próxima for a sua data de protocolo desta data, mais perto está da análise do seu processo.
+              {isLate && <span style={{color:"var(--ok)",fontWeight:600}}> O seu processo está na fila para análise em breve!</span>}
+              {isRecent && <span style={{color:"#92400e"}}> O seu processo é mais recente e aguarda que os anteriores sejam analisados primeiro.</span>}
+            </div>
+          </div>
+        );
+      })()}
       <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
         <div className="card">
           <div className="ct">Etapas do Processo IRN</div>
