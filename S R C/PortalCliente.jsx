@@ -338,6 +338,132 @@ function Login({ onLogin }) {
   );
 }
 
+// ── IRN TIMELINE ──────────────────────────────────────────────────────────────
+// As 7 etapas reais do site IRN (nacionalidadeonline.justica.gov.pt)
+const IRN_STEPS = [
+  { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN." },
+  { num:2, label:"Registado",   icon:"📋", desc:"Pedido registado no sistema IRN." },
+  { num:3, label:"Consultas",   icon:"🔍", desc:"IRN a consultar entidades externas." },
+  { num:4, label:"Documentos",  icon:"📄", desc:"Análise da documentação submetida." },
+  { num:5, label:"Análise",     icon:"⚖️",  desc:"Análise jurídica do pedido em curso." },
+  { num:6, label:"Despacho",    icon:"✍️",  desc:"Decisão final em elaboração." },
+  { num:7, label:"Terminado",   icon:"🎉", desc:"Processo concluído." },
+];
+
+function IRNTimeline({ proc, submissao }) {
+  // Map process status/fonte to IRN step
+  const getStep = () => {
+    if (!proc) return 0;
+    const status = (proc.status || '').toLowerCase();
+    const sub    = (proc.submissao_irn || submissao || '');
+    const arquivo = (proc.arquivo || '');
+
+    if (status === 'concluido') return 7;
+    if (status === 'aguardando') return 1; // Correção pendente = ainda no início
+    // Has submissão IRN = at least step 2 (Registado)
+    if (sub) {
+      // Check numeroProcessoIRN hints for further steps
+      // Default: submitted = step 2 Registado, em análise = step 5
+      const fonte = (proc.type || '').toLowerCase();
+      if (status === 'em_andamento' && sub) return 2;
+    }
+    return 1;
+  };
+
+  const currentStep = proc?.current_step || getStep();
+  const submissaoText = proc?.submissao_irn || submissao || '';
+
+  // Parse submissao date: "IRN-17066/2023 de 2023/12/29"
+  let submissaoDate = '';
+  if (submissaoText) {
+    const match = submissaoText.match(/de (\d{4}\/\d{2}\/\d{2})/);
+    if (match) submissaoDate = match[1].replace(/\//g, '-');
+  }
+
+  return (
+    <div>
+      {/* Submission info */}
+      {submissaoText && (
+        <div style={{ background:"rgba(201,168,76,.08)", border:"1px solid rgba(201,168,76,.25)", borderRadius:10, padding:".65rem 1rem", marginBottom:"1.25rem", fontSize:".8rem", color:"var(--n)" }}>
+          <span style={{ color:"var(--mu)", marginRight:6 }}>📌 Submissão:</span>
+          <strong>{submissaoText}</strong>
+        </div>
+      )}
+
+      {/* Horizontal step track — desktop */}
+      <div style={{ display:"flex", alignItems:"flex-start", gap:0, marginBottom:"1.5rem", overflowX:"auto", paddingBottom:".5rem" }}>
+        {IRN_STEPS.map((s, i) => {
+          const done    = s.num < currentStep;
+          const active  = s.num === currentStep;
+          const future  = s.num > currentStep;
+          return (
+            <div key={s.num} style={{ display:"flex", flexDirection:"column", alignItems:"center", flex:1, minWidth:60, position:"relative" }}>
+              {/* Connector line */}
+              {i > 0 && (
+                <div style={{
+                  position:"absolute", top:18, right:"50%", width:"100%", height:2,
+                  background: done || active ? "var(--g)" : "#e2ddd5",
+                  zIndex:0
+                }}/>
+              )}
+              {/* Circle */}
+              <div style={{
+                width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:".85rem", fontWeight:700, zIndex:1, position:"relative", transition:"all .3s",
+                background: done ? "var(--g)" : active ? "var(--n)" : "#f5f0e8",
+                color: done ? "var(--n)" : active ? "var(--g)" : "#bbb",
+                border: active ? "2px solid var(--g)" : done ? "none" : "2px solid #e2ddd5",
+                boxShadow: active ? "0 0 0 4px rgba(201,168,76,.2)" : "none",
+              }}>
+                {done ? "✓" : s.num}
+              </div>
+              {/* Label */}
+              <div style={{
+                fontSize:".68rem", marginTop:6, textAlign:"center", fontWeight: active ? 700 : 400,
+                color: done ? "var(--g)" : active ? "var(--n)" : "var(--mu)",
+                lineHeight:1.3
+              }}>
+                {s.label}
+              </div>
+              {/* Active indicator */}
+              {active && (
+                <div style={{ fontSize:".6rem", color:"var(--g)", fontWeight:700, marginTop:2 }}>● actual</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Active step detail card */}
+      {IRN_STEPS.filter(s => s.num === currentStep).map(s => (
+        <div key={s.num} style={{
+          background:"linear-gradient(135deg, rgba(15,30,53,.04), rgba(201,168,76,.06))",
+          border:"1px solid rgba(201,168,76,.2)", borderRadius:12, padding:"1rem 1.25rem",
+          display:"flex", gap:".75rem", alignItems:"flex-start"
+        }}>
+          <div style={{ fontSize:"1.5rem", lineHeight:1 }}>{s.icon}</div>
+          <div>
+            <div style={{ fontWeight:700, fontSize:".9rem", color:"var(--n)", marginBottom:3 }}>
+              Etapa {s.num} de 7 — {s.label}
+            </div>
+            <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.5 }}>{s.desc}</div>
+            {proc?.arquivo && (
+              <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
+                🏛️ {proc.arquivo}
+              </div>
+            )}
+            {submissaoDate && (
+              <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>
+                📅 Submetido a {new Date(submissaoDate).toLocaleDateString("pt-BR")}
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function Dashboard({ client, proc, steps }) {
   const done = steps.filter(s => s.done).length;
@@ -410,20 +536,8 @@ function Dashboard({ client, proc, steps }) {
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
         <div className="card">
-          <div className="ct">Etapas do Processo</div>
-          <div className="tl">
-            {steps.map(s => {
-              const isA = s.step_order === proc.current_step, isDn = s.done && !isA;
-              return (
-                <div key={s.id} className="ti">
-                  <div className={`td${isA?" ac":isDn?" dn":""}`}>{isDn && <Icon name="check" size={11} />}</div>
-                  <div className={`tit${!s.done?" mu":""}`}>{s.title}</div>
-                  <div className="tdt">{s.date}</div>
-                  {(s.done || isA) && <div className="tde">{s.detail}</div>}
-                </div>
-              );
-            })}
-          </div>
+          <div className="ct">Etapas do Processo IRN</div>
+          <IRNTimeline proc={proc} submissao={client.observacao} />
         </div>
         <div style={{ display:"flex", flexDirection:"column", gap:"1.25rem" }}>
           <div className="card">
