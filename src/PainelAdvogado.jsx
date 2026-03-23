@@ -31,6 +31,8 @@ const api = {
 const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const ini  = n => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
+// Valida pendências — ignora null, undefined, "nan", "null", string vazia
+const validPend = v => v && typeof v === "string" && v.trim() !== "" && v.toLowerCase() !== "nan" && v.toLowerCase() !== "null" && v.toLowerCase() !== "undefined";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}) : "";
 
 function Icon({ name, size=18 }) {
@@ -235,7 +237,7 @@ function Dash({ clients }) {
   const total       = clients.length;
   const comChave    = clients.filter(c => c.chave_acesso).length;
   const semChave    = clients.filter(c => !c.chave_acesso).length;
-  const pendentes   = clients.filter(c => c.pendencias).length;
+  const pendentes   = clients.filter(c => validPend(c.pendencias)).length;
   const emAndamento = clients.filter(c => c.proc?.status === "em_andamento").length;
   const aguardando  = clients.filter(c => c.proc?.status === "aguardando").length;
   const porto       = clients.filter(c => c.proc?.arquivo?.includes("Porto")).length;
@@ -248,7 +250,7 @@ function Dash({ clients }) {
     : [];
 
   // Clients with pendencias
-  const comPendencias = clients.filter(c => c.pendencias).slice(0, 8);
+  const comPendencias = clients.filter(c => validPend(c.pendencias)).slice(0, 8);
 
   return (
     <div>
@@ -311,7 +313,7 @@ function Dash({ clients }) {
                     <div style={{fontWeight:600,fontSize:".85rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
                     <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} · <StatusBadge s={c.proc?.status}/></div>
                   </div>
-                  {c.pendencias && <span title={c.pendencias} style={{fontSize:"1rem"}}>⚠️</span>}
+                  {validPend(c.pendencias) && <span title={c.pendencias} style={{fontSize:"1rem"}}>⚠️</span>}
                 </div>
               ))
           )}
@@ -841,7 +843,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
         ].map(([k,v])=>(
           <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".85rem",maxWidth:220}}>{v}</div></div>
         ))}
-        {client.pendencias&&(
+        {validPend(client.pendencias)&&(
           <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:8,padding:".6rem .9rem"}}>
             <div style={{fontWeight:600,fontSize:".78rem",color:"#92400e"}}>⚠️ {client.pendencias}</div>
             {client.observacao&&<div style={{fontSize:".75rem",color:"#b45309",marginTop:2}}>{client.observacao}</div>}
@@ -1124,16 +1126,8 @@ export default function App(){
     const ws=new WebSocket(wsUrl);
     let hb;
     ws.onopen=()=>{
-      // Subscreve reuniões
-      ws.send(JSON.stringify({
-        topic:'realtime:public:meetings',event:'phx_join',ref:'1',
-        payload:{config:{broadcast:{self:false},presence:{key:''},postgres_changes:[{event:'INSERT',schema:'public',table:'meetings'}]}}
-      }));
-      // Subscreve documentos
-      ws.send(JSON.stringify({
-        topic:'realtime:public:documents',event:'phx_join',ref:'2',
-        payload:{config:{broadcast:{self:false},presence:{key:''},postgres_changes:[{event:'INSERT',schema:'public',table:'documents'}]}}
-      }));
+      ws.send(JSON.stringify({topic:'realtime:public:meetings',event:'phx_join',ref:'1',payload:{config:{broadcast:{self:false},presence:{key:''},postgres_changes:[{event:'INSERT',schema:'public',table:'meetings'}]}}}));
+      ws.send(JSON.stringify({topic:'realtime:public:documents',event:'phx_join',ref:'2',payload:{config:{broadcast:{self:false},presence:{key:''},postgres_changes:[{event:'INSERT',schema:'public',table:'documents'}]}}}));
       hb=setInterval(()=>ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'})),30000);
     };
     ws.onmessage=e=>{
@@ -1143,9 +1137,7 @@ export default function App(){
           const rec=msg.payload.data.record;
           if(!rec) return;
           const table=msg.payload.data.table||msg.topic?.split(':')?.[2];
-
           if(table==='meetings'||rec.date){
-            // Nova reunião
             setClients(cs=>cs.map(c=>{
               if(!c.proc||c.proc.id!==rec.process_id) return c;
               if((c.meetings||[]).find(x=>x.id===rec.id)) return c;
@@ -1153,18 +1145,15 @@ export default function App(){
             }));
             showToast('📅 Nova reunião solicitada por um cliente!');
           } else if(table==='documents'||rec.file_name||rec.url){
-            // Novo documento
-            setClients(cs=>cs.map(c=>{
-              if(!c.proc||c.proc.id!==rec.process_id) return c;
-              if((c.docs||[]).find(x=>x.id===rec.id)) return c;
-              return{...c,docs:[...(c.docs||[]),rec]};
-            }));
-            // Find client name for the toast
             setClients(cs=>{
               const client=cs.find(c=>c.proc&&c.proc.id===rec.process_id);
               const nome=client?client.name.split(' ')[0]:'Um cliente';
               showToast(`📄 ${nome} enviou um novo documento!`);
-              return cs;
+              return cs.map(c=>{
+                if(!c.proc||c.proc.id!==rec.process_id) return c;
+                if((c.docs||[]).find(x=>x.id===rec.id)) return c;
+                return{...c,docs:[...(c.docs||[]),rec]};
+              });
             });
           }
         }
