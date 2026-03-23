@@ -49,6 +49,7 @@ function Icon({ name, size = 20 }) {
     chat:     <svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
     cal:      <svg {...p}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
     logout:   <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+    users:    <svg {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
     upload:   <svg {...p}><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>,
     send:     <svg {...p}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>,
     check:    <svg {...p}><polyline points="20,6 9,17 4,12"/></svg>,
@@ -1025,6 +1026,168 @@ function Chat({ client, proc }) {
   );
 }
 
+// ── PERFIL ────────────────────────────────────────────────────────────────────
+function Perfil({ client, toast, onUpdate }) {
+  const [form,   setForm]   = useState({
+    email:    client.email    || "",
+    phone:    client.phone    || "",
+    whatsapp: client.whatsapp || client.phone || "",
+    address:  client.address  || "",
+    city:     client.city     || "",
+    state:    client.state    || "",
+    zip:      client.zip      || "",
+    country:  client.country  || "Brasil",
+  });
+  const [saving, setSaving] = useState(false);
+  const [saved,  setSaved]  = useState(false);
+
+  const set = (f, v) => { setForm(p => ({ ...p, [f]: v })); setSaved(false); };
+
+  const save = async () => {
+    if (!form.email.trim()) { toast("Por favor insira um email válido."); return; }
+    setSaving(true);
+    const payload = {
+      email:    form.email.trim(),
+      phone:    form.phone.trim(),
+      whatsapp: form.whatsapp.trim(),
+      address:  form.address.trim(),
+      city:     form.city.trim(),
+      state:    form.state.trim(),
+      zip:      form.zip.trim(),
+      country:  form.country.trim(),
+    };
+    const r = await db.patch("clients", client.id, payload);
+    if (r[0]) { onUpdate({ ...client, ...payload }); setSaved(true); toast("✅ Dados actualizados com sucesso!"); }
+    else toast("Erro ao guardar. Tente novamente.");
+    setSaving(false);
+  };
+
+  // State/region label changes by country
+  const stateLabel = ["Brasil"].includes(form.country) ? "Estado"
+    : ["Portugal","Espanha","França","Itália","Alemanha"].includes(form.country) ? "Região / Distrito"
+    : ["EUA","Canadá","Austrália","México"].includes(form.country) ? "Estado / Província"
+    : "Estado / Região";
+
+  const zipLabel = ["Brasil"].includes(form.country) ? "CEP"
+    : ["Portugal"].includes(form.country) ? "Código Postal"
+    : ["EUA","Canadá"].includes(form.country) ? "ZIP Code"
+    : ["Reino Unido"].includes(form.country) ? "Postcode"
+    : "Código Postal";
+
+  const COUNTRIES = [
+    "Brasil","Portugal","Angola","Cabo Verde","Moçambique","São Tomé e Príncipe",
+    "Guiné-Bissau","Timor-Leste",
+    "---",
+    "Alemanha","Argentina","Austrália","Áustria","Bélgica","Bolívia","Canadá",
+    "Chile","China","Colômbia","Dinamarca","Equador","Espanha","EUA","Finlândia",
+    "França","Grécia","Holanda","Hungria","Índia","Irlanda","Israel","Itália",
+    "Japão","México","Noruega","Nova Zelândia","Panamá","Paraguai","Peru",
+    "Polónia","Reino Unido","República Checa","Roménia","Rússia","Suécia",
+    "Suíça","Turquia","Ucrânia","Uruguai","Venezuela","Outro",
+  ];
+
+  return (
+    <div>
+      <div className="ph">
+        <h1>Meu Perfil</h1>
+        <p>Mantenha os seus dados de contacto actualizados.</p>
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:"1.25rem", maxWidth:560 }}>
+
+        {/* Identity card */}
+        <div className="card" style={{ padding:"1.5rem", display:"flex", alignItems:"center", gap:"1.25rem" }}>
+          <div className="av" style={{ width:64, height:64, fontSize:"1.4rem", flexShrink:0 }}>{ini(client.name)}</div>
+          <div>
+            <div style={{ fontWeight:700, fontSize:"1.1rem", color:"var(--n)" }}>{client.name}</div>
+            <div style={{ fontSize:".82rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || "Nacionalidade Portuguesa"}</div>
+            <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>🔑 {client.chave_acesso}</div>
+          </div>
+        </div>
+
+        {/* Contact form */}
+        <div className="card" style={{ padding:"1.5rem" }}>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.05rem", color:"var(--n)", marginBottom:"1.25rem", fontWeight:600 }}>
+            Dados de Contacto
+          </div>
+
+          <div className="fg" style={{ marginBottom:"1rem" }}>
+            <label>📧 Email</label>
+            <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="o.seu@email.com" />
+            <div style={{ fontSize:".72rem", color:"var(--mu)", marginTop:4 }}>Usado para comunicações do escritório</div>
+          </div>
+
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem", marginBottom:"1rem" }}>
+            <div className="fg">
+              <label>📞 Telefone</label>
+              <input type="tel" value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+55 11 99999-9999" />
+            </div>
+            <div className="fg">
+              <label>💬 WhatsApp</label>
+              <input type="tel" value={form.whatsapp} onChange={e => set("whatsapp", e.target.value)} placeholder="+55 11 99999-9999" />
+              <div style={{ fontSize:".72rem", color:"var(--mu)", marginTop:4 }}>Pode ser diferente do telefone</div>
+            </div>
+          </div>
+
+          {/* Address section */}
+          <div style={{ borderTop:"1px solid var(--bo)", paddingTop:"1rem", marginTop:".5rem", marginBottom:"1rem" }}>
+            <div style={{ fontSize:".72rem", fontWeight:600, color:"var(--mu)", textTransform:"uppercase", letterSpacing:".07em", marginBottom:".85rem" }}>
+              📍 Endereço
+            </div>
+
+            {/* Country first — affects labels below */}
+            <div className="fg" style={{ marginBottom:"1rem" }}>
+              <label>🌍 País</label>
+              <select value={form.country} onChange={e => set("country", e.target.value)}
+                style={{ width:"100%", padding:".65rem .9rem", border:"1.5px solid var(--bo)", borderRadius:10, fontFamily:"'DM Sans',sans-serif", fontSize:".9rem", color:"var(--tx)", background:"var(--bg)", outline:"none" }}>
+                {COUNTRIES.map(c => c === "---"
+                  ? <option key="---" disabled>──────────────</option>
+                  : <option key={c} value={c}>{c}</option>
+                )}
+              </select>
+            </div>
+
+            <div className="fg" style={{ marginBottom:"1rem" }}>
+              <label>Rua / Avenida</label>
+              <input type="text" value={form.address} onChange={e => set("address", e.target.value)} placeholder="Nome da rua, número, complemento" />
+            </div>
+
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem", marginBottom:"1rem" }}>
+              <div className="fg">
+                <label>Cidade</label>
+                <input type="text" value={form.city} onChange={e => set("city", e.target.value)} placeholder="Cidade" />
+              </div>
+              <div className="fg">
+                <label>{stateLabel}</label>
+                <input type="text" value={form.state} onChange={e => set("state", e.target.value)} placeholder={stateLabel} />
+              </div>
+            </div>
+
+            <div className="fg">
+              <label>{zipLabel}</label>
+              <input type="text" value={form.zip} onChange={e => set("zip", e.target.value)} placeholder="Código postal" style={{ maxWidth:200 }} />
+            </div>
+          </div>
+
+          <button onClick={save} disabled={saving} style={{
+            width:"100%", padding:".85rem", background: saved ? "var(--ok)" : "var(--n)",
+            color:"#fff", border:"none", borderRadius:12, fontFamily:"'DM Sans',sans-serif",
+            fontSize:".95rem", fontWeight:600, cursor: saving ? "not-allowed" : "pointer",
+            transition:"all .2s", display:"flex", alignItems:"center", justifyContent:"center", gap:".6rem", opacity: saving ? .7 : 1,
+          }}>
+            {saving ? <><Icon name="spin" size={16} /> A guardar…</>
+            : saved  ? <><Icon name="check" size={16} /> Dados guardados!</>
+            :           <>💾 Guardar alterações</>}
+          </button>
+        </div>
+
+        <div style={{ background:"rgba(201,168,76,.06)", border:"1px solid rgba(201,168,76,.2)", borderRadius:12, padding:"1rem 1.25rem", fontSize:".8rem", color:"var(--mu)", lineHeight:1.7 }}>
+          <strong style={{ color:"var(--n)" }}>ℹ️ Nota:</strong> As suas informações são confidenciais e utilizadas exclusivamente pelo escritório Bono & Lacerda para comunicações relacionadas com o seu processo.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [client,  setClient]  = useState(null);
@@ -1053,6 +1216,7 @@ export default function App() {
     { id:"meetings", label:"Reuniões",      ic:"cal"  },
     { id:"notifs",   label:"Notificações",  ic:"bell" },
     { id:"chat",     label:"Chat",          ic:"chat" },
+    { id:"perfil",   label:"Meu Perfil",    ic:"users"},
   ];
 
   if (!client) return <><style>{css}</style><Login onLogin={onLogin} /></>;
@@ -1108,6 +1272,7 @@ export default function App() {
               {tab === "meetings" && <Meetings proc={proc} client={client} />}
               {tab === "notifs"   && <Notifs client={client} />}
               {tab === "chat"     && <Chat client={client} proc={proc} />}
+              {tab === "perfil"   && <Perfil client={client} toast={showToast} onUpdate={c => setClient(c)} />}
             </>
           )}
         </main>
@@ -1121,7 +1286,8 @@ export default function App() {
                 {n.label === "Visão Geral" ? "Início" :
                  n.label === "Documentos" ? "Docs" :
                  n.label === "Reuniões" ? "Reuniões" :
-                 n.label === "Notificações" ? "Avisos" : "Chat"}
+                 n.label === "Notificações" ? "Avisos" :
+                 n.label === "Meu Perfil" ? "Perfil" : "Chat"}
               </button>
             ))}
           </div>
