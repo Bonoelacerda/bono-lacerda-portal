@@ -85,7 +85,8 @@ body::before {
 }
 
 /* ── LOGIN ── */
-.lw { min-height:100vh; display:flex; flex-wrap:wrap; overflow-x:hidden; width:100%; max-width:100vw; position:relative; }
+.login-wrap { display:flex; flex-direction:column; min-height:100vh; width:100%; max-width:100vw; }
+.lw { flex:1; display:flex; overflow-x:hidden; width:100%; }
 .ll { width:44%; background:linear-gradient(160deg, var(--nd) 0%, #0c1a2f 50%, #14294a 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3rem; position:relative; overflow:hidden; }
 .ll::before { content:''; position:absolute; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle, rgba(212,168,67,.06) 0%, transparent 70%); top:-200px; left:-200px; animation:float 8s ease-in-out infinite; }
 .ll::after  { content:''; position:absolute; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle, rgba(212,168,67,.04) 0%, transparent 70%); bottom:-120px; right:-120px; animation:float 10s ease-in-out infinite reverse; }
@@ -343,34 +344,36 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
   };
 
   return (
-    <div className="lw">
-      <div className="ll">
-        <div className="deco1" />
-        <div className="deco2" />
-        <div className="logo">
-          <div className="logo-ic"><img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="Bono & Lacerda" style={{width:54,height:54,objectFit:'contain'}} /></div>
-          <h1>Bono & Lacerda<br />Advogados</h1>
-          <p>Portal do Cliente</p>
+    <div className="login-wrap">
+      <div className="lw">
+        <div className="ll">
+          <div className="deco1" />
+          <div className="deco2" />
+          <div className="logo">
+            <div className="logo-ic"><img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="Bono & Lacerda" style={{width:54,height:54,objectFit:'contain'}} /></div>
+            <h1>Bono & Lacerda<br />Advogados</h1>
+            <p>Portal do Cliente</p>
+          </div>
+          <p className="ltag">Advocacia Internacional<br />Migração · Nacionalidade · Empresarial</p>
         </div>
-        <p className="ltag">Advocacia Internacional<br />Migração · Nacionalidade · Empresarial</p>
-      </div>
-      <div className="lr">
-        <div className="lc">
-          <h2>Bem-vindo</h2>
-          <p>Insira a sua chave de acesso para acompanhar o seu processo em tempo real.</p>
-          <input
-            className="chave-input"
-            placeholder="XXXX-XXXX-XXXX"
-            value={chave}
-            maxLength={14}
-            onChange={e => setChave(fmt(e.target.value))}
-            onKeyDown={e => e.key === "Enter" && go()}
-          />
-          <p className="chave-hint">A chave foi enviada pelo escritório Bono & Lacerda</p>
-          <button className="btnp" onClick={go} disabled={busy}>
-            {busy ? <><Icon name="spin" size={16} /> A verificar…</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
-          </button>
-          {err && <p className="errmsg">{err}</p>}
+        <div className="lr">
+          <div className="lc">
+            <h2>Bem-vindo</h2>
+            <p>Insira a sua chave de acesso para acompanhar o seu processo em tempo real.</p>
+            <input
+              className="chave-input"
+              placeholder="XXXX-XXXX-XXXX"
+              value={chave}
+              maxLength={14}
+              onChange={e => setChave(fmt(e.target.value))}
+              onKeyDown={e => e.key === "Enter" && go()}
+            />
+            <p className="chave-hint">A chave foi enviada pelo escritório Bono & Lacerda</p>
+            <button className="btnp" onClick={go} disabled={busy}>
+              {busy ? <><Icon name="spin" size={16} /> A verificar…</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
+            </button>
+            {err && <p className="errmsg">{err}</p>}
+          </div>
         </div>
       </div>
       <LegalFooter onOpen={setLegalDoc} />
@@ -1513,6 +1516,7 @@ export default function App() {
               {tab === "perfil"   && <Perfil client={client} toast={showToast} onUpdate={c => setClient(c)} />}
             </>
           )}
+          <LegalFooter onOpen={setLegalDoc} />
         </main>
 
         <nav className="mob-nav">
@@ -1531,7 +1535,6 @@ export default function App() {
         </nav>
 
       </div>
-      <LegalFooter onOpen={setLegalDoc} />
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
       {legalDoc && <LegalModal docKey={legalDoc} onClose={() => setLegalDoc(null)} />}
     </>
