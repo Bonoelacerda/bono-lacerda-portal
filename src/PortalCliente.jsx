@@ -373,6 +373,15 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
               {busy ? <><Icon name="spin" size={16} /> A verificar…</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
             </button>
             {err && <p className="errmsg">{err}</p>}
+            <div onClick={() => setLegalDoc('irn')} style={{ marginTop:"1.5rem", padding:".85rem 1.1rem", background:"rgba(212,168,67,.06)", border:"1px solid rgba(212,168,67,.18)", borderRadius:14, cursor:"pointer", transition:"all .25s", display:"flex", alignItems:"center", gap:".75rem" }}
+              onMouseOver={e => { e.currentTarget.style.background="rgba(212,168,67,.12)"; e.currentTarget.style.borderColor="rgba(212,168,67,.35)"; }}
+              onMouseOut={e => { e.currentTarget.style.background="rgba(212,168,67,.06)"; e.currentTarget.style.borderColor="rgba(212,168,67,.18)"; }}>
+              <span style={{ fontSize:"1.3rem" }}>🏛️</span>
+              <div>
+                <div style={{ fontSize:".82rem", fontWeight:600, color:"#fff", lineHeight:1.4 }}>Consulta Oficial do Processo</div>
+                <div style={{ fontSize:".72rem", color:"rgba(255,255,255,.45)", lineHeight:1.5 }}>A consulta vinculativa é feita no site do IRN com o seu Código de Consulta. <span style={{ color:"rgba(212,168,67,.7)", textDecoration:"underline" }}>Saber mais</span></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -581,6 +590,15 @@ function Dashboard({ client, proc, steps }) {
           <div className="sl">Artigo</div>
           <div style={{ fontWeight:700, fontSize:"1rem", color:"#fff", marginTop:6 }}>{client.artigo || proc.type || "—"}</div>
           <div className="ss" style={{ marginTop:4 }}>Nacionalidade Portuguesa</div>
+        </div>
+      </div>
+
+      {/* Aviso consulta oficial IRN */}
+      <div style={{ background:"linear-gradient(135deg, rgba(29,53,87,.04) 0%, rgba(212,168,67,.06) 100%)", border:"1px solid rgba(212,168,67,.18)", borderRadius:16, padding:"1rem 1.3rem", marginBottom:"1.5rem", display:"flex", alignItems:"center", gap:"1rem" }}>
+        <div style={{ width:42, height:42, borderRadius:12, background:"rgba(212,168,67,.1)", border:"1px solid rgba(212,168,67,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.3rem", flexShrink:0 }}>🏛️</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:".82rem", fontWeight:600, color:"#fff", marginBottom:2 }}>Consulta Oficial do Processo</div>
+          <div style={{ fontSize:".74rem", color:"rgba(255,255,255,.5)", lineHeight:1.55 }}>A consulta vinculativa do seu processo é feita em <a href="https://www.irn.justica.gov.pt" target="_blank" rel="noopener noreferrer" style={{ color:"var(--g)", textDecoration:"none", fontWeight:600 }}>irn.justica.gov.pt</a> com o seu Código de Consulta. Este portal é complementar.</div>
         </div>
       </div>
 
