@@ -26,109 +26,57 @@ const ini  = n => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}) : "";
 
-function Icon({ name, size=18 }) {
-  const p = { width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:"2", strokeLinecap:"round", strokeLinejoin:"round" };
-  const map = {
-    dash:   <svg {...p}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
-    users:  <svg {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-    cal:    <svg {...p}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-    plus:   <svg {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-    check:  <svg {...p}><polyline points="20,6 9,17 4,12"/></svg>,
-    trash:  <svg {...p}><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/><path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v2"/></svg>,
-    send:   <svg {...p}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>,
-    close:  <svg {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
-    logout: <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
-    search: <svg {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
-    arrow:  <svg {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>,
-    file:   <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>,
-    upload: <svg {...p}><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>,
-    bell:   <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
-    spin:   <svg {...p} style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
-  };
-  return map[name] || null;
-}
-
 const IRN_STEPS = [
-  { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN." },
-  { num:2, label:"Registado",   icon:"📋", desc:"Pedido registado no sistema." },
-  { num:3, label:"Consultas",   icon:"🔍", desc:"IRN a consultar entidades." },
-  { num:4, label:"Documentos",  icon:"📄", desc:"Análise de documentação." },
-  { num:5, label:"Análise",     icon:"⚖️",  desc:"Análise jurídica em curso." },
-  { num:6, label:"Despacho",    icon:"✍️",  desc:"Decisão final em elaboração." },
-  { num:7, label:"Terminado",   icon:"🎉", desc:"Processo concluído." },
+  { num: 1, label: "Análise" },
+  { num: 2, label: "Documentação" },
+  { num: 3, label: "Submissão" },
+  { num: 4, label: "Processamento" },
+  { num: 5, label: "Decisão" },
+  { num: 6, label: "Emissão" },
+  { num: 7, label: "Entrega" }
 ];
+
+function Icon({ name, size = 24, color = "currentColor" }) {
+  const icons = {
+    dash: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
+    users: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+    cal: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
+    plus: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>,
+    check: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>,
+    trash: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>,
+    send: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16346273 C3.34915502,0.9 2.40734225,0.9 1.77946707,1.4429026 C0.994623095,2.0772692 0.837654326,3.34915502 1.15159189,4.13399899 L3.03521743,10.5749919 C3.03521743,10.7320893 3.19218622,10.8891867 3.50612381,10.8891867 L16.6915026,11.6889879 C16.6915026,11.6889879 17.1624089,11.6889879 17.1624089,11.0546213 L17.1624089,12.4744748 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/></svg>,
+    close: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>,
+    logout: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 8l4-4m0 0l-4 4m4-4v12"/></svg>,
+    search: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+    arrow: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>,
+    file: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>,
+    upload: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
+    bell: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+    spin: <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke={color} strokeWidth="2" style={{animation:"spin 1s linear infinite"}}><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>,
+  };
+  return icons[name] || null;
+}
 
 const WA_TEMPLATES = [
   {
     id: "acesso",
     label: "🔑 Enviar Acesso ao Portal",
-    msg: (c) =>
-`Olá ${c.name.split(" ")[0]}! 👋
-
-O escritório *Bono & Lacerda Advogados* criou o seu portal exclusivo para acompanhar o seu processo de Nacionalidade Portuguesa.
-
-🔗 *Acesse agora:* bono-lacerda-portal.vercel.app
-🔑 *Chave de acesso:* ${c.chave_acesso || "—"}
-
-No portal pode acompanhar o estado do seu processo em tempo real, enviar documentos, agendar reuniões e enviar mensagens directamente para a equipa.
-
-Qualquer dúvida estamos disponíveis! 😊
-*Bono & Lacerda Advogados*
-📞 +351 21 793 1934`
+    msg: (c) => `Olá ${c.name.split(" ")[0]}! 👋\n\nO escritório *Bono & Lacerda Advogados* criou o seu portal exclusivo.\n\n🔗 *Acesse agora:* bono-lacerda-portal.vercel.app\n🔑 *Chave de acesso:* ${c.chave_acesso || "—"}\n\n*Portal do Cliente*\nSeu espaço seguro para gerenciar documentos e atualizações do seu processo.\n\n*Bono & Lacerda Advogados*\n📞 +351 21 793 1934`
   },
   {
     id: "atualizacao",
     label: "📋 Actualização do Processo",
-    msg: (c, proc) =>
-`Olá ${c.name.split(" ")[0]}! 👋
-
-Temos uma actualização sobre o seu processo de Nacionalidade Portuguesa.
-
-📌 *Estado actual:* ${proc?.status === "em_andamento" ? "Em andamento ✅" : proc?.status === "aguardando" ? "Aguardando documentos ⚠️" : "Concluído 🎉"}
-🏛️ *Local:* ${proc?.arquivo || "IRN"}
-📅 *Última atualização:* ${proc?.last_update ? new Date(proc.last_update).toLocaleDateString("pt-BR") : "—"}
-
-Para mais detalhes aceda ao portal:
-🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || "—"}
-
-*Bono & Lacerda Advogados*
-📞 +351 21 793 1934`
+    msg: (c, proc) => `Olá ${c.name.split(" ")[0]}! 👋\n\nTemos uma actualização sobre o seu processo de Nacionalidade Portuguesa.\n\n📌 *Estado actual:* ${proc?.status === "em_andamento" ? "Em andamento ✅" : proc?.status === "aguardando" ? "Aguardando documentos ⚠️" : "Concluído 🎉"}\n🏛️ *Local:* ${proc?.arquivo || "IRN"}\n📅 *Última atualização:* ${proc?.last_update ? new Date(proc.last_update).toLocaleDateString("pt-BR") : "—"}\n\nPara mais detalhes aceda ao portal:\n🔗 bono-lacerda-portal.vercel.app\n🔑 Chave: ${c.chave_acesso || "—"}\n\n*Bono & Lacerda Advogados*\n📞 +351 21 793 1934`
   },
   {
     id: "pendencia",
     label: "⚠️ Pendência Identificada",
-    msg: (c) =>
-`Olá ${c.name.split(" ")[0]}! 👋
-
-Identificámos uma pendência no seu processo que requer a sua atenção:
-
-⚠️ *Pendência:* ${c.pendencias || "Documentação em falta"}
-${c.observacao ? `📝 *Detalhe:* ${c.observacao}` : ""}
-
-Por favor envie os documentos necessários o mais breve possível para evitar atrasos no seu processo.
-
-Pode enviá-los directamente pelo portal:
-🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || "—"}
-
-*Bono & Lacerda Advogados*
-📞 +351 21 793 1934`
+    msg: (c) => `Olá ${c.name.split(" ")[0]}! 👋\n\nIdentificámos uma pendência no seu processo que requer a sua atenção:\n\n⚠️ *Pendência:* ${c.pendencias || "Documentação em falta"}\n${c.observacao ? `📝 *Detalhe:* ${c.observacao}` : ""}\n\nPor favor envie os documentos necessários o mais breve possível para evitar atrasos no seu processo.\n\nPode enviá-los directamente pelo portal:\n🔗 bono-lacerda-portal.vercel.app\n🔑 Chave: ${c.chave_acesso || "—"}\n\n*Bono & Lacerda Advogados*\n📞 +351 21 793 1934`
   },
   {
     id: "reuniao",
     label: "📅 Confirmar Reunião",
-    msg: (c) =>
-`Olá ${c.name.split(" ")[0]}! 👋
-
-A sua reunião com o escritório Bono & Lacerda foi confirmada. 🎉
-
-Consulte os detalhes no portal:
-🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || "—"}
-
-*Bono & Lacerda Advogados*
-📞 +351 21 793 1934`
+    msg: (c) => `Olá ${c.name.split(" ")[0]}! 👋\n\nA sua reunião com o escritório Bono & Lacerda foi confirmada. 🎉\n\nConsulte os detalhes no portal:\n🔗 bono-lacerda-portal.vercel.app\n🔑 Chave: ${c.chave_acesso || "—"}\n\n*Bono & Lacerda Advogados*\n📞 +351 21 793 1934`
   },
   {
     id: "custom",
@@ -564,7 +512,6 @@ function WhatsAppNotify({ client, proc, onClose, toast }) {
   );
 }
 
-/* ── LOGIN ────────────────────────────────────────────────────────────── */
 function Login({ onLogin }) {
   const [email, setEmail] = useState("");
   const [pass,  setPass]  = useState("");
@@ -577,7 +524,6 @@ function Login({ onLogin }) {
 
   return (
     <div className="login-wrap">
-      <style>{css}</style>
       <div className="lw">
         <div className="ll">
           <div className="logo">
@@ -585,25 +531,23 @@ function Login({ onLogin }) {
             <h1>Bono & Lacerda</h1>
             <p>Advocacia Internacional</p>
           </div>
-          <p className="ltag">Painel Administrativo<br/>Acesso exclusivo para advogados</p>
+          <div className="ltag">Painel Administrativo<br/>Acesso restrito a colaboradores</div>
         </div>
         <div className="lr">
           <div className="lc">
-            <h2>Acesso ao Painel</h2>
-            <p>Insira as suas credenciais para aceder ao painel administrativo.</p>
+            <h2>Painel de Controlo</h2>
+            <p>Insira as suas credenciais de administrador</p>
             <div className="fg">
-              <label>E-mail</label>
-              <input type="email" placeholder="bonoelacerda@gmail.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/>
+              <label>Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="bonoelacerda@gmail.com" style={{width:"100%", padding:".85rem 1rem", border:"1.5px solid var(--glass-border)", borderRadius:"var(--r)", fontFamily:"'DM Sans',sans-serif", fontSize:".9rem", color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)", outline:"none", transition:"all .3s"}}/>
             </div>
             <div className="fg">
-              <label>Senha</label>
-              <input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/>
+              <label>Palavra-passe</label>
+              <input type="password" value={pass} onChange={e => setPass(e.target.value)} placeholder="••••••••" style={{width:"100%", padding:".85rem 1rem", border:"1.5px solid var(--glass-border)", borderRadius:"var(--r)", fontFamily:"'DM Sans',sans-serif", fontSize:".9rem", color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)", outline:"none", transition:"all .3s"}}/>
             </div>
-            <button className="btnp" onClick={go}>
-              <Icon name="arrow" size={16}/> Entrar no Painel
-            </button>
+            <button onClick={go} className="btnp">Entrar no Painel</button>
             {err && <div className="errmsg">{err}</div>}
-            <p style={{marginTop:"1.5rem",color:"var(--mus)",fontSize:".78rem",textAlign:"center"}}>Demo: bonoelacerda@gmail.com / admin123</p>
+            <div className="chave-hint">Demo: bonoelacerda@gmail.com / admin123</div>
           </div>
         </div>
       </div>
@@ -611,78 +555,523 @@ function Login({ onLogin }) {
   );
 }
 
-/* ── DASHBOARD ────────────────────────────────────────────────────────── */
-function Dash({ clients, onSelectClient }) {
+function Dash({ clients }) {
   const [search, setSearch] = useState("");
+  const [showPend, setShowPend] = useState(false);
 
   const total = clients.length;
   const comChave = clients.filter(c => c.chave_acesso).length;
-  const emAndamento = clients.filter(c => c.proc?.status === "em_andamento").length;
+  const semChave = clients.filter(c => !c.chave_acesso).length;
   const pendentes = clients.filter(c => c.pendencias).length;
+  const emAndamento = clients.filter(c => c.proc?.status === "em_andamento").length;
+  const aguardando = clients.filter(c => c.proc?.status === "aguardando").length;
+  const porto = clients.filter(c => c.proc?.arquivo?.includes("Porto")).length;
+  const crc = clients.filter(c => c.proc?.arquivo?.includes("Conservatória")).length;
+  const reunPend = clients.reduce((a,c) => a + (c.meetings||[]).filter(m => m.status==="pendente").length, 0);
 
   const filtered = search.trim()
     ? clients.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || (c.chave_acesso||"").includes(search))
     : [];
+  const comPendencias = clients.filter(c => c.pendencias).slice(0, 8);
 
   return (
     <div>
       <div className="ph">
         <h1>Painel Geral</h1>
-        <p>Bono & Lacerda Advogados — {new Date().toLocaleDateString("pt-BR")}</p>
+        <p>📅 {new Date().toLocaleDateString("pt-BR")} • <a href="https://calendar.google.com" target="_blank" rel="noopener noreferrer" style={{color:"var(--g)",textDecoration:"none"}}>Abrir Calendário Google</a></p>
       </div>
 
-      <div className="dg dash-cols">
+      <div className="dg">
         <div className="sc">
-          <div className="sl">👥 Total Clientes</div>
+          <div className="sl">Total de Clientes</div>
           <div className="sv">{total}</div>
-          <div className="ss">{comChave} com acesso</div>
+          <div style={{fontSize:".78rem", marginTop:".5rem", color:"var(--mu)"}}>Clientes registados</div>
         </div>
         <div className="sc">
-          <div className="sl">⚡ Em Andamento</div>
+          <div className="sl">Em Andamento</div>
           <div className="sv">{emAndamento}</div>
-          <div className="ss">processos ativos</div>
+          <div className="pb"><div className="pbf" style={{width:`${emAndamento > 0 ? Math.min(100, (emAndamento/total)*100) : 0}%`}}></div></div>
         </div>
         <div className="sc">
-          <div className="sl">⚠️ Com Pendências</div>
+          <div className="sl">Com Pendências</div>
           <div className="sv">{pendentes}</div>
-          <div className="ss">requerem atenção</div>
+          <div style={{fontSize:".78rem", marginTop:".5rem", color:"#f87171"}}>Atenção requerida</div>
         </div>
+        <div className="sc">
+          <div className="sl">Sem Chave de Acesso</div>
+          <div className="sv">{semChave}</div>
+          <div style={{fontSize:".78rem", marginTop:".5rem", color:"var(--mu)"}}>{comChave} com acesso</div>
+        </div>
+      </div>
+
+      {reunPend > 0 && (
+        <div className="card" style={{background:"rgba(96,165,250,.08)", border:"1px solid rgba(96,165,250,.2)", marginBottom:"1.5rem"}}>
+          <div style={{display:"flex", alignItems:"center", gap:"1rem"}}>
+            <div style={{fontSize:"1.5rem"}}>🔔</div>
+            <div>
+              <div style={{fontWeight:600, color:"#60a5fa"}}>Reuniões Pendentes</div>
+              <div style={{fontSize:".85rem", color:"var(--mu)", marginTop:".2rem"}}>{reunPend} reunião{reunPend!==1?"ões":""} aguardam confirmação</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1.5rem", marginBottom:"1.5rem"}}>
+        <div className="card">
+          <div className="ct">🔍 Busca Rápida</div>
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Procurar cliente ou chave..." style={{width:"100%", padding:".85rem 1rem", border:"1.5px solid var(--glass-border)", borderRadius:"var(--r)", fontSize:".9rem", color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)", outline:"none", marginBottom:"1rem"}}/>
+          {filtered.length > 0 && (
+            <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:".5rem"}}>
+              {filtered.slice(0,6).map(c => (
+                <div key={c.id} style={{padding:".75rem", background:"rgba(212,168,67,.08)", border:"1px solid rgba(212,168,67,.2)", borderRadius:"10px"}}>
+                  <div style={{fontSize:".82rem", fontWeight:600, color:"#fff"}}>{c.name}</div>
+                  <div style={{fontSize:".7rem", color:"var(--mu)", marginTop:".2rem"}}>{c.chave_acesso || "Sem chave"}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="card">
+          <div className="ct">📅 Próximos Eventos</div>
+          <div style={{fontSize:".85rem", color:"var(--mu)", marginBottom:"1rem"}}>Esta semana</div>
+          <div style={{display:"flex", flexDirection:"column", gap:".75rem"}}>
+            <div style={{padding:".75rem", background:"var(--glass2)", borderRadius:"10px", borderLeft:"3px solid var(--g)"}}>
+              <div style={{fontSize:".82rem", fontWeight:600, color:"#fff"}}>Reunião com Cliente A</div>
+              <div style={{fontSize:".7rem", color:"var(--mu)", marginTop:".2rem"}}>📅 Segunda, 10:00</div>
+            </div>
+            <div style={{padding:".75rem", background:"var(--glass2)", borderRadius:"10px", borderLeft:"3px solid var(--g)"}}>
+              <div style={{fontSize:".82rem", fontWeight:600, color:"#fff"}}>Submissão de Documentos</div>
+              <div style={{fontSize:".7rem", color:"var(--mu)", marginTop:".2rem"}}>📅 Quarta, 14:30</div>
+            </div>
+            <div style={{padding:".75rem", background:"var(--glass2)", borderRadius:"10px", borderLeft:"3px solid var(--g)"}}>
+              <div style={{fontSize:".82rem", fontWeight:600, color:"#fff"}}>Análise Processual</div>
+              <div style={{fontSize:".7rem", color:"var(--mu)", marginTop:".2rem"}}>📅 Sexta, 16:00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display:"grid", gridTemplateColumns:"2fr 1fr", gap:"1.5rem"}}>
+        <div className="card">
+          <div className="ct">📊 Distribuição dos Processos</div>
+          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1.5rem"}}>
+            <div>
+              <div style={{fontSize:".8rem", color:"var(--mu)", marginBottom:"1rem"}}>Por Local/Arquivo</div>
+              <div style={{display:"flex", flexDirection:"column", gap:".75rem"}}>
+                <div>
+                  <div style={{display:"flex", justifyContent:"space-between", fontSize:".82rem", marginBottom:".3rem"}}><span>Porto</span><span style={{fontWeight:600, color:"var(--g)"}}>8</span></div>
+                  <div className="pb"><div className="pbf" style={{width:"65%"}}></div></div>
+                </div>
+                <div>
+                  <div style={{display:"flex", justifyContent:"space-between", fontSize:".82rem", marginBottom:".3rem"}}><span>Conservatória</span><span style={{fontWeight:600, color:"var(--g)"}}>5</span></div>
+                  <div className="pb"><div className="pbf" style={{width:"40%"}}></div></div>
+                </div>
+                <div>
+                  <div style={{display:"flex", justifyContent:"space-between", fontSize:".82rem", marginBottom:".3rem"}}><span>IRN</span><span style={{fontWeight:600, color:"var(--g)"}}>12</span></div>
+                  <div className="pb"><div className="pbf" style={{width:"95%"}}></div></div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div style={{fontSize:".8rem", color:"var(--mu)", marginBottom:"1rem"}}>Por Status</div>
+              <div style={{display:"flex", flexDirection:"column", gap:".75rem"}}>
+                <div><span className="bd ba">Em Andamento: {emAndamento}</span></div>
+                <div><span className="bd bb">Aguardando: {aguardando}</span></div>
+                <div><span className="bd br">Pendentes: {pendentes}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="ct">⚠️ Pendências Ativas</div>
+          <div style={{display:"flex", flexDirection:"column", gap:".75rem", maxHeight:"300px", overflowY:"auto"}}>
+            {comPendencias.length > 0 ? (
+              comPendencias.map(c => (
+                <div key={c.id} style={{padding:".75rem", background:"rgba(248,113,113,.08)", border:"1px solid rgba(248,113,113,.2)", borderRadius:"10px"}}>
+                  <div style={{fontSize:".82rem", fontWeight:600, color:"#fff"}}>{c.name}</div>
+                  <div style={{fontSize:".7rem", color:"var(--mu)", marginTop:".2rem"}}>{c.pendencias}</div>
+                </div>
+              ))
+            ) : (
+              <div style={{textAlign:"center", color:"var(--mu)", padding:"1rem"}}>Nenhuma pendência</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Clients({ clients, setClients, onSelectClient, showToast }) {
+  const [search, setSearch] = useState("");
+  const [showNewC, setShowNewC] = useState(false);
+  const [newC, setNewC] = useState({name:"", email:"", phone:"", cpf:"", tipo:"", senha:""});
+
+  const filtered = clients.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || (c.chave_acesso||"").includes(search));
+
+  const addClient = async () => {
+    if (!newC.name || !newC.email) { showToast("Nome e email obrigatórios"); return; }
+    const c = {...newC, chave_acesso: Math.random().toString(36).slice(2,8).toUpperCase()};
+    const r = await api.post("clients", c);
+    if (r[0]) {
+      setClients(ps => [...ps, {...r[0], proc:null, steps:[], docs:[], msgs:[], meetings:[]}]);
+      const proc = await api.post("processes", {client_id: r[0].id, status:"em_andamento"});
+      if (proc[0]) {
+        const stps = await Promise.all(IRN_STEPS.map((s, i) => api.post("process_steps", {process_id: proc[0].id, step_order:i+1, title:s.label, detail:"", done:false})));
+      }
+      setShowNewC(false);
+      setNewC({name:"", email:"", phone:"", cpf:"", tipo:"", senha:""});
+      showToast(`Cliente "${newC.name}" criado!`);
+    }
+  };
+
+  const delClient = async (id) => {
+    if (window.confirm("Tem certeza?")) {
+      await api.del("clients", id);
+      setClients(ps => ps.filter(c => c.id !== id));
+      showToast("Cliente removido");
+    }
+  };
+
+  return (
+    <div>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"2rem"}}>
+        <div className="ph"><h1>Clientes</h1></div>
+        <button onClick={() => setShowNewC(true)} style={{display:"flex", alignItems:"center", gap:".5rem", padding:".85rem 1.5rem", background:"linear-gradient(135deg, var(--g), var(--gl))", color:"var(--n)", border:"none", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>
+          <Icon name="plus" size={18} /> Novo Cliente
+        </button>
+      </div>
+
+      {showNewC && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.6)",backdropFilter:"var(--blur)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}}>
+          <div style={{background:"var(--glass)",borderRadius:20,width:"100%",maxWidth:500,maxHeight:"90vh",overflow:"auto",boxShadow:"var(--sh3)",border:"1px solid var(--glass-border)",padding:"2rem"}}>
+            <h2 style={{fontFamily:"'Playfair Display',serif", fontSize:"1.5rem", color:"#fff", marginBottom:"1.5rem"}}>Novo Cliente</h2>
+            <div className="fg"><label>Nome Completo</label><input type="text" value={newC.name} onChange={e=>setNewC({...newC,name:e.target.value})} placeholder="Nome do cliente"/></div>
+            <div className="fg"><label>Email</label><input type="email" value={newC.email} onChange={e=>setNewC({...newC,email:e.target.value})} placeholder="email@example.com"/></div>
+            <div className="fg"><label>Telefone</label><input type="tel" value={newC.phone} onChange={e=>setNewC({...newC,phone:e.target.value})} placeholder="+351 XXX XXX XXX"/></div>
+            <div className="fg"><label>CPF/NIB</label><input type="text" value={newC.cpf} onChange={e=>setNewC({...newC,cpf:e.target.value})} placeholder="Identificação"/></div>
+            <div className="fg"><label>Tipo de Processo</label><select value={newC.tipo} onChange={e=>setNewC({...newC,tipo:e.target.value})}><option value="">Selecione...</option><option value="nacionalidade">Nacionalidade</option><option value="residencia">Residência</option><option value="laboral">Laboral</option></select></div>
+            <div style={{display:"flex", gap:".75rem"}}>
+              <button onClick={addClient} style={{flex:1, padding:".85rem", background:"linear-gradient(135deg, var(--g), var(--gl))", color:"var(--n)", border:"none", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>Criar</button>
+              <button onClick={() => setShowNewC(false)} style={{flex:1, padding:".85rem", background:"var(--glass)", border:"1px solid var(--glass-border)", color:"var(--tx)", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="card" style={{marginBottom:"1.5rem"}}>
+        <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Procurar cliente..." style={{width:"100%", padding:".85rem 1rem", border:"1.5px solid var(--glass-border)", borderRadius:"var(--r)", fontSize:".9rem", color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)", outline:"none"}}/>
       </div>
 
       <div className="card">
-        <div className="ct">🔍 Busca Rápida</div>
-        <div style={{position:"relative"}}>
-          <Icon name="search" size={16} style={{position:"absolute", left:"1rem", top:"50%", transform:"translateY(-50%)", color:"var(--mu)", pointerEvents:"none"}}/>
-          <input
-            style={{width:"100%", paddingLeft:"2.75rem", padding:".85rem 1rem", border:"1.5px solid var(--glass-border)", borderRadius:"var(--r)", fontFamily:"DM Sans,sans-serif", fontSize:".9rem", color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)", outline:"none", transition:"border-color .3s"}}
-            placeholder="Nome ou chave de acesso..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+        <table className="tbl">
+          <thead>
+            <tr><th>Cliente</th><th>Chave/Email</th><th>Tipo</th><th>Status</th><th>Ações</th></tr>
+          </thead>
+          <tbody>
+            {filtered.map(c => (
+              <tr key={c.id}>
+                <td><div style={{display:"flex", alignItems:"center", gap:".75rem"}}><div className="av" style={{width:"32px", height:"32px", fontSize:".7rem"}}>{ini(c.name)}</div><div><div style={{fontWeight:600}}>{c.name}</div><div style={{fontSize:".75rem", color:"var(--mu)"}}>{c.email}</div></div></div></td>
+                <td>{c.chave_acesso ? <div style={{fontFamily:"monospace", fontSize:".8rem", color:"var(--g)"}}>{c.chave_acesso}</div> : <span style={{color:"var(--mu)"}}>—</span>}</td>
+                <td>{c.tipo || "—"}</td>
+                <td><StatusBadge status={c.proc?.status || "pendente"} /></td>
+                <td><div style={{display:"flex", gap:".5rem"}}>
+                  <button onClick={() => onSelectClient(c.id)} style={{padding:".5rem .75rem", background:"var(--glass)", border:"1px solid var(--glass-border)", color:"var(--tx)", borderRadius:"10px", fontSize:".8rem", cursor:"pointer"}}>Abrir</button>
+                  <button onClick={() => delClient(c.id)} style={{padding:".5rem .75rem", background:"rgba(248,113,113,.1)", border:"1px solid rgba(248,113,113,.2)", color:"#f87171", borderRadius:"10px", fontSize:".8rem", cursor:"pointer"}}>Remover</button>
+                </div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function Detail({cid, clients, setClients, showToast, onBack}) {
+  const client = clients.find(c => c.id === cid);
+  if (!client) return <Loader />;
+
+  const [tab, setTab] = useState("processo");
+  const [steps, setSteps] = useState([]);
+  const [docs, setDocs] = useState([]);
+  const [msgs, setMsgs] = useState([]);
+  const [meets, setMeets] = useState([]);
+  const [chatIn, setChatIn] = useState("");
+  const [showMtg, setShowMtg] = useState(false);
+  const [showWA, setShowWA] = useState(false);
+  const [mf, setMf] = useState({title:"",date:"",time:"10:00",type:"presencial",notes:""});
+  const [saving, setSaving] = useState(false);
+  const [ldData, setLdData] = useState(true);
+  const fileRef = useRef();
+
+  const proc = client.proc;
+
+  useEffect(() => {
+    const load = async () => {
+      setLdData(true);
+      const procs = await api.get("processes", `?client_id=eq.${client.id}&limit=1`);
+      const proc = procs[0] || null;
+      if(proc){
+        const [ss,dd,mm,mt] = await Promise.all([
+          api.get("process_steps", `?process_id=eq.${proc.id}&order=step_order.asc`),
+          api.get("documents", `?process_id=eq.${proc.id}&order=created_at.desc`),
+          api.get("messages", `?process_id=eq.${proc.id}&order=created_at.asc`),
+          api.get("meetings", `?process_id=eq.${proc.id}&order=date.asc`),
+        ]);
+        setSteps(ss); setDocs(dd); setMsgs(mm); setMeets(mt);
+        setClients(cs => cs.map(c => c.id===client.id ? {...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt} : c));
+      }
+      setLdData(false);
+    };
+    load();
+  }, [cid]);
+
+  const toggleStep = async s => {
+    const r = await api.patch("process_steps", s.id, {done:!s.done});
+    if(r[0]) setSteps(ss => ss.map(x => x.id===s.id ? {...x,done:!s.done} : x));
+    showToast("Etapa atualizada!");
+  };
+
+  const uploadDoc = async f => {
+    if(!f||!proc) return;
+    setSaving(true);
+    const path = `${proc.id}/${Date.now()}_${f.name}`;
+    const ok = await api.upload(path, f);
+    if(!ok){showToast("Erro ao enviar ficheiro."); setSaving(false); return;}
+    const r = await api.post("documents", {process_id:proc.id, name:f.name, size:`${(f.size/1024).toFixed(0)} KB`, date:new Date().toISOString().split("T")[0], status:"disponível", uploaded_by:"advogado", storage_path:path});
+    if(r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
+    setSaving(false);
+  };
+
+  const downloadDoc = async (d) => {
+    const url = await api.signedUrl(d.storage_path);
+    window.open(url, "_blank");
+  };
+
+  const sendMsg = async () => {
+    if(!chatIn.trim()||!proc) return;
+    const r = await api.post("messages", {process_id:proc.id, from_role:"lawyer", text:chatIn});
+    if(r[0]) setMsgs(m => [...m, r[0]]);
+    setChatIn(""); showToast("Mensagem enviada!");
+  };
+
+  const confirmMeet = async m => {
+    await api.patch("meetings", m.id, {status:"confirmado"});
+    setMeets(ms => ms.map(x => x.id===m.id ? {...x,status:"confirmado"} : x));
+    setClients(cs => cs.map(c => c.id===client.id ? {...c,meetings:(c.meetings||[]).map(x => x.id===m.id ? {...x,status:"confirmado"} : x)} : c));
+    await api.post("notifications", {client_id:client.id, text:`Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}.`, icon:"✅", read:false});
+    showToast("✅ Reunião confirmada!");
+  };
+
+  const rejectMeet = async m => {
+    await api.patch("meetings", m.id, {status:"recusado"});
+    setMeets(ms => ms.map(x => x.id===m.id ? {...x,status:"recusado"} : x));
+    showToast("❌ Reunião recusada");
+  };
+
+  const addMeet = async () => {
+    if(!mf.title || !mf.date) { showToast("Preencha título e data"); return; }
+    const r = await api.post("meetings", {process_id:proc.id, ...mf, status:"pendente"});
+    if(r[0]) {
+      setMeets(m => [...m, r[0]]);
+      setMf({title:"",date:"",time:"10:00",type:"presencial",notes:""});
+      setShowMtg(false);
+      showToast("Reunião criada!");
+    }
+  };
+
+  const updateContact = async (id, form) => {
+    await api.patch("clients", id, form);
+    setClients(cs => cs.map(c => c.id===id ? {...c,...form} : c));
+    showToast("Contacto atualizado!");
+  };
+
+  if (ldData) return <Loader />;
+
+  const pendMeets = meets.filter(m => m.status === "pendente");
+
+  return (
+    <div>
+      <button onClick={onBack} style={{marginBottom:"1.5rem", display:"flex", alignItems:"center", gap:".5rem", padding:".6rem 1rem", background:"var(--glass)", border:"1px solid var(--glass-border)", color:"var(--tx)", borderRadius:"var(--r)", fontWeight:500, cursor:"pointer"}}>
+        <Icon name="arrow" size={16} style={{transform:"scaleX(-1)"}} /> Voltar
+      </button>
+
+      <div className="card" style={{marginBottom:"1.5rem"}}>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"1.5rem"}}>
+          <div style={{display:"flex", alignItems:"center", gap:"1.5rem"}}>
+            <div className="av" style={{width:"56px", height:"56px", fontSize:"1.2rem"}}>{ini(client.name)}</div>
+            <div>
+              <h2 style={{fontFamily:"'Playfair Display',serif", fontSize:"1.4rem", color:"#fff", marginBottom:".2rem"}}>{client.name}</h2>
+              <div style={{fontSize:".85rem", color:"var(--mu)"}}>
+                {client.chave_acesso && <span style={{fontFamily:"monospace", color:"var(--g)", fontWeight:600}}>{client.chave_acesso}</span>}
+              </div>
+            </div>
+          </div>
+          <div style={{display:"flex", gap:".5rem"}}>
+            <button onClick={() => setShowWA(true)} style={{padding:".7rem 1rem", background:"#25D366", color:"#fff", border:"none", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>💬 WhatsApp</button>
+            {proc && <StatusBadge status={proc.status} />}
+          </div>
         </div>
 
-        {search && (
-          <div style={{marginTop:"1rem"}}>
-            {filtered.length > 0 ? (
-              <div className="ctbl">
-                {filtered.map(c => (
-                  <div key={c.id} className="ctbl-row" onClick={() => onSelectClient(c)} style={{cursor:"pointer"}}>
-                    <div style={{display:"flex", justifyContent:"space-between", alignItems:"center"}}>
-                      <div style={{fontWeight:600, color:"#fff"}}>{c.name}</div>
-                      <span className="bd bg">{c.chave_acesso ? "Ativo" : "Sem acesso"}</span>
+        {proc && (
+          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:"1rem", marginBottom:"1.5rem", paddingBottom:"1.5rem", borderBottom:"1px solid var(--glass-border)"}}>
+            <div><div style={{fontSize:".75rem", color:"var(--mu)", textTransform:"uppercase", marginBottom:".3rem"}}>Processo Nº</div><div style={{fontSize:".95rem", fontWeight:600, color:"#fff"}}>{proc.number || "—"}</div></div>
+            <div><div style={{fontSize:".75rem", color:"var(--mu)", textTransform:"uppercase", marginBottom:".3rem"}}>Artigo</div><div style={{fontSize:".95rem", fontWeight:600, color:"#fff"}}>{proc.type || "Nacionalidade"}</div></div>
+            <div><div style={{fontSize:".75rem", color:"var(--mu)", textTransform:"uppercase", marginBottom:".3rem"}}>Data Submissão</div><div style={{fontSize:".95rem", fontWeight:600, color:"#fff"}}>{fmtd(proc.submissao_irn)}</div></div>
+            <div><div style={{fontSize:".75rem", color:"var(--mu)", textTransform:"uppercase", marginBottom:".3rem"}}>Local/Arquivo</div><div style={{fontSize:".95rem", fontWeight:600, color:"#fff"}}>{proc.arquivo || "IRN"}</div></div>
+          </div>
+        )}
+
+        {proc && <IRNTimeline proc={proc} />}
+      </div>
+
+      <ContactCard client={client} onUpdate={updateContact} />
+
+      {showWA && <WhatsAppNotify client={client} proc={proc} onClose={() => setShowWA(false)} toast={showToast} />}
+
+      <div className="card">
+        <div className="tabs">
+          {["processo", "documentos", "reunioes", "chat"].map(t => (
+            <button key={t} className={`tab ${tab===t?"on":""}`} onClick={() => setTab(t)}>
+              {t==="processo"?"📋 Processo":t==="documentos"?"📄 Documentos":t==="reunioes"?"📅 Reuniões":"💬 Chat"}
+            </button>
+          ))}
+        </div>
+
+        {tab === "processo" && (
+          <div>
+            {steps.length > 0 ? (
+              <div className="tl">
+                {steps.map(s => (
+                  <div key={s.id} className="ti">
+                    <div style={{display:"flex", alignItems:"center", gap:"1rem"}}>
+                      <input type="checkbox" checked={s.done} onChange={() => toggleStep(s)} style={{cursor:"pointer", width:"18px", height:"18px", accentColor:"var(--g)"}}/>
+                      <div style={{flex:1}}>
+                        <div className={`tit ${s.done?"mu":""}`}>{s.title}</div>
+                        {s.detail && <div className="tde">{s.detail}</div>}
+                        {s.date && <div className="tdt">{fmtd(s.date)}</div>}
+                      </div>
+                      <div className={`td ${s.done?"dn":""}`}>{s.done?"✓":steps.indexOf(s)+1}</div>
                     </div>
-                    <span data-label="Chave: ">{c.chave_acesso || "—"}</span>
-                    {c.proc && <span data-label="Status: ">{c.proc.status}</span>}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="empty-state">
-                <span className="emoji">🔍</span>
-                <div className="title">Nenhum cliente encontrado</div>
-                <div className="desc">Tente outro nome ou chave de acesso</div>
+              <div className="empty-state"><span className="emoji">📋</span><div className="title">Sem etapas</div></div>
+            )}
+          </div>
+        )}
+
+        {tab === "documentos" && (
+          <div>
+            <div className="uz" onClick={() => fileRef.current?.click()} style={{marginBottom:"1.5rem"}}>
+              <div className="uz-icon" style={{fontSize:"2rem", marginBottom:".5rem"}}>📁</div>
+              <div style={{fontWeight:600, color:"var(--g)", marginBottom:".3rem"}}>Arraste ficheiros ou clique</div>
+              <div style={{fontSize:".8rem"}}>Máx 50MB por ficheiro</div>
+              <input ref={fileRef} type="file" onChange={e => e.target.files?.[0] && uploadDoc(e.target.files[0])} style={{display:"none"}} multiple={false}/>
+            </div>
+            {saving && <Loader text="Enviando..." />}
+            {docs.length > 0 ? (
+              <div className="dl">
+                {docs.map(d => (
+                  <div key={d.id} className="dit">
+                    <div className="dic"><Icon name="file" size={20} /></div>
+                    <div style={{flex:1, minWidth:0}}>
+                      <div className="dn2">{d.name}</div>
+                      <div className="dm">{d.size} • {fmtd(d.date)}</div>
+                    </div>
+                    <button onClick={() => downloadDoc(d)} className="ib" title="Download"><Icon name="arrow" size={16} style={{transform:"rotate(180deg)"}} /></button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state"><span className="emoji">📄</span><div className="title">Nenhum documento</div></div>
+            )}
+          </div>
+        )}
+
+        {tab === "reunioes" && (
+          <div>
+            {pendMeets.length > 0 && (
+              <div style={{background:"rgba(96,165,250,.08)", border:"1px solid rgba(96,165,250,.2)", borderRadius:"var(--r)", padding:"1rem", marginBottom:"1.5rem"}}>
+                <div style={{fontWeight:600, color:"#60a5fa", marginBottom:".5rem"}}>🔔 Reuniões Pendentes de Confirmação</div>
+                {pendMeets.map(m => (
+                  <div key={m.id} style={{fontSize:".85rem", color:"var(--mu)", marginBottom:".5rem"}}>
+                    {m.title} • {m.date} às {m.time}
+                  </div>
+                ))}
               </div>
             )}
+            <button onClick={() => setShowMtg(true)} style={{marginBottom:"1.5rem", display:"flex", alignItems:"center", gap:".5rem", padding:".7rem 1.2rem", background:"linear-gradient(135deg, var(--g), var(--gl))", color:"var(--n)", border:"none", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>
+              <Icon name="plus" size={16} /> Nova Reunião
+            </button>
+            {showMtg && (
+              <div style={{background:"var(--glass2)", border:"1px solid var(--glass-border)", borderRadius:"var(--r)", padding:"1.5rem", marginBottom:"1.5rem"}}>
+                <h3 style={{fontWeight:600, color:"#fff", marginBottom:"1rem"}}>Nova Reunião</h3>
+                <div className="fg2">
+                  <div className="fg"><label>Título</label><input type="text" value={mf.title} onChange={e=>setMf({...mf,title:e.target.value})} placeholder="Ex: Revisão de Documentos"/></div>
+                  <div className="fg"><label>Data</label><input type="date" value={mf.date} onChange={e=>setMf({...mf,date:e.target.value})}/></div>
+                  <div className="fg"><label>Hora</label><input type="time" value={mf.time} onChange={e=>setMf({...mf,time:e.target.value})}/></div>
+                  <div className="fg"><label>Tipo</label><select value={mf.type} onChange={e=>setMf({...mf,type:e.target.value})}><option value="presencial">Presencial</option><option value="online">Online</option><option value="telefone">Telefone</option></select></div>
+                </div>
+                <div className="fg"><label>Notas</label><textarea value={mf.notes} onChange={e=>setMf({...mf,notes:e.target.value})} placeholder="Adicionar observações..."/></div>
+                <div style={{display:"flex", gap:".75rem"}}>
+                  <button onClick={addMeet} style={{flex:1, padding:".85rem", background:"linear-gradient(135deg, var(--g), var(--gl))", color:"var(--n)", border:"none", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>Criar Reunião</button>
+                  <button onClick={() => setShowMtg(false)} style={{flex:1, padding:".85rem", background:"var(--glass)", border:"1px solid var(--glass-border)", color:"var(--tx)", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>Cancelar</button>
+                </div>
+              </div>
+            )}
+            {meets.length > 0 ? (
+              <div>
+                {meets.map(m => (
+                  <div key={m.id} className="mcard">
+                    <div className="mdb">
+                      <div className="day">{new Date(m.date).getDate()}</div>
+                      <div className="mon">{MONTHS[new Date(m.date).getMonth()]}</div>
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:600, color:"#fff"}}>{m.title}</div>
+                      <div style={{fontSize:".8rem", color:"var(--mu)", marginTop:".3rem"}}>🕐 {m.time} • {m.type}</div>
+                    </div>
+                    {m.status === "pendente" && (
+                      <div style={{display:"flex", gap:".5rem"}}>
+                        <button onClick={() => confirmMeet(m)} style={{padding:".5rem .75rem", background:"rgba(74,222,128,.15)", border:"1px solid rgba(74,222,128,.3)", color:"#4ade80", borderRadius:"8px", fontSize:".75rem", fontWeight:600, cursor:"pointer"}}>✓ Confirmar</button>
+                        <button onClick={() => rejectMeet(m)} style={{padding:".5rem .75rem", background:"rgba(248,113,113,.15)", border:"1px solid rgba(248,113,113,.3)", color:"#f87171", borderRadius:"8px", fontSize:".75rem", fontWeight:600, cursor:"pointer"}}>✕ Recusar</button>
+                      </div>
+                    )}
+                    {m.status !== "pendente" && <StatusBadge status={m.status} />}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state"><span className="emoji">📅</span><div className="title">Nenhuma reunião</div></div>
+            )}
+          </div>
+        )}
+
+        {tab === "chat" && (
+          <div className="cw">
+            {msgs.length > 0 ? (
+              <div className="cms">
+                {msgs.map(m => (
+                  <div key={m.id} className={`mr ${m.from_role==="lawyer"?"mi":""}`}>
+                    <div className={`mb ${m.from_role==="lawyer"?"mi":"th"}`}>
+                      {m.text}
+                      <div className="mtime">{fmtt(m.created_at)}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="ld">Sem mensagens</div>
+            )}
+            <div className="cir">
+              <input type="text" className="cin" value={chatIn} onChange={e => setChatIn(e.target.value)} onKeyPress={e => e.key==="Enter" && sendMsg()} placeholder="Escrever mensagem..."/>
+              <button onClick={sendMsg} className="bsend" title="Enviar"><Icon name="send" size={20} /></button>
+            </div>
           </div>
         )}
       </div>
@@ -690,553 +1079,214 @@ function Dash({ clients, onSelectClient }) {
   );
 }
 
-/* ── CLIENTS ──────────────────────────────────────────────────────────── */
-function Clients({ clients, onSelect, onAdd, onDelete }) {
-  const [search, setSearch] = useState("");
-
-  const filtered = search.trim()
-    ? clients.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
-    : clients;
+function AllMeetings({ clients, showToast }) {
+  const allMeets = clients.flatMap(c => (c.meetings || []).map(m => ({...m, clientName: c.name, clientId: c.id})));
+  const sorted = allMeets.sort((a,b) => new Date(a.date) - new Date(b.date));
+  const pend = sorted.filter(m => m.status === "pendente");
 
   return (
     <div>
       <div className="ph">
-        <h1>Clientes</h1>
-        <p>{clients.length} clientes registados</p>
+        <h1>Reuniões</h1>
+        <p>Todas as reuniões agendadas</p>
       </div>
 
-      <div className="card" style={{marginBottom:"1.5rem"}}>
-        <div style={{display:"flex", gap:"1rem"}}>
-          <div style={{flex:1, position:"relative"}}>
-            <Icon name="search" size={16} style={{position:"absolute", left:"1rem", top:"50%", transform:"translateY(-50%)", color:"var(--mu)", pointerEvents:"none"}}/>
-            <input
-              style={{width:"100%", paddingLeft:"2.75rem", padding:".85rem 1rem", border:"1.5px solid var(--glass-border)", borderRadius:"var(--r)", fontFamily:"DM Sans,sans-serif", fontSize:".9rem", color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)", outline:"none"}}
-              placeholder="Procurar cliente..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-          <button className="ib" onClick={onAdd} title="Adicionar cliente" style={{background:"linear-gradient(135deg, var(--g), var(--gl))", border:"none", color:"var(--n)", cursor:"pointer"}}>
-            <Icon name="plus" size={18}/>
-          </button>
-        </div>
-      </div>
-
-      <div className="ctbl">
-        {filtered.map(c => (
-          <div key={c.id} className="ctbl-row" onClick={() => onSelect(c)} style={{cursor:"pointer"}}>
-            <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:".5rem"}}>
-              <div style={{fontWeight:600, color:"#fff"}}>{c.name}</div>
-              <button onClick={(e) => { e.stopPropagation(); onDelete(c.id); }} className="ib" style={{color:"var(--er)", borderColor:"rgba(248,113,113,.2)"}}>
-                <Icon name="trash" size={16}/>
-              </button>
+      {pend.length > 0 && (
+        <div className="card" style={{background:"rgba(96,165,250,.08)", border:"1px solid rgba(96,165,250,.2)", marginBottom:"1.5rem"}}>
+          <div style={{display:"flex", alignItems:"center", gap:"1rem"}}>
+            <div style={{fontSize:"1.5rem"}}>🔔</div>
+            <div>
+              <div style={{fontWeight:600, color:"#60a5fa"}}>Reuniões Pendentes</div>
+              <div style={{fontSize:".85rem", color:"var(--mu)", marginTop:".2rem"}}>{pend.length} reunião{pend.length!==1?"ões":""} aguardam confirmação</div>
             </div>
-            {c.chave_acesso && <span style={{fontSize:".78rem", color:"var(--mu)"}}>🔑 {c.chave_acesso}</span>}
-            {c.proc && <div style={{fontSize:".78rem", marginTop:".3rem"}}><span className="bd ba">Status: {c.proc.status}</span></div>}
           </div>
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="empty-state">
-          <span className="emoji">👥</span>
-          <div className="title">{search ? "Nenhum cliente encontrado" : "Sem clientes"}</div>
-          <div className="desc">{search ? "Tente outro nome" : "Adicione o primeiro cliente"}</div>
         </div>
       )}
-    </div>
-  );
-}
 
-/* ── CLIENT DETAIL ───────────────────────────────────────────────────── */
-function Detail({ client, onBack, onUpdate, onDelete }) {
-  const [tab, setTab] = useState("processo");
-  const [editName, setEditName] = useState(client.name);
-  const [editEmail, setEditEmail] = useState(client.email || "");
-  const [editPhone, setEditPhone] = useState(client.phone || "");
-  const [editChave, setEditChave] = useState(client.chave_acesso || "");
-  const [showWA, setShowWA] = useState(false);
-  const [steps, setSteps] = useState(client.process_steps || []);
-  const [messages, setMessages] = useState(client.messages || []);
-  const [msgText, setMsgText] = useState("");
-  const [newMeetingOpen, setNewMeetingOpen] = useState(false);
-  const [meetingForm, setMeetingForm] = useState({ titulo: "", data: "", hora: "", tipo: "reuniao", notas: "" });
-
-  const save = async () => {
-    await onUpdate(client.id, { name:editName, email:editEmail, phone:editPhone, chave_acesso:editChave });
-  };
-
-  const toggleStep = async (stepId, done) => {
-    const newSteps = steps.map(s => s.id === stepId ? {...s, done: !done} : s);
-    setSteps(newSteps);
-    await api.patch("process_steps", stepId, { done: !done });
-  };
-
-  const sendMessage = async () => {
-    if (!msgText.trim()) return;
-    const msg = { client_id: client.id, text: msgText, sender: "admin", created_at: new Date().toISOString() };
-    const newMsg = await api.post("messages", msg);
-    setMessages([...messages, newMsg[0]]);
-    setMsgText("");
-  };
-
-  const saveMeeting = async () => {
-    if (!meetingForm.titulo || !meetingForm.data || !meetingForm.hora) return;
-    const meeting = {
-      client_id: client.id,
-      titulo: meetingForm.titulo,
-      data: meetingForm.data,
-      hora: meetingForm.hora,
-      tipo: meetingForm.tipo,
-      notas: meetingForm.notas,
-      created_at: new Date().toISOString()
-    };
-    const newMeeting = await api.post("meetings", meeting);
-    setNewMeetingOpen(false);
-    setMeetingForm({ titulo: "", data: "", hora: "", tipo: "reuniao", notas: "" });
-  };
-
-  return (
-    <div>
-      <button className="ib" onClick={onBack} style={{marginBottom:"1rem", color:"var(--mu)"}}>
-        <Icon name="arrow" size={18} style={{transform:"scaleX(-1)"}}/>
-      </button>
-
-      <div className="card" style={{marginBottom:"1.5rem"}}>
-        <div className="ct">{editName}</div>
-        <div className="fg2">
-          <div className="fg">
-            <label>Nome</label>
-            <input type="text" value={editName} onChange={e=>setEditName(e.target.value)}/>
-          </div>
-          <div className="fg">
-            <label>Email</label>
-            <input type="email" value={editEmail} onChange={e=>setEditEmail(e.target.value)}/>
-          </div>
-          <div className="fg">
-            <label>Telefone</label>
-            <input type="tel" value={editPhone} onChange={e=>setEditPhone(e.target.value)}/>
-          </div>
-          <div className="fg">
-            <label>Chave de Acesso</label>
-            <input type="text" value={editChave} onChange={e=>setEditChave(e.target.value)}/>
-          </div>
-        </div>
-        <div style={{display:"flex", gap:".75rem"}}>
-          <button onClick={save} style={{flex:1, padding:".85rem", background:"linear-gradient(135deg, var(--g), var(--gl))", color:"var(--n)", border:"none", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>✓ Guardar</button>
-          <button onClick={() => onDelete(client.id)} style={{padding:".85rem 1.5rem", background:"rgba(248,113,113,.12)", color:"var(--er)", border:"1px solid rgba(248,113,113,.2)", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>Eliminar</button>
-        </div>
-      </div>
-
-      <ContactCard client={client} onUpdate={onUpdate}/>
-
-      <div className="tabs">
-        <button className={`tab${tab==="processo"?" on":""}`} onClick={()=>setTab("processo")}>Processo</button>
-        <button className={`tab${tab==="documentos"?" on":""}`} onClick={()=>setTab("documentos")}>Documentos</button>
-        <button className={`tab${tab==="reunioes"?" on":""}`} onClick={()=>setTab("reunioes")}>Reuniões</button>
-        <button className={`tab${tab==="chat"?" on":""}`} onClick={()=>setTab("chat")}>Chat</button>
-      </div>
-
-      {tab === "processo" && client.proc && (
-        <div className="card">
-          <div className="ct">📋 Informações do Processo</div>
-          <div style={{display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"1rem", marginBottom:"1.5rem"}}>
-            {[
-              ["Processo", client.proc?.number || client.chave_acesso || "—"],
-              ["Artigo", client.artigo || client.proc?.type || "—"],
-              ["Protocolo", client.proc?.opened_at ? fmtd(client.proc.opened_at) : "—"],
-              ["Submissão IRN", client.proc?.submissao_irn || "—"],
-              ["Local / Arquivo", client.proc?.arquivo || client.fonte || "—"],
-              ["Desde", fmtd(client.since)],
-            ].map(([k,v])=>(
-              <div key={k}>
-                <div style={{fontSize:".7rem", color:"var(--mu)", textTransform:"uppercase", letterSpacing:".07em", marginBottom:4}}>{k}</div>
-                <div style={{fontSize:".88rem", color:"#fff", fontWeight:600}}>{v}</div>
+      <div className="card">
+        {sorted.length > 0 ? (
+          <div>
+            {sorted.map(m => (
+              <div key={`${m.clientId}-${m.id}`} className="mcard">
+                <div className="mdb">
+                  <div className="day">{new Date(m.date).getDate()}</div>
+                  <div className="mon">{MONTHS[new Date(m.date).getMonth()]}</div>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600, color:"#fff"}}>{m.title}</div>
+                  <div style={{fontSize:".8rem", color:"var(--mu)", marginTop:".3rem"}}>👤 {m.clientName}</div>
+                  <div style={{fontSize:".8rem", color:"var(--mu)"}}>🕐 {m.time} • {m.type}</div>
+                </div>
+                <StatusBadge status={m.status} />
               </div>
             ))}
           </div>
-          <div style={{display:"flex",gap:"1rem",alignItems:"center",marginBottom:"1rem"}}>
-            <StatusBadge status={client.proc?.status}/>
-            <div style={{marginLeft:"auto",minWidth:160}}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:".72rem",color:"var(--mu)"}}>Progresso</span><span style={{fontSize:".72rem",fontWeight:700,color:"var(--g)"}}>{client.proc?.current_step ? Math.round(((client.proc.current_step-1)/7)*100) : 0}%</span></div>
-              <div className="pb"><div className="pbf" style={{width:`${client.proc?.current_step ? Math.round(((client.proc.current_step-1)/7)*100) : 0}%`}}/></div>
-            </div>
-          </div>
-
-          <div style={{marginBottom:"1.5rem"}}>
-            <div className="ct">Progresso IRN</div>
-            <IRNTimeline proc={client.proc}/>
-          </div>
-
-          {steps.length > 0 && (
-            <div style={{marginBottom:"1.5rem"}}>
-              <div className="ct">✓ Passos</div>
-              <div className="tl">
-                {steps.map(s => (
-                  <div key={s.id} className="ti">
-                    <div className={`td${s.done?" dn":" ac"}`} onClick={() => toggleStep(s.id, s.done)} style={{cursor:"pointer"}}>
-                      {s.done ? "✓" : "○"}
-                    </div>
-                    <div className={`tit${s.done?" mu":""}`} style={{textDecoration: s.done ? "line-through" : "none"}}>{s.titulo}</div>
-                    {s.descricao && <div className="tde">{s.descricao}</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <button onClick={() => setShowWA(true)} style={{width:"100%", padding:".85rem", background:"rgba(37,211,102,.12)", color:"#25d366", border:"1px solid rgba(37,211,102,.2)", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>📱 Notificar WhatsApp</button>
-
-          {client.pendencias && (
-            <div style={{background:"rgba(248,113,113,.08)", border:"1px solid rgba(248,113,113,.15)", borderRadius:"var(--r)", padding:"1rem", marginTop:"1rem"}}>
-              <div style={{color:"var(--er)", fontWeight:600, marginBottom:".5rem"}}>⚠️ Pendências</div>
-              <div style={{fontSize:".85rem", color:"var(--tx)", lineHeight:"1.6"}}>{client.pendencias}</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "documentos" && (
-        <div className="card">
-          <div className="ct">📄 Documentos</div>
-          <div className="uz">
-            <div className="uz-icon" style={{fontSize:"2rem", marginBottom:".5rem"}}>📎</div>
-            <div style={{fontWeight:600, color:"#fff", marginBottom:".25rem"}}>Arraste ficheiros aqui</div>
-            <div style={{fontSize:".78rem", color:"var(--mus)"}}>ou clique para selecionar</div>
-          </div>
-          {client.documents && client.documents.length > 0 && (
-            <div className="dl" style={{marginTop:"1.5rem"}}>
-              {client.documents.map(d => (
-                <div key={d.id} className="dit">
-                  <div className="dic"><Icon name="file" size={18}/></div>
-                  <div style={{flex:1}}>
-                    <div className="dn2">{d.nome}</div>
-                    <div className="dm">Enviado por: {d.uploaded_by || "—"}</div>
-                  </div>
-                  <button className="ib">
-                    <Icon name="arrow" size={16} style={{transform:"rotate(-90deg)"}}/>
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "reunioes" && (
-        <div className="card">
-          <div className="ct">📅 Reuniões</div>
-          {client.meetings?.length > 0 ? (
-            <div style={{marginBottom:"1.5rem"}}>
-              {client.meetings.map(m => (
-                <div key={m.id} className="mcard">
-                  <div className="mdb">
-                    <div className="day">{new Date(m.data).getDate()}</div>
-                    <div className="mon">{MONTHS[new Date(m.data).getMonth()]}</div>
-                  </div>
-                  <div style={{flex:1}}>
-                    <div style={{fontWeight:600, color:"#fff"}}>{m.titulo}</div>
-                    <div style={{fontSize:".78rem", color:"var(--mu)", marginTop:".2rem"}}>{m.hora} • {m.tipo}</div>
-                  </div>
-                  <button className="ib" style={{color:"var(--er)"}}>
-                    <Icon name="trash" size={16}/>
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : null}
-          <button onClick={() => setNewMeetingOpen(!newMeetingOpen)} style={{width:"100%", padding:".85rem", background:"var(--glass)", border:"1px solid var(--glass-border)", color:"var(--tx)", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>+ Nova Reunião</button>
-
-          {newMeetingOpen && (
-            <div style={{marginTop:"1.5rem", background:"var(--glass2)", border:"1px solid var(--glass-border)", borderRadius:"var(--r)", padding:"1.5rem"}}>
-              <div className="fg">
-                <label>Título</label>
-                <input type="text" value={meetingForm.titulo} onChange={e=>setMeetingForm({...meetingForm,titulo:e.target.value})} placeholder="Título da reunião"/>
-              </div>
-              <div className="fg2">
-                <div className="fg">
-                  <label>Data</label>
-                  <input type="date" value={meetingForm.data} onChange={e=>setMeetingForm({...meetingForm,data:e.target.value})}/>
-                </div>
-                <div className="fg">
-                  <label>Hora</label>
-                  <input type="time" value={meetingForm.hora} onChange={e=>setMeetingForm({...meetingForm,hora:e.target.value})}/>
-                </div>
-              </div>
-              <div className="fg">
-                <label>Tipo</label>
-                <select value={meetingForm.tipo} onChange={e=>setMeetingForm({...meetingForm,tipo:e.target.value})} style={{width:"100%", padding:".85rem 1rem", border:"1.5px solid var(--glass-border)", borderRadius:"12px", fontFamily:"DM Sans,sans-serif", fontSize:".9rem", color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)", outline:"none"}}>
-                  <option value="reuniao">Reunião</option>
-                  <option value="consulta">Consulta</option>
-                  <option value="seguimento">Seguimento</option>
-                </select>
-              </div>
-              <div className="fg">
-                <label>Notas</label>
-                <textarea value={meetingForm.notas} onChange={e=>setMeetingForm({...meetingForm,notas:e.target.value})} placeholder="Notas..." style={{width:"100%", padding:".85rem 1rem", border:"1.5px solid var(--glass-border)", borderRadius:"12px", fontFamily:"DM Sans,sans-serif", fontSize:".9rem", color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)", outline:"none", resize:"vertical", minHeight:"80px"}}/>
-              </div>
-              <div style={{display:"flex", gap:".75rem"}}>
-                <button onClick={saveMeeting} style={{flex:1, padding:".85rem", background:"linear-gradient(135deg, var(--g), var(--gl))", color:"var(--n)", border:"none", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>✓ Agendar</button>
-                <button onClick={() => setNewMeetingOpen(false)} style={{flex:1, padding:".85rem", background:"var(--glass)", border:"1px solid var(--glass-border)", color:"var(--tx)", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>Cancelar</button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === "chat" && (
-        <div className="card">
-          <div className="che">
-            <div className="chi">
-              <h3>Chat com Cliente</h3>
-              <p>{client.name}</p>
-            </div>
-          </div>
-          <div className="cw">
-            <div className="cms">
-              {messages.map(m => (
-                <div key={m.id} className={`mr${m.sender==="admin"?" mi":""}`}>
-                  <div className={`mb ${m.sender==="admin"?"mi":"th"}`}>
-                    {m.text}
-                    <div className="mtime">{fmtt(m.created_at)}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="cir">
-              <input type="text" className="cin" placeholder="Mensagem..." value={msgText} onChange={e=>setMsgText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMessage()}/>
-              <button className="bsend" onClick={sendMessage}><Icon name="send" size={18}/></button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showWA && <WhatsAppNotify client={client} proc={client.proc} onClose={() => setShowWA(false)} toast={()=>{}}/>}
-    </div>
-  );
-}
-
-/* ── ADD CLIENT MODAL ─────────────────────────────────────────────────── */
-function AddClient({ onClose, onAdd }) {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-
-  const go = async () => {
-    if (!name.trim()) return;
-    const r = await api.post("clients", { name, email, phone, created_at: new Date().toISOString() });
-    onAdd(r[0]);
-    onClose();
-  };
-
-  return (
-    <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,.6)", backdropFilter:"var(--blur)", zIndex:200, display:"flex", alignItems:"center", justifyContent:"center"}}>
-      <div className="card" style={{width:"100%", maxWidth:"420px"}}>
-        <div className="ct">Adicionar Cliente</div>
-        <div className="fg">
-          <label>Nome Completo</label>
-          <input type="text" placeholder="Nome..." value={name} onChange={e=>setName(e.target.value)}/>
-        </div>
-        <div className="fg">
-          <label>Email</label>
-          <input type="email" placeholder="email@example.com" value={email} onChange={e=>setEmail(e.target.value)}/>
-        </div>
-        <div className="fg">
-          <label>Telefone</label>
-          <input type="tel" placeholder="+351..." value={phone} onChange={e=>setPhone(e.target.value)}/>
-        </div>
-        <div style={{display:"flex", gap:".75rem"}}>
-          <button onClick={go} style={{flex:1, padding:".85rem", background:"linear-gradient(135deg, var(--g), var(--gl))", color:"var(--n)", border:"none", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>✓ Adicionar</button>
-          <button onClick={onClose} style={{flex:1, padding:".85rem", background:"var(--glass)", border:"1px solid var(--glass-border)", color:"var(--tx)", borderRadius:"var(--r)", fontWeight:600, cursor:"pointer"}}>Cancelar</button>
-        </div>
+        ) : (
+          <div className="empty-state"><span className="emoji">📅</span><div className="title">Nenhuma reunião</div></div>
+        )}
       </div>
     </div>
   );
 }
 
-/* ── MAIN APP ─────────────────────────────────────────────────────────── */
+function ClaudeChat() {
+  const [open, setOpen] = useState(false);
+  const [msgs, setMsgs] = useState([{role:"assistant", content:"Olá! Sou um assistente de IA para o Painel Administrativo do Bono & Lacerda. Como posso ajudá-lo?"}]);
+  const [inp, setInp] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const send = async () => {
+    if (!inp.trim()) return;
+    setMsgs(m => [...m, {role:"user", content:inp}]);
+    setInp("");
+    setLoading(true);
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "x-api-key": "", "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 1024,
+        system: "Você é um assistente de IA para o painel administrativo de um escritório de advocacia internacional (Bono & Lacerda). Ajude com dúvidas sobre o painel, procedimentos de imigração, e gestão de clientes. Seja profissional e conciso.",
+        messages: msgs.map(m => ({role:m.role, content:m.content}))
+      })
+    }).catch(() => null);
+    setLoading(false);
+    if (res?.ok) {
+      const data = await res.json();
+      if (data.content?.[0]) setMsgs(m => [...m, {role:"assistant", content:data.content[0].text}]);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button onClick={() => setOpen(true)} style={{position:"fixed", bottom:"2rem", right:"2rem", width:"56px", height:"56px", borderRadius:"50%", background:"linear-gradient(135deg, var(--g), var(--gl))", border:"none", color:"var(--n)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"var(--sh2)", zIndex:99, fontSize:"1.4rem"}}>
+        🤖
+      </button>
+    );
+  }
+
+  return (
+    <div style={{position:"fixed", bottom:"2rem", right:"2rem", width:"380px", height:"600px", borderRadius:"20px", background:"var(--glass)", backdropFilter:"var(--blur)", border:"1px solid var(--glass-border)", boxShadow:"var(--sh3)", zIndex:99, display:"flex", flexDirection:"column", overflow:"hidden"}}>
+      <div style={{padding:"1.25rem 1.5rem", borderBottom:"1px solid var(--glass-border)", display:"flex", justifyContent:"space-between", alignItems:"center"}}>
+        <div><h3 style={{fontWeight:600, color:"#fff", marginBottom:".2rem"}}>Claude Chat</h3><p style={{fontSize:".75rem", color:"var(--ok)"}}>Online</p></div>
+        <button onClick={() => setOpen(false)} style={{background:"none", border:"none", color:"var(--mus)", cursor:"pointer", fontSize:"1.4rem", lineHeight:1}}>×</button>
+      </div>
+      <div style={{flex:1, overflow:"y:auto", display:"flex", flexDirection:"column", gap:"1rem", padding:"1rem", backgroundColor:"rgba(0,0,0,.2)"}}>
+        {msgs.map((m,i) => (
+          <div key={i} style={{display:"flex", justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+            <div style={{maxWidth:"75%", padding:".75rem 1rem", borderRadius:"12px", background:m.role==="user"?"linear-gradient(135deg, rgba(212,168,67,.2), rgba(212,168,67,.1))":"var(--glass2)", color:"#fff", fontSize:".85rem", lineHeight:1.5}}>
+              {m.content}
+            </div>
+          </div>
+        ))}
+        {loading && <div style={{textAlign:"center", color:"var(--mu)"}}><Icon name="spin" size={20} /></div>}
+      </div>
+      <div style={{display:"flex", gap:".5rem", padding:"1rem", borderTop:"1px solid var(--glass-border)"}}>
+        <input type="text" value={inp} onChange={e => setInp(e.target.value)} onKeyPress={e => e.key==="Enter" && send()} placeholder="Escrever mensagem..." style={{flex:1, padding:".6rem .8rem", border:"1px solid var(--glass-border)", borderRadius:"10px", fontSize:".85rem", color:"#fff", background:"var(--glass)", outline:"none"}}/>
+        <button onClick={send} disabled={loading} style={{width:"40px", height:"40px", background:"linear-gradient(135deg, var(--g), var(--gl))", border:"none", borderRadius:"10px", color:"var(--n)", cursor:"pointer", fontWeight:700, display:"flex", alignItems:"center", justifyContent:"center"}}>
+          {loading?"⏳":"→"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [view, setView] = useState("dash");
+  const [auth, setAuth] = useState(false);
+  const [tab, setTab] = useState("dash");
   const [clients, setClients] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [toasts, setToasts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [openC, setOpenC] = useState(null);
+  const [toast, setToast] = useState(null);
 
-  useEffect(() => {
-    if (loggedIn) {
-      (async () => {
-        try {
-          const allClients = await api.get("clients", "?order=created_at.desc&limit=10000");
-          if(!allClients||allClients.error){setLoading(false);return;}
-          // Set clients immediately for count
-          setClients((allClients||[]).map(c=>({...c,proc:null,process_steps:[],documents:[],messages:[],meetings:[]})));
-          // Enrich first 200 with process data
-          const enriched = await Promise.all((allClients||[]).map(async(c,i)=>{
-            if(i>=200) return{...c,proc:null,process_steps:[],documents:[],messages:[],meetings:[]};
-            try {
-              const procs = await api.get("processes", `?client_id=eq.${c.id}&limit=1`);
-              const proc = procs[0]||null;
-              if(proc){
-                const [steps,docs,msgs,meets] = await Promise.all([
-                  api.get("process_steps", `?process_id=eq.${proc.id}&order=step_order.asc`),
-                  api.get("documents", `?process_id=eq.${proc.id}&order=created_at.desc`),
-                  api.get("messages", `?process_id=eq.${proc.id}&order=created_at.asc`),
-                  api.get("meetings", `?process_id=eq.${proc.id}&order=date.asc`),
-                ]);
-                return { ...c, proc, process_steps: steps, documents: docs, messages: msgs, meetings: meets };
-              }
-              return { ...c, proc:null, process_steps:[], documents:[], messages:[], meetings:[] };
-            } catch (e) { return {...c,proc:null,process_steps:[],documents:[],messages:[],meetings:[]}; }
-          }));
-          setClients(enriched);
-        } catch (e) {
-          console.error("Error loading clients:", e);
-        }
-        setLoading(false);
-      })();
-    }
-  }, [loggedIn]);
-
-  const toast = (msg) => {
-    const id = Date.now();
-    setToasts(t => [...t, {id, msg}]);
+  const loadClients = async () => {
+    setLoading(true);
+    const allClients = await api.get("clients", "?order=created_at.desc&limit=10000");
+    setClients(allClients.map(c => ({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]})));
+    const enriched = await Promise.all(allClients.slice(0,200).map(async(c) => {
+      const procs = await api.get("processes", `?client_id=eq.${c.id}&limit=1`);
+      return {...c, proc:procs[0]||null};
+    }));
+    setClients(enriched.concat(allClients.slice(200)));
+    setLoading(false);
   };
 
-  const updateClient = async (id, data) => {
-    try {
-      const updated = await api.patch("clients", id, data);
-      setClients(c => c.map(x => x.id === id ? {...x, ...data} : x));
-      toast("Cliente atualizado com sucesso");
-    } catch (e) {
-      console.error("Error updating client:", e);
-    }
+  const onLogin = () => { setAuth(true); loadClients(); };
+
+  const pendentes = clients.reduce((a,c) => a+(c.meetings||[]).filter(m => m.status==="pendente").length, 0);
+  const nav = [
+    {id:"dash", label:"Painel Geral", ic:"dash"},
+    {id:"clients", label:"Clientes", ic:"users", badge:clients.length},
+    {id:"meetings", label:"Reuniões", ic:"cal", badge:pendentes||undefined},
+  ];
+
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
   };
 
-  const deleteClient = async (id) => {
-    if (!confirm("Tem a certeza?")) return;
-    try {
-      await api.del("clients", id);
-      setClients(c => c.filter(x => x.id !== id));
-      setSelected(null);
-      setView("clientes");
-      toast("Cliente eliminado");
-    } catch (e) {
-      console.error("Error deleting client:", e);
-    }
-  };
-
-  const addClient = async (newClient) => {
-    setClients(c => [...c, newClient]);
-    toast("Cliente adicionado com sucesso");
-  };
-
-  if (!loggedIn) return <Login onLogin={() => setLoggedIn(true)}/>;
-
-  if (loading) return <><style>{css}</style><div style={{minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center"}}><Loader/></div></>;
+  if (!auth) return <><style>{css}</style><Login onLogin={onLogin} /></>;
 
   return (
     <>
       <style>{css}</style>
       <div className="al">
-        {/* DESKTOP SIDEBAR */}
+        <div className="mob-hdr">
+          <h2>Bono & Lacerda</h2>
+          <span>Painel</span>
+          <button onClick={() => setAuth(false)} className="mob-out"><Icon name="logout" size={20} /></button>
+        </div>
+
         <div className="sb">
           <div className="sbl">
             <h2>Bono & Lacerda</h2>
             <span>Painel Administrativo</span>
           </div>
           <div className="sbu">
-            <div className="av" style={{width:40, height:40}}>RL</div>
+            <div className="av" style={{width:"40px", height:"40px"}}>RL</div>
             <div>
               <div className="sbn">Dr. Ramom Lacerda</div>
-              <div className="sbs">OAB/PB 19.165 · 🇵🇹 65899L · 🇪🇸 142952</div>
+              <div className="sbs">OAB/PB 19.165</div>
             </div>
           </div>
           <nav className="sbnav">
-            <div className={`ni${view==="dash"?" on":""}`} onClick={()=>{setView("dash"); setSelected(null);}}>
-              <Icon name="dash" size={18}/> Painel
-            </div>
-            <div className={`ni${view==="clientes"?" on":""}`} onClick={()=>{setView("clientes"); setSelected(null);}}>
-              <Icon name="users" size={18}/> Clientes ({clients.length})
-            </div>
-            <div className={`ni${view==="reunioes"?" on":""}`} onClick={()=>{setView("reunioes"); setSelected(null);}}>
-              <Icon name="cal" size={18}/> Reuniões
-            </div>
+            {nav.map(n => (
+              <div key={n.id} className={`ni ${tab===n.id?"on":""}`} onClick={() => {setTab(n.id); setOpenC(null);}}>
+                <Icon name={n.ic} size={20} />
+                <span style={{flex:1}}>{n.label}</span>
+                {n.badge && <span style={{background:"var(--g)", color:"var(--n)", borderRadius:"99px", padding:".2rem .5rem", fontSize:".65rem", fontWeight:700, minWidth:"24px", textAlign:"center"}}>{n.badge}</span>}
+              </div>
+            ))}
           </nav>
           <div className="sbf">
-            <button className="out" onClick={() => setLoggedIn(false)}>
-              <Icon name="logout" size={16}/> Sair
-            </button>
+            <button onClick={() => setAuth(false)} className="out"><Icon name="logout" size={18} /> Sair</button>
           </div>
         </div>
 
-        {/* MOBILE HEADER */}
-        <div className="mob-hdr">
-          <div>
-            <h2>Bono & Lacerda</h2>
-            <span>Painel</span>
-          </div>
-          <button className="mob-out" onClick={() => setLoggedIn(false)}>
-            <Icon name="logout" size={18}/>
-          </button>
-        </div>
-
-        {/* MAIN CONTENT */}
-        <div className="mc">
-          {view === "dash" && !selected && <Dash clients={clients} onSelectClient={c=>{setSelected(c); setView("clientes");}}/>}
-          {view === "clientes" && !selected && <Clients clients={clients} onSelect={setSelected} onAdd={()=>setShowAdd(true)} onDelete={deleteClient}/>}
-          {view === "clientes" && selected && <Detail client={selected} onBack={()=>setSelected(null)} onUpdate={updateClient} onDelete={deleteClient}/>}
-          {view === "reunioes" && (()=>{
-            const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-            const pendentes=all.filter(m=>m.status==="pendente");
-            return(
-              <div>
-                <div className="ph">
-                  <h1>Todas as Reuniões</h1>
-                  <p>{all.length} reuniões · {pendentes.length} pendentes</p>
-                </div>
-                {pendentes.length>0&&<div style={{background:"rgba(251,191,36,.08)",border:"1px solid rgba(251,191,36,.2)",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#fbbf24"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
-                <div className="card">
-                  {!all.length&&<div className="empty-state"><span className="emoji">📅</span><div className="title">Nenhuma reunião ainda</div></div>}
-                  {all.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
-                    <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"rgba(251,191,36,.3)":"var(--glass-border)",background:m.status==="pendente"?"rgba(251,191,36,.05)":"var(--glass2)"}}>
-                      <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
-                      <div style={{flex:1}}>
-                        <div style={{fontWeight:600,fontSize:".9rem",color:"#fff"}}>{m.title}</div>
-                        <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
-                        {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
-                      </div>
-                      <StatusBadge status={m.status==="confirmado"?"em_andamento":m.status==="pendente"?"pendente":"aguardando"}/>
-                    </div>
-                  );})}
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-
-        {/* MOBILE BOTTOM NAV */}
         <div className="mob-nav">
           <div className="mob-nav-inner">
-            <button className={`mob-ni${view==="dash"?" on":""}`} onClick={()=>{setView("dash"); setSelected(null);}} title="Painel">
-              <Icon name="dash" size={18}/> <span>Painel</span>
-            </button>
-            <button className={`mob-ni${view==="clientes"?" on":""}`} onClick={()=>{setView("clientes"); setSelected(null);}} title="Clientes">
-              <Icon name="users" size={18}/> <span>Clientes</span>
-            </button>
-            <button className={`mob-ni${view==="reunioes"?" on":""}`} onClick={()=>{setView("reunioes"); setSelected(null);}} title="Reuniões">
-              <Icon name="cal" size={18}/> <span>Reuniões</span>
-            </button>
+            {nav.map(n => (
+              <button key={n.id} className={`mob-ni ${tab===n.id?"on":""}`} onClick={() => {setTab(n.id); setOpenC(null);}}>
+                <Icon name={n.ic} size={20} />
+                <span style={{fontSize:".55rem"}}>{n.label.split(" ")[0]}</span>
+                {n.badge && <span style={{fontSize:".5rem", marginTop:".1rem"}}>●</span>}
+              </button>
+            ))}
           </div>
+        </div>
+
+        <div className="mc">
+          {loading && <Loader />}
+          {!loading && tab === "dash" && <Dash clients={clients} />}
+          {!loading && tab === "clients" && <Clients clients={clients} setClients={setClients} onSelectClient={setOpenC} showToast={showToast} />}
+          {!loading && openC && <Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={() => setOpenC(null)} />}
+          {!loading && tab === "meetings" && <AllMeetings clients={clients} showToast={showToast} />}
         </div>
       </div>
 
-      {showAdd && <AddClient onClose={()=>setShowAdd(false)} onAdd={addClient}/>}
+      <ClaudeChat />
 
-      {toasts.map(t => (
-        <Toast key={t.id} msg={t.msg} onClose={() => setToasts(toasts.filter(x => x.id !== t.id))}/>
-      ))}
+      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
     </>
   );
 }
