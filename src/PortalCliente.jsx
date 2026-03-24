@@ -25,37 +25,6 @@ const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
 const ini  = n  => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 
-/* ── LOGO COMPONENT ── */
-function BLLogo({ size = 80 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg" style={{filter:"drop-shadow(0 4px 12px rgba(212,168,67,.2))"}}>
-      {/* Shield outline */}
-      <path d="M30 8 H170 V140 Q170 210 100 240 Q30 210 30 140 Z" stroke="#c9a84c" strokeWidth="3.5" fill="none" strokeLinejoin="round"/>
-      {/* Top horizontal lines */}
-      <line x1="42" y1="20" x2="158" y2="20" stroke="#c9a84c" strokeWidth="2"/>
-      <line x1="42" y1="28" x2="158" y2="28" stroke="#c9a84c" strokeWidth="2"/>
-      <line x1="42" y1="36" x2="158" y2="36" stroke="#c9a84c" strokeWidth="2"/>
-      <line x1="42" y1="44" x2="158" y2="44" stroke="#c9a84c" strokeWidth="2"/>
-      {/* Spiral on the left */}
-      <clipPath id="lc"><rect x="32" y="50" width="68" height="188"/></clipPath>
-      <g clipPath="url(#lc)">
-        <path d="M76 56 Q120 56 120 100 Q120 144 76 148 Q40 148 36 108 Q32 68 68 58 Q92 52 104 72 Q114 92 96 108 Q80 120 68 108 Q58 98 68 88 Q76 80 84 88 Q90 96 82 100" stroke="#c9a84c" strokeWidth="2.2" fill="none"/>
-      </g>
-      {/* Vertical lines on the right */}
-      <clipPath id="rc"><path d="M100 8 H170 V140 Q170 210 100 240 Z"/></clipPath>
-      <g clipPath="url(#rc)">
-        <line x1="108" y1="52" x2="108" y2="220" stroke="#c9a84c" strokeWidth="2"/>
-        <line x1="116" y1="52" x2="116" y2="215" stroke="#c9a84c" strokeWidth="2"/>
-        <line x1="124" y1="52" x2="124" y2="205" stroke="#c9a84c" strokeWidth="2"/>
-        <line x1="132" y1="52" x2="132" y2="192" stroke="#c9a84c" strokeWidth="2"/>
-        <line x1="140" y1="52" x2="140" y2="178" stroke="#c9a84c" strokeWidth="2"/>
-        <line x1="148" y1="52" x2="148" y2="162" stroke="#c9a84c" strokeWidth="2"/>
-        <line x1="156" y1="52" x2="156" y2="144" stroke="#c9a84c" strokeWidth="2"/>
-      </g>
-    </svg>
-  );
-}
-
 function Icon({ name, size = 20 }) {
   const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
   const map = {
@@ -124,13 +93,8 @@ body::before {
 .ll .deco2 { position:absolute; bottom:18%; left:8%; width:60px; height:60px; border:1px solid rgba(212,168,67,.06); border-radius:50%; animation:float 7s ease-in-out infinite reverse; }
 .logo { display:flex; flex-direction:column; align-items:center; gap:1.4rem; z-index:1; }
 .logo-ic { width:80px; height:80px; background:rgba(212,168,67,.08); backdrop-filter:var(--blur); border:1.5px solid rgba(212,168,67,.2); border-radius:24px; display:flex; align-items:center; justify-content:center; color:var(--g); }
-.logo-img { width:80px; height:auto; filter:drop-shadow(0 4px 12px rgba(212,168,67,.2)); }
 .logo h1 { font-family:'Playfair Display',serif; color:#fff; font-size:2.2rem; text-align:center; line-height:1.25; }
 .logo p  { color:rgba(255,255,255,.4); font-size:.78rem; letter-spacing:.18em; text-transform:uppercase; text-align:center; }
-.sb-logo { width:36px; height:auto; filter:drop-shadow(0 2px 8px rgba(212,168,67,.15)); }
-.sbl-logo { display:flex; align-items:center; gap:.75rem; }
-.mob-logo { width:28px; height:auto; filter:drop-shadow(0 2px 6px rgba(212,168,67,.12)); }
-.mob-hdr-logo { display:flex; align-items:center; gap:.6rem; }
 .ltag { margin-top:3rem; color:rgba(255,255,255,.25); font-size:.75rem; text-align:center; line-height:2.2; z-index:1; letter-spacing:.03em; }
 .lr { flex:1; display:flex; align-items:center; justify-content:center; padding:3rem; background:linear-gradient(135deg, #0c1a2f, #0f1e35); }
 .lc { width:100%; max-width:420px; animation:fadeUp .5s ease; }
@@ -185,8 +149,7 @@ body::before {
   .ll::before, .ll::after, .ll .deco1, .ll .deco2 { display:none; }
   .ltag { margin-top:.75rem; }
   .lr { padding:1.5rem 1.25rem; }
-  .dg { grid-template-columns:1fr 1fr !important; gap:.75rem !important; }
-  .dg > .sc:last-child { grid-column: span 2; }
+  .dg { grid-template-columns:1fr !important; gap:.75rem !important; }
   .card { padding:1.15rem; border-radius:var(--r); }
   .ph h1 { font-size:1.5rem; }
   .ph p  { margin-bottom:1rem; }
@@ -196,9 +159,13 @@ body::before {
   .cw { height:calc(100vh - 300px); }
   .chave-input { font-size:1.15rem; letter-spacing:.15em; }
   .tl { padding-left:1.75rem; }
+  .dash-cols { grid-template-columns:1fr !important; }
+  .hero-card { padding:1.5rem !important; }
+  .hero-card .hero-pct { font-size:2.2rem !important; }
+  .hero-card .hero-flex { flex-direction:column !important; gap:1rem !important; }
+  .hero-card .hero-right { text-align:left !important; }
+  .lawyer-info { font-size:.7rem !important; }
   ::-webkit-scrollbar { display:none; }
-  .dashboard-grid { grid-template-columns:1fr !important; }
-  .advogado-grid  { grid-template-columns:1fr !important; }
 }
 
 /* ── COMPONENTS — GLASS CARDS ── */
@@ -381,7 +348,7 @@ function Login({ onLogin }) {
         <div className="deco1" />
         <div className="deco2" />
         <div className="logo">
-          <BLLogo size={80} />
+          <div className="logo-ic"><Icon name="scale" size={30} /></div>
           <h1>Bono & Lacerda<br />Advogados</h1>
           <p>Portal do Cliente</p>
         </div>
@@ -570,18 +537,18 @@ function Dashboard({ client, proc, steps }) {
       <div className="ph"><h1>Olá, {first}!</h1><p>Acompanhe o andamento do seu processo em tempo real.</p></div>
 
       {/* Hero progress card */}
-      <div style={{ background:"linear-gradient(135deg, var(--n) 0%, var(--nl) 100%)", borderRadius:"var(--r3)", padding:"2rem 2.5rem", marginBottom:"1.75rem", color:"#fff", position:"relative", overflow:"hidden" }}>
+      <div className="hero-card" style={{ background:"linear-gradient(135deg, var(--n) 0%, var(--nl) 100%)", borderRadius:"var(--r3)", padding:"2rem 2.5rem", marginBottom:"1.75rem", color:"#fff", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", border:"1px solid rgba(201,168,76,.1)" }} />
         <div style={{ position:"absolute", bottom:-30, left:"60%", width:120, height:120, borderRadius:"50%", border:"1px solid rgba(201,168,76,.06)" }} />
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", position:"relative", zIndex:1 }}>
+        <div className="hero-flex" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", position:"relative", zIndex:1 }}>
           <div>
             <div style={{ fontSize:".72rem", textTransform:"uppercase", letterSpacing:".12em", color:"rgba(201,168,76,.7)", marginBottom:".5rem", fontWeight:600 }}>Progresso do Processo</div>
-            <div style={{ fontSize:"3rem", fontFamily:"'Playfair Display',serif", fontWeight:700, lineHeight:1 }}>{pct}%</div>
+            <div className="hero-pct" style={{ fontSize:"3rem", fontFamily:"'Playfair Display',serif", fontWeight:700, lineHeight:1 }}>{pct}%</div>
             <div style={{ fontSize:".85rem", color:"rgba(255,255,255,.6)", marginTop:".4rem" }}>Etapa {currentStep} de {totalSteps} — {stepName}</div>
           </div>
-          <div style={{ textAlign:"right" }}>
+          <div className="hero-right" style={{ textAlign:"right" }}>
             <div style={{ fontSize:".72rem", textTransform:"uppercase", letterSpacing:".1em", color:"rgba(201,168,76,.7)", marginBottom:".4rem", fontWeight:600 }}>{client.artigo || proc.type}</div>
-            <div style={{ fontSize:".82rem", color:"rgba(255,255,255,.5)" }}>Chave: {client.chave_acesso}</div>
+            <div style={{ fontSize:".82rem", color:"rgba(255,255,255,.5)", wordBreak:"break-all" }}>Chave: {client.chave_acesso}</div>
           </div>
         </div>
         <div style={{ marginTop:"1.25rem", background:"rgba(255,255,255,.12)", borderRadius:99, height:10, overflow:"hidden", position:"relative", zIndex:1 }}>
@@ -602,7 +569,7 @@ function Dashboard({ client, proc, steps }) {
         <div className="sc">
           <div className="sl">Local de Processamento</div>
           <div style={{ fontWeight:600, fontSize:".88rem", color:"#fff", marginTop:6, lineHeight:1.4 }}>
-            {proc.arquivo || (client.observacao?.includes("IRN") ? "IRN — Em análise" : "—")}
+            {proc.arquivo || proc.submissao_irn || client.fonte || (client.observacao?.includes("IRN") ? "IRN — Em análise" : "—")}
           </div>
           <div className="ss" style={{ marginTop:6 }}>{fmtd(proc.last_update)}</div>
         </div>
@@ -616,25 +583,63 @@ function Dashboard({ client, proc, steps }) {
       {/* Prazo estimado */}
       {(() => {
         const artigo = (client.artigo || proc.type || '').toLowerCase();
-        const arquivo = (proc.arquivo || '').toLowerCase();
+        const arquivo = (proc.arquivo || proc.submissao_irn || client.fonte || '').toLowerCase();
         const protocolo = proc.opened_at || '';
 
         const PRAZOS = [
-          { match: a => a.includes('6') && (a.includes('n.º 7') || a.includes('no 7') || a.includes('n7')),
+          // Art.º 6º n.º 7 - Naturalização
+          { match: a => a.includes('6') && (a.includes('n.º 7') || a.includes('n. 7') || a.includes('no 7') || a.includes('n7')),
             porto:  { julgando: '2ª quinzena de maio de 2022',     fonte: 'ACP — Jan/2026' },
             lisboa: { julgando: '1ª quinzena de maio de 2021',     fonte: 'CRC Lisboa — Fev/2026' } },
-          { match: a => a.includes('6') && (a.includes('n.º 1') || a.includes('no 1') || a.includes('n1')),
+          // Art.º 6º n.º 1 - Naturalização
+          { match: a => a.includes('6') && (a.includes('n.º 1') || a.includes('n. 1') || a.includes('no 1') || a.includes('n1')),
             porto:  { julgando: '2ª quinzena de setembro de 2023', fonte: 'ACP — Jan/2026' },
             lisboa: { julgando: '1ª quinzena de janeiro de 2024',  fonte: 'CRC Lisboa — Fev/2026' } },
-          { match: a => a.includes('6') && (a.includes('n.º 2') || a.includes('no 2') || a.includes('n2')),
+          // Art.º 6º n.º 2
+          { match: a => a.includes('6') && (a.includes('n.º 2') || a.includes('n. 2') || a.includes('no 2') || a.includes('n2')),
             porto:  { julgando: '1ª quinzena de setembro de 2025', fonte: 'ACP — Jan/2026' },
             lisboa: { julgando: '2ª quinzena de fevereiro de 2026',fonte: 'CRC Lisboa — Fev/2026' } },
-          { match: a => a.includes('1') && (a.includes('alínea d') || a.includes('alinea d') || a.includes('1.º d') || a.includes('1o d')),
+          // Art.º 6º n.º 3
+          { match: a => a.includes('6') && (a.includes('n.º 3') || a.includes('n. 3') || a.includes('no 3') || a.includes('n3')),
             porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de fevereiro de 2026',fonte: 'CRC Lisboa — Fev/2026' } },
-          { match: a => a.includes('1') && (a.includes('alínea c') || a.includes('alinea c') || a.includes('inscrição') || a.includes('inscricao')),
+            lisboa: { julgando: '2ª quinzena de janeiro de 2026',  fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 6º n.º 4
+          { match: a => a.includes('6') && (a.includes('n.º 4') || a.includes('n. 4') || a.includes('no 4') || a.includes('n4')),
             porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'CRC Lisboa — Fev/2026' } },
+            lisboa: { julgando: '2ª quinzena de dezembro de 2024', fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 6º n.º 5
+          { match: a => a.includes('6') && (a.includes('n.º 5') || a.includes('n. 5') || a.includes('no 5') || a.includes('n5')),
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de abril de 2025',    fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 6º n.º 6
+          { match: a => a.includes('6') && (a.includes('n.º 6') || a.includes('n. 6') || a.includes('no 6') || a.includes('n6')),
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de novembro de 2021', fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 6º n.º 8 - Naturalização (ascendentes)
+          { match: a => a.includes('6') && (a.includes('n.º 8') || a.includes('n. 8') || a.includes('no 8') || a.includes('n8')),
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '1ª quinzena de outubro de 2023',  fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 6º n.º 9
+          { match: a => a.includes('6') && (a.includes('n.º 9') || a.includes('n. 9') || a.includes('no 9') || a.includes('n9')),
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '1ª quinzena de abril de 2025',    fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 3º n.º 1 - Aquisição (casamento)
+          { match: a => (a.includes('3') && a.includes('1')) || a.includes('casamento') || a.includes('aquisição'),
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de outubro de 2021',  fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 2º - Aquisição de Nacionalidade
+          { match: a => a.includes('art') && a.includes('2') && !a.includes('6') && !a.includes('1') && !a.includes('3'),
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '1ª quinzena de setembro de 2022', fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 1º D - Atribuição (netos) — Maiores e Menores
+          { match: a => (a.includes('1') && a.includes('d')) || a.includes('netos'),
+            dual: true,
+            porto:  { maiores: '1ª quinzena de dezembro de 2021', menores: '1ª quinzena de janeiro de 2026', fonte: 'ACP — Jan/2026' },
+            lisboa: { maiores: '2ª quinzena de janeiro de 2022',  menores: '1ª quinzena de janeiro de 2025', fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 1º C - Atribuição (nasc. estrangeiro)
+          { match: a => (a.includes('1') && a.includes('c')) || a.includes('nasc') || a.includes('estrangeiro'),
+            porto:  { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'ACP — Jan/2026' },
+            lisboa: { julgando: '1ª quinzena de novembro de 2025', fonte: 'CRC Lisboa — Fev/2026' } },
         ];
 
         const isPorto  = arquivo.includes('porto');
@@ -642,7 +647,44 @@ function Dashboard({ client, proc, steps }) {
         const prazo = PRAZOS.find(p => p.match(artigo));
         if (!prazo) return null;
         const info = isPorto ? prazo.porto : isLisboa ? prazo.lisboa : null;
-        if (!info || info.julgando === '—') return null;
+        if (!info) return null;
+
+        /* Art.º 1º D dual (maiores / menores) */
+        if (prazo.dual) {
+          const local = isPorto ? "Arquivo Central do Porto" : "Conservatória dos Registos Centrais";
+          return (
+            <div style={{ background:"linear-gradient(135deg, rgba(29,53,87,.03) 0%, rgba(201,168,76,.05) 100%)", border:"1px solid rgba(201,168,76,.2)", borderRadius:"var(--r2)", padding:"1.3rem 1.5rem", marginBottom:"1.5rem" }}>
+              <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:"1rem" }}>
+                <span style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.05rem", fontWeight:600, color:"#fff" }}>
+                  Previsão de Análise pelo IRN
+                </span>
+                <span style={{ marginLeft:"auto", fontSize:".68rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:"3px 10px", borderRadius:99, border:"1px solid var(--glass-border)" }}>{info.fonte}</span>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"1rem" }}>
+                <div style={{ background:"rgba(255,255,255,.04)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid var(--glass-border)" }}>
+                  <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--mu)", marginBottom:5, fontWeight:600 }}>O seu processo entrou em</div>
+                  <div style={{ fontWeight:700, fontSize:".95rem", color:"#fff" }}>{protocolo ? fmtd(protocolo) : "—"}</div>
+                  <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || proc.type}</div>
+                </div>
+                <div style={{ background:"rgba(212,168,67,.08)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid rgba(212,168,67,.2)" }}>
+                  <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--g)", marginBottom:5, fontWeight:600 }}>Maiores de idade</div>
+                  <div style={{ fontWeight:700, fontSize:".95rem", color:"var(--g)" }}>{info.maiores}</div>
+                  <div style={{ fontSize:".75rem", color:"var(--g)", marginTop:3 }}>{local}</div>
+                </div>
+                <div style={{ background:"rgba(212,168,67,.08)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid rgba(212,168,67,.2)" }}>
+                  <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--g)", marginBottom:5, fontWeight:600 }}>Menores de idade</div>
+                  <div style={{ fontWeight:700, fontSize:".95rem", color:"var(--g)" }}>{info.menores}</div>
+                  <div style={{ fontSize:".75rem", color:"var(--g)", marginTop:3 }}>{local}</div>
+                </div>
+              </div>
+              <div style={{ marginTop:"1rem", fontSize:".78rem", color:"var(--mu)", lineHeight:1.65, padding:".7rem 1rem", background:"rgba(255,255,255,.04)", borderRadius:10, border:"1px solid var(--glass-border)" }}>
+                <strong style={{color:"#fff"}}>O que isto significa:</strong> O Art.º 1º D distingue entre maiores e menores de idade, cada faixa com datas de análise diferentes. Verifique acima qual se aplica ao seu caso.
+              </div>
+            </div>
+          );
+        }
+
+        if (info.julgando === '—') return null;
 
         const isLate = protocolo && new Date(protocolo) < new Date('2022-06-01');
         const isRecent = protocolo && new Date(protocolo) > new Date('2024-06-01');
@@ -678,41 +720,41 @@ function Dashboard({ client, proc, steps }) {
         );
       })()}
 
-      <div className="dashboard-grid" style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
+      <div className="dash-cols" style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
         <div className="card">
           <div className="ct">Etapas do Processo IRN</div>
           <IRNTimeline proc={proc} submissao={client.observacao} />
         </div>
-        <div className="advogado-grid" style={{ display:"grid", gridTemplateColumns:"1fr", gap:"1.25rem" }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:"1.25rem" }}>
           <div className="card">
             <div className="ct">Advogados</div>
-            <div style={{ display:"flex", alignItems:"center", gap:".85rem", marginBottom:"1rem" }}>
-              <div className="av" style={{ width:48, height:48, fontSize:".95rem" }}>RL</div>
-              <div>
-                <div style={{ fontWeight:600, fontSize:".92rem" }}>Dr. Ramom Lacerda</div>
-                <div style={{ fontSize:".73rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
-                <div style={{ fontSize:".73rem", color:"var(--mu)" }}>Lisboa — Cédula 65899L · Madrid — 142952</div>
-                <div style={{ fontSize:".73rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
+            <div style={{ display:"flex", alignItems:"center", gap:".75rem", marginBottom:"1rem" }}>
+              <div className="av" style={{ width:42, height:42, fontSize:".85rem", flexShrink:0 }}>RL</div>
+              <div style={{ minWidth:0 }}>
+                <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Ramom Lacerda</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L · Madrid 142952</div>
+                <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
-            <div style={{ display:"flex", alignItems:"center", gap:".85rem", paddingTop:".85rem", borderTop:"1px solid var(--bo)" }}>
-              <div className="av" style={{ width:48, height:48, fontSize:".95rem" }}>LF</div>
-              <div>
-                <div style={{ fontWeight:600, fontSize:".92rem" }}>Dr. Luis Felipe Bono</div>
-                <div style={{ fontSize:".73rem", color:"var(--mu)", marginTop:2 }}>OAB/SP 441.255 · OAB/PB 33587A</div>
-                <div style={{ fontSize:".73rem", color:"var(--mu)", marginTop:1 }}>Lisboa 67321L · Madrid 142951</div>
-                <div style={{ fontSize:".73rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
+            <div style={{ display:"flex", alignItems:"center", gap:".75rem", paddingTop:".85rem", borderTop:"1px solid var(--glass-border)" }}>
+              <div className="av" style={{ width:42, height:42, fontSize:".85rem", flexShrink:0 }}>LF</div>
+              <div style={{ minWidth:0 }}>
+                <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Luis Felipe Bono</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 · OAB/PB 33587A</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L · Madrid 142951</div>
+                <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
             {proc?.opened_at && (
-              <div style={{ marginTop:".9rem", paddingTop:".8rem", borderTop:"1px solid var(--bo)", fontSize:".78rem", color:"var(--mu)" }}>
-                Data de protocolo: <strong style={{color:"var(--n)"}}>{fmtd(proc.opened_at)}</strong>
+              <div style={{ marginTop:".9rem", paddingTop:".8rem", borderTop:"1px solid var(--glass-border)", fontSize:".78rem", color:"var(--mu)" }}>
+                Data de protocolo: <strong style={{color:"#fff"}}>{fmtd(proc.opened_at)}</strong>
               </div>
             )}
           </div>
           <div className="card">
             <div className="ct">Escritório</div>
-            <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:2 }}>
+            <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:2, wordBreak:"break-word" }}>
               Av João XXI, 72B, LJ E38<br />1000-219 Lisboa, Portugal<br />
               +351 21 793 1934<br />
               bonoelacerda@gmail.com
@@ -1281,12 +1323,9 @@ export default function App() {
       <div className="al">
 
         <header className="mob-hdr">
-          <div className="mob-hdr-logo">
-            <BLLogo size={28} />
-            <div>
-              <h2>Bono & Lacerda</h2>
-              <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
-            </div>
+          <div>
+            <h2>Bono & Lacerda</h2>
+            <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
           </div>
           <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
             <Icon name="logout" size={20} />
@@ -1295,13 +1334,8 @@ export default function App() {
 
         <aside className="sb">
           <div className="sbl">
-            <div className="sbl-logo">
-              <BLLogo size={36} />
-              <div>
-                <h2>Bono & Lacerda</h2>
-                <span>Portal do Cliente</span>
-              </div>
-            </div>
+            <h2>Bono & Lacerda</h2>
+            <span>Portal do Cliente</span>
           </div>
           <div className="sbu">
             <div className="av" style={{ width:40, height:40, fontSize:".82rem" }}>{ini(client.name)}</div>
