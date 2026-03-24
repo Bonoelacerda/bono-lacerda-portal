@@ -789,7 +789,7 @@ function Dashboard({ client, proc, steps }) {
 }
 
 /* ── DOCUMENTS ────────────────────────────────────────────────────────── */
-function Docs({ proc, toast }) {
+function Docs({ proc, client, toast }) {
   const [docs, setDocs] = useState([]);
   const [ld,   setLd]   = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -810,7 +810,11 @@ function Docs({ proc, toast }) {
     if (!ok) { toast("Erro ao enviar ficheiro. Tente novamente."); setUploading(false); return; }
     const row = { process_id:proc.id, name:f.name, size:`${(f.size/1024).toFixed(0)} KB`, date:new Date().toISOString().split("T")[0], status:"aguardando", uploaded_by:"cliente", storage_path:path };
     const saved = await db.post("documents", row);
-    if (saved[0]) { setDocs(d => [saved[0], ...d]); toast(`"${f.name}" enviado com sucesso!`); }
+    if (saved[0]) {
+      setDocs(d => [saved[0], ...d]);
+      toast(`"${f.name}" enviado com sucesso!`);
+      if (client) db.post("notifications", { client_id: client.id, text: `📄 Novo documento enviado: "${f.name}". Aguarda revisão do advogado.`, icon: "📄", read: false });
+    }
     setUploading(false);
   };
 
@@ -1527,7 +1531,7 @@ export default function App() {
           {loading ? <Loader text="A carregar o seu processo…" /> : (
             <>
               {tab === "home"     && <Dashboard client={client} proc={proc} steps={steps} />}
-              {tab === "docs"     && <Docs proc={proc} toast={showToast} />}
+              {tab === "docs"     && <Docs proc={proc} client={client} toast={showToast} />}
               {tab === "meetings" && <Meetings proc={proc} client={client} />}
               {tab === "notifs"   && <Notifs client={client} />}
               {tab === "chat"     && <Chat client={client} proc={proc} />}
