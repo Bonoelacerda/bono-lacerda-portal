@@ -85,7 +85,7 @@ body::before {
 }
 
 /* ── LOGIN ── */
-.lw { min-height:100vh; display:flex; overflow-x:hidden; width:100%; max-width:100vw; }
+.lw { min-height:100vh; display:flex; flex-wrap:wrap; overflow-x:hidden; width:100%; max-width:100vw; position:relative; }
 .ll { width:44%; background:linear-gradient(160deg, var(--nd) 0%, #0c1a2f 50%, #14294a 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3rem; position:relative; overflow:hidden; }
 .ll::before { content:''; position:absolute; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle, rgba(212,168,67,.06) 0%, transparent 70%); top:-200px; left:-200px; animation:float 8s ease-in-out infinite; }
 .ll::after  { content:''; position:absolute; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle, rgba(212,168,67,.04) 0%, transparent 70%); bottom:-120px; right:-120px; animation:float 10s ease-in-out infinite reverse; }
@@ -318,7 +318,7 @@ function Loader({ text = "Carregando…" }) {
 }
 
 /* ── LOGIN ────────────────────────────────────────────────────────────── */
-function Login({ onLogin }) {
+function Login({ onLogin, legalDoc, setLegalDoc }) {
   const [chave, setChave] = useState("");
   const [err,   setErr]   = useState("");
   const [busy,  setBusy]  = useState(false);
@@ -373,6 +373,7 @@ function Login({ onLogin }) {
           {err && <p className="errmsg">{err}</p>}
         </div>
       </div>
+      <LegalFooter onOpen={setLegalDoc} />
     </div>
   );
 }
@@ -1284,6 +1285,140 @@ function Perfil({ client, toast, onUpdate }) {
   );
 }
 
+/* ── LEGAL / POLÍTICAS ────────────────────────────────────────────────── */
+const LEGAL = {
+  privacidade: {
+    title: "Política de Privacidade",
+    body: `Bono & Lacerda Advogados ("nós") compromete-se a proteger a privacidade dos seus dados pessoais em conformidade com o Regulamento Geral de Proteção de Dados (RGPD — Regulamento UE 2016/679) e a Lei Geral de Proteção de Dados brasileira (LGPD — Lei 13.709/2018).
+
+Dados recolhidos: nome completo, contacto telefónico, e-mail, número de processo IRN, chave de acesso ao portal, documentos de identificação e certidões, e dados de navegação (cookies essenciais).
+
+Finalidade do tratamento: acompanhamento do processo de nacionalidade portuguesa, comunicação entre cliente e advogado, e envio de notificações sobre o andamento processual.
+
+Base legal: execução de contrato de prestação de serviços jurídicos e consentimento do titular para comunicações.
+
+Conservação: os dados são conservados durante a vigência do contrato e pelo período legalmente exigido (até 5 anos após a conclusão do processo, conforme legislação aplicável).
+
+Direitos do titular: pode exercer os seus direitos de acesso, rectificação, apagamento, portabilidade e oposição contactando-nos através do e-mail bonoelacerda@gmail.com.
+
+Partilha de dados: os dados poderão ser partilhados com o Instituto dos Registos e do Notariado (IRN) e entidades oficiais portuguesas estritamente no âmbito do processo de nacionalidade.
+
+Segurança: utilizamos encriptação, controlo de acesso e monitorização contínua para proteger os seus dados. O acesso ao portal é feito exclusivamente através de chave de acesso individual.
+
+Responsável pelo tratamento: Bono & Lacerda Advogados.`
+  },
+  termos: {
+    title: "Termos de Uso",
+    body: `Ao aceder e utilizar o Portal do Cliente de Bono & Lacerda Advogados, o utilizador aceita os presentes Termos de Uso.
+
+Objecto: este portal permite ao cliente acompanhar o estado do seu processo de nacionalidade portuguesa, consultar documentos, receber notificações e comunicar com o escritório.
+
+Acesso: o acesso é pessoal e intransmissível, sendo feito através de uma chave de acesso única fornecida pelo escritório. É responsabilidade do cliente manter a confidencialidade da sua chave.
+
+Utilização: o portal destina-se exclusivamente à consulta de informações processuais. É proibida qualquer utilização indevida, incluindo tentativas de acesso não autorizado, extracção automatizada de dados ou partilha de credenciais.
+
+Informações: as informações apresentadas no portal são de carácter meramente informativo e não substituem comunicações oficiais do IRN — Instituto dos Registos e do Notariado.
+
+Propriedade intelectual: todo o conteúdo, design e código do portal são propriedade de Bono & Lacerda Advogados, sendo proibida a reprodução sem autorização.
+
+Disponibilidade: o escritório envidará os melhores esforços para manter o portal disponível, mas não garante funcionamento ininterrupto. Manutenções poderão ser realizadas sem aviso prévio.
+
+Alterações: estes termos podem ser actualizados a qualquer momento. A continuidade de utilização do portal implica aceitação dos termos actualizados.
+
+Legislação aplicável: aplica-se a legislação portuguesa, com foro na comarca de Lisboa.`
+  },
+  cookies: {
+    title: "Política de Cookies",
+    body: `Este portal utiliza cookies estritamente necessários ao seu funcionamento.
+
+O que são cookies: cookies são pequenos ficheiros de texto armazenados no seu dispositivo quando visita um website.
+
+Cookies utilizados:
+— Cookies de sessão: necessários para manter a sua sessão activa enquanto navega no portal. Expiram ao fechar o navegador.
+— Cookies de autenticação: armazenam a sua chave de acesso de forma segura durante a sessão.
+— Cookies de preferência: guardam configurações como o separador activo.
+
+Cookies de terceiros: este portal não utiliza cookies de terceiros, de publicidade ou de rastreamento.
+
+Gestão de cookies: por se tratarem de cookies essenciais ao funcionamento do portal, a sua desactivação poderá impedir o correcto funcionamento do serviço.
+
+Base legal: o uso de cookies estritamente necessários é permitido sem consentimento prévio ao abrigo do artigo 5.º, n.º 3, da Directiva ePrivacy (2002/58/CE).`
+  },
+  disclaimer: {
+    title: "Aviso Legal",
+    body: `Bono & Lacerda Advogados é um escritório de advocacia especializado em direito da nacionalidade portuguesa, migração e direito empresarial.
+
+Sede: Lisboa, Portugal.
+Contacto: bonoelacerda@gmail.com
+
+Informação processual: as datas de análise e previsões apresentadas neste portal baseiam-se em tabelas oficiais publicadas pelo IRN — Instituto dos Registos e do Notariado (Arquivo Central do Porto e Conservatória dos Registos Centrais de Lisboa). Estas datas são indicativas e podem sofrer alterações sem aviso prévio por parte do IRN.
+
+Responsabilidade: o escritório não se responsabiliza por eventuais atrasos do IRN, alterações legislativas supervenientes ou decisões administrativas que escapam ao nosso controlo.
+
+Sigilo profissional: toda a informação partilhada através deste portal está protegida pelo sigilo profissional previsto no Estatuto da Ordem dos Advogados.
+
+As informações contidas neste portal não constituem aconselhamento jurídico formal e não dispensam a consulta directa com o advogado responsável pelo processo.`
+  },
+  irn: {
+    title: "Consulta Oficial do Processo",
+    body: `O acompanhamento oficial do seu processo de nacionalidade portuguesa deve ser feito directamente no portal do IRN — Instituto dos Registos e do Notariado.
+
+Para consultar o estado oficial do seu processo:
+1. Aceda ao site https://www.irn.justica.gov.pt
+2. Navegue até à secção "Nacionalidade" → "Consulta de Processos"
+3. Introduza o seu Código de Consulta (fornecido pelo escritório)
+
+A Chave de Acesso deste portal é diferente do Código de Consulta do IRN.
+
+Este portal de Bono & Lacerda Advogados é uma ferramenta complementar que facilita o acompanhamento do seu processo, mas a informação vinculativa e oficial é sempre a que consta no portal do IRN.
+
+Em caso de dúvida sobre o estado do seu processo, contacte o escritório ou consulte directamente o IRN.`
+  }
+};
+
+function LegalModal({ docKey, onClose }) {
+  const doc = LEGAL[docKey];
+  if (!doc) return null;
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,.7)", backdropFilter:"blur(6px)", animation:"fadeUp .25s ease" }} onClick={onClose}>
+      <div style={{ background:"linear-gradient(135deg, #0f1e35, #162a4a)", border:"1px solid rgba(212,168,67,.2)", borderRadius:20, width:"90%", maxWidth:620, maxHeight:"80vh", display:"flex", flexDirection:"column", overflow:"hidden" }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding:"1.3rem 1.5rem", borderBottom:"1px solid rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <h3 style={{ fontFamily:"'Playfair Display',serif", color:"#fff", fontSize:"1.15rem", margin:0 }}>{doc.title}</h3>
+          <button onClick={onClose} style={{ background:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.1)", borderRadius:10, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", color:"rgba(255,255,255,.5)", cursor:"pointer", fontSize:"1.1rem" }}>✕</button>
+        </div>
+        <div style={{ padding:"1.5rem", overflowY:"auto", fontSize:".85rem", color:"rgba(255,255,255,.7)", lineHeight:1.8, whiteSpace:"pre-wrap" }}>
+          {doc.body}
+        </div>
+        <div style={{ padding:"1rem 1.5rem", borderTop:"1px solid rgba(255,255,255,.08)", textAlign:"right" }}>
+          <button onClick={onClose} style={{ background:"linear-gradient(135deg, var(--g), var(--gl))", border:"none", borderRadius:10, padding:".55rem 1.5rem", color:"var(--n)", fontWeight:600, cursor:"pointer", fontSize:".82rem" }}>Fechar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LegalFooter({ onOpen }) {
+  const links = [
+    { key: "privacidade", label: "Política de Privacidade" },
+    { key: "termos", label: "Termos de Uso" },
+    { key: "cookies", label: "Cookies" },
+    { key: "disclaimer", label: "Aviso Legal" },
+    { key: "irn", label: "Consulta Oficial IRN" },
+  ];
+  return (
+    <div style={{ padding:"1rem 1.5rem", borderTop:"1px solid rgba(255,255,255,.06)", textAlign:"center", display:"flex", flexWrap:"wrap", justifyContent:"center", gap:".3rem .8rem", fontSize:".7rem", color:"rgba(255,255,255,.3)" }}>
+      <span>© {new Date().getFullYear()} Bono & Lacerda Advogados</span>
+      <span style={{ color:"rgba(255,255,255,.12)" }}>|</span>
+      {links.map((l, i) => (
+        <span key={l.key}>
+          <a href="#" onClick={e => { e.preventDefault(); onOpen(l.key); }} style={{ color:"rgba(212,168,67,.5)", textDecoration:"none", transition:"color .2s" }} onMouseOver={e => e.target.style.color="rgba(212,168,67,.9)"} onMouseOut={e => e.target.style.color="rgba(212,168,67,.5)"}>{l.label}</a>
+          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>·</span>}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /* ── APP ──────────────────────────────────────────────────────────────── */
 export default function App() {
   const [client,  setClient]  = useState(null);
@@ -1292,6 +1427,7 @@ export default function App() {
   const [tab,     setTab]     = useState("home");
   const [toast,   setToast]   = useState(null);
   const [loading, setLoading] = useState(false);
+  const [legalDoc, setLegalDoc] = useState(null);
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 3500); };
 
@@ -1315,7 +1451,7 @@ export default function App() {
     { id:"perfil",   label:"Meu Perfil",    ic:"users"},
   ];
 
-  if (!client) return <><style>{css}</style><Login onLogin={onLogin} /></>;
+  if (!client) return <><style>{css}</style><Login onLogin={onLogin} legalDoc={legalDoc} setLegalDoc={setLegalDoc} />{legalDoc && <LegalModal docKey={legalDoc} onClose={() => setLegalDoc(null)} />}</>;
 
   return (
     <>
@@ -1395,7 +1531,9 @@ export default function App() {
         </nav>
 
       </div>
+      <LegalFooter onOpen={setLegalDoc} />
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
+      {legalDoc && <LegalModal docKey={legalDoc} onClose={() => setLegalDoc(null)} />}
     </>
   );
 }
