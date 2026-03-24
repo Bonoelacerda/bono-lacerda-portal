@@ -1087,6 +1087,63 @@ function AllMeetings({clients}){
   );
 }
 
+// ── ALL DOCUMENTS ────────────────────────────────────────────────────────────
+function AllDocuments({clients,showToast}){
+  const [allDocs,setAllDocs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [filter,setFilter]=useState("todos");
+
+  useEffect(()=>{
+    const load=async()=>{
+      setLoading(true);
+      const docs=await api.get("documents","?order=created_at.desc&limit=500");
+      // Enrich with client name
+      const enriched=(docs||[]).map(d=>{
+        const cl=clients.find(c=>c.proc&&c.proc.id===d.process_id);
+        return{...d,clientName:cl?cl.name:"—"};
+      });
+      setAllDocs(enriched);
+      setLoading(false);
+    };
+    load();
+  },[clients]);
+
+  const filtered=filter==="todos"?allDocs:filter==="cliente"?allDocs.filter(d=>d.uploaded_by==="cliente"):allDocs.filter(d=>d.uploaded_by==="advogado");
+  const aguardando=allDocs.filter(d=>d.uploaded_by==="cliente"&&d.status==="aguardando").length;
+
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos · {aguardando} aguardando revisão</p></div></div>
+      {aguardando>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {aguardando} documento(s) enviados por clientes aguardando revisão</div></div>}
+      <div style={{display:"flex",gap:".5rem",marginBottom:"1.25rem"}}>
+        {["todos","cliente","advogado"].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)} className={`btn${filter===f?" btn-dk":" btn-gh"}`} style={{padding:".5rem 1rem",fontSize:".8rem"}}>
+            {f==="todos"?"📋 Todos":f==="cliente"?"👤 Do Cliente":"⚖️ Do Advogado"}
+          </button>
+        ))}
+      </div>
+      <div className="card cp">
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando documentos…</span></div>}
+        {!loading&&!filtered.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento encontrado.</p>}
+        {!loading&&filtered.map(d=>(
+          <div key={d.id} className="mcard" style={{borderColor:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fcd34d":"var(--bo)",background:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fffbf0":"var(--bg)"}}>
+            <div className="mdb" style={{background:d.uploaded_by==="cliente"?"#dbeafe":"#f0fdf4",borderColor:d.uploaded_by==="cliente"?"#93c5fd":"#86efac"}}>
+              <div className="day" style={{fontSize:"1.2rem"}}>📄</div>
+              <div className="mon">{d.uploaded_by==="cliente"?"CLI":"ADV"}</div>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontWeight:600,fontSize:".9rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{d.clientName}</strong> · 📦 {d.size} · 📅 {d.date}</div>
+            </div>
+            <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"👤 Cliente":"⚖️ Advogado"}</span>
+            {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function App(){
   const [auth,setAuth]=useState(false);
@@ -1122,6 +1179,7 @@ export default function App(){
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
+    {id:"documents",label:"Documentos",ic:"file"},
     {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
   ];
 
@@ -1154,6 +1212,7 @@ export default function App(){
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
+          tab==="documents"?<AllDocuments clients={clients} showToast={showToast}/>:
           tab==="meetings"?<AllMeetings clients={clients}/>:null}
         </main>
       </div>
