@@ -25,6 +25,37 @@ const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
 const ini  = n  => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 
+/* ── LOGO COMPONENT ── */
+function BLLogo({ size = 80 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg" style={{filter:"drop-shadow(0 4px 12px rgba(212,168,67,.2))"}}>
+      {/* Shield outline */}
+      <path d="M30 8 H170 V140 Q170 210 100 240 Q30 210 30 140 Z" stroke="#c9a84c" strokeWidth="3.5" fill="none" strokeLinejoin="round"/>
+      {/* Top horizontal lines */}
+      <line x1="42" y1="20" x2="158" y2="20" stroke="#c9a84c" strokeWidth="2"/>
+      <line x1="42" y1="28" x2="158" y2="28" stroke="#c9a84c" strokeWidth="2"/>
+      <line x1="42" y1="36" x2="158" y2="36" stroke="#c9a84c" strokeWidth="2"/>
+      <line x1="42" y1="44" x2="158" y2="44" stroke="#c9a84c" strokeWidth="2"/>
+      {/* Spiral on the left */}
+      <clipPath id="lc"><rect x="32" y="50" width="68" height="188"/></clipPath>
+      <g clipPath="url(#lc)">
+        <path d="M76 56 Q120 56 120 100 Q120 144 76 148 Q40 148 36 108 Q32 68 68 58 Q92 52 104 72 Q114 92 96 108 Q80 120 68 108 Q58 98 68 88 Q76 80 84 88 Q90 96 82 100" stroke="#c9a84c" strokeWidth="2.2" fill="none"/>
+      </g>
+      {/* Vertical lines on the right */}
+      <clipPath id="rc"><path d="M100 8 H170 V140 Q170 210 100 240 Z"/></clipPath>
+      <g clipPath="url(#rc)">
+        <line x1="108" y1="52" x2="108" y2="220" stroke="#c9a84c" strokeWidth="2"/>
+        <line x1="116" y1="52" x2="116" y2="215" stroke="#c9a84c" strokeWidth="2"/>
+        <line x1="124" y1="52" x2="124" y2="205" stroke="#c9a84c" strokeWidth="2"/>
+        <line x1="132" y1="52" x2="132" y2="192" stroke="#c9a84c" strokeWidth="2"/>
+        <line x1="140" y1="52" x2="140" y2="178" stroke="#c9a84c" strokeWidth="2"/>
+        <line x1="148" y1="52" x2="148" y2="162" stroke="#c9a84c" strokeWidth="2"/>
+        <line x1="156" y1="52" x2="156" y2="144" stroke="#c9a84c" strokeWidth="2"/>
+      </g>
+    </svg>
+  );
+}
+
 function Icon({ name, size = 20 }) {
   const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
   const map = {
@@ -93,8 +124,13 @@ body::before {
 .ll .deco2 { position:absolute; bottom:18%; left:8%; width:60px; height:60px; border:1px solid rgba(212,168,67,.06); border-radius:50%; animation:float 7s ease-in-out infinite reverse; }
 .logo { display:flex; flex-direction:column; align-items:center; gap:1.4rem; z-index:1; }
 .logo-ic { width:80px; height:80px; background:rgba(212,168,67,.08); backdrop-filter:var(--blur); border:1.5px solid rgba(212,168,67,.2); border-radius:24px; display:flex; align-items:center; justify-content:center; color:var(--g); }
+.logo-img { width:80px; height:auto; filter:drop-shadow(0 4px 12px rgba(212,168,67,.2)); }
 .logo h1 { font-family:'Playfair Display',serif; color:#fff; font-size:2.2rem; text-align:center; line-height:1.25; }
 .logo p  { color:rgba(255,255,255,.4); font-size:.78rem; letter-spacing:.18em; text-transform:uppercase; text-align:center; }
+.sb-logo { width:36px; height:auto; filter:drop-shadow(0 2px 8px rgba(212,168,67,.15)); }
+.sbl-logo { display:flex; align-items:center; gap:.75rem; }
+.mob-logo { width:28px; height:auto; filter:drop-shadow(0 2px 6px rgba(212,168,67,.12)); }
+.mob-hdr-logo { display:flex; align-items:center; gap:.6rem; }
 .ltag { margin-top:3rem; color:rgba(255,255,255,.25); font-size:.75rem; text-align:center; line-height:2.2; z-index:1; letter-spacing:.03em; }
 .lr { flex:1; display:flex; align-items:center; justify-content:center; padding:3rem; background:linear-gradient(135deg, #0c1a2f, #0f1e35); }
 .lc { width:100%; max-width:420px; animation:fadeUp .5s ease; }
@@ -345,7 +381,7 @@ function Login({ onLogin }) {
         <div className="deco1" />
         <div className="deco2" />
         <div className="logo">
-          <div className="logo-ic"><Icon name="scale" size={30} /></div>
+          <BLLogo size={80} />
           <h1>Bono & Lacerda<br />Advogados</h1>
           <p>Portal do Cliente</p>
         </div>
@@ -1245,9 +1281,12 @@ export default function App() {
       <div className="al">
 
         <header className="mob-hdr">
-          <div>
-            <h2>Bono & Lacerda</h2>
-            <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
+          <div className="mob-hdr-logo">
+            <BLLogo size={28} />
+            <div>
+              <h2>Bono & Lacerda</h2>
+              <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
+            </div>
           </div>
           <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
             <Icon name="logout" size={20} />
@@ -1256,8 +1295,13 @@ export default function App() {
 
         <aside className="sb">
           <div className="sbl">
-            <h2>Bono & Lacerda</h2>
-            <span>Portal do Cliente</span>
+            <div className="sbl-logo">
+              <BLLogo size={36} />
+              <div>
+                <h2>Bono & Lacerda</h2>
+                <span>Portal do Cliente</span>
+              </div>
+            </div>
           </div>
           <div className="sbu">
             <div className="av" style={{ width:40, height:40, fontSize:".82rem" }}>{ini(client.name)}</div>
