@@ -348,7 +348,7 @@ function Login({ onLogin }) {
         <div className="deco1" />
         <div className="deco2" />
         <div className="logo">
-          <div className="logo-ic"><Icon name="scale" size={30} /></div>
+          <div className="logo-ic"><img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="Bono & Lacerda" style={{width:54,height:54,objectFit:'contain'}} /></div>
           <h1>Bono & Lacerda<br />Advogados</h1>
           <p>Portal do Cliente</p>
         </div>
@@ -1323,9 +1323,12 @@ export default function App() {
       <div className="al">
 
         <header className="mob-hdr">
-          <div>
-            <h2>Bono & Lacerda</h2>
-            <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
+          <div style={{display:'flex',alignItems:'center',gap:'.6rem'}}>
+            <img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="BL" style={{width:32,height:32,objectFit:'contain'}} />
+            <div>
+              <h2>Bono & Lacerda</h2>
+              <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
+            </div>
           </div>
           <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
             <Icon name="logout" size={20} />
@@ -1334,8 +1337,13 @@ export default function App() {
 
         <aside className="sb">
           <div className="sbl">
-            <h2>Bono & Lacerda</h2>
-            <span>Portal do Cliente</span>
+            <div style={{display:'flex',alignItems:'center',gap:'.7rem'}}>
+              <img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="BL" style={{width:36,height:36,objectFit:'contain'}} />
+              <div>
+                <h2>Bono & Lacerda</h2>
+                <span>Portal do Cliente</span>
+              </div>
+            </div>
           </div>
           <div className="sbu">
             <div className="av" style={{ width:40, height:40, fontSize:".82rem" }}>{ini(client.name)}</div>
