@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+const { useState, useEffect, useRef } = typeof React !== 'undefined' ? React : require('react');
 
 const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
@@ -566,31 +566,18 @@ function WhatsAppNotify({ client, proc, onClose, toast }) {
 
 /* ── LOGIN ────────────────────────────────────────────────────────────── */
 function Login({ onLogin }) {
-  const [chave, setChave] = useState("");
+  const [email, setEmail] = useState("");
+  const [pass,  setPass]  = useState("");
   const [err,   setErr]   = useState("");
-  const [busy,  setBusy]  = useState(false);
 
-  const fmt = (val) => {
-    const d = val.replace(/[^0-9a-zA-Z]/g, "").slice(0, 12);
-    if (d.length > 8) return d.slice(0,4) + "-" + d.slice(4,8) + "-" + d.slice(8);
-    if (d.length > 4) return d.slice(0,4) + "-" + d.slice(4);
-    return d;
-  };
-
-  const go = async () => {
-    const c = chave.trim();
-    if (!c) { setErr("Insira a chave de acesso."); return; }
-    setBusy(true); setErr("");
-    try {
-      const rows = await api.get("clients", `?chave_acesso=eq.${encodeURIComponent(c)}&select=*`);
-      if (rows.length > 0) onLogin();
-      else setErr("Chave não encontrada.");
-    } catch { setErr("Erro de ligação."); }
-    setBusy(false);
+  const go = () => {
+    if (email === "bonoelacerda@gmail.com" && pass === "admin123") onLogin();
+    else setErr("Credenciais inválidas.");
   };
 
   return (
     <div className="login-wrap">
+      <style>{css}</style>
       <div className="lw">
         <div className="ll">
           <div className="logo">
@@ -598,18 +585,25 @@ function Login({ onLogin }) {
             <h1>Bono & Lacerda</h1>
             <p>Advocacia Internacional</p>
           </div>
-          <p className="ltag">Acesso exclusivo para administradores</p>
+          <p className="ltag">Painel Administrativo<br/>Acesso exclusivo para advogados</p>
         </div>
         <div className="lr">
           <div className="lc">
             <h2>Acesso ao Painel</h2>
-            <p>Introduza a chave de administrador para continuar.</p>
-            <input type="text" className="chave-input" placeholder="XXXX-XXXX-XXXX" value={chave} onChange={e=>setChave(fmt(e.target.value))} onKeyDown={e=>e.key==="Enter"&&go()}/>
-            <p className="chave-hint">Chave de acesso de 12 caracteres</p>
-            <button className="btnp" onClick={go} disabled={busy}>
-              {busy ? <><Icon name="spin" size={16}/> Verificando...</> : <><Icon name="arrow" size={16}/> Entrar</>}
+            <p>Insira as suas credenciais para aceder ao painel administrativo.</p>
+            <div className="fg">
+              <label>E-mail</label>
+              <input type="email" placeholder="bonoelacerda@gmail.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/>
+            </div>
+            <div className="fg">
+              <label>Senha</label>
+              <input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/>
+            </div>
+            <button className="btnp" onClick={go}>
+              <Icon name="arrow" size={16}/> Entrar no Painel
             </button>
             {err && <div className="errmsg">{err}</div>}
+            <p style={{marginTop:"1.5rem",color:"var(--mus)",fontSize:".78rem",textAlign:"center"}}>Demo: bonoelacerda@gmail.com / admin123</p>
           </div>
         </div>
       </div>
