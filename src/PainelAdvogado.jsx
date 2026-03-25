@@ -1088,7 +1088,7 @@ function AllMeetings({clients}){
 }
 
 // ── ALL DOCUMENTS ────────────────────────────────────────────────────────────
-function AllDocuments({clients,showToast}){
+function AllDocuments({clients,showToast,openClient}){
   const [allDocs,setAllDocs]=useState([]);
   const [loading,setLoading]=useState(true);
   const [filter,setFilter]=useState("todos");
@@ -1097,10 +1097,10 @@ function AllDocuments({clients,showToast}){
     const load=async()=>{
       setLoading(true);
       const docs=await api.get("documents","?order=created_at.desc&limit=500");
-      // Enrich with client name
+      // Enrich with client name and id
       const enriched=(docs||[]).map(d=>{
         const cl=clients.find(c=>c.proc&&c.proc.id===d.process_id);
-        return{...d,clientName:cl?cl.name:"—"};
+        return{...d,clientName:cl?cl.name:"—",clientId:cl?cl.id:null};
       });
       setAllDocs(enriched);
       setLoading(false);
@@ -1133,7 +1133,7 @@ function AllDocuments({clients,showToast}){
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontWeight:600,fontSize:".9rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{d.clientName}</strong> · 📦 {d.size} · 📅 {d.date}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} · 📦 {d.size} · 📅 {d.date}</div>
             </div>
             <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"👤 Cliente":"⚖️ Advogado"}</span>
             {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
@@ -1174,12 +1174,35 @@ export default function App(){
     setLoading(false);
   };
 
+  const [newDocs,setNewDocs]=useState(0);
+  const lastDocCheck=useRef(null);
+
   const onLogin=()=>{setAuth(true);loadClients();};
+
+  // Poll for new client documents every 30s
+  useEffect(()=>{
+    if(!auth) return;
+    const check=async()=>{
+      const since=lastDocCheck.current||new Date().toISOString();
+      const recent=await api.get("documents",`?uploaded_by=eq.cliente&created_at=gt.${since}&order=created_at.desc`);
+      if(recent&&recent.length>0){
+        setNewDocs(n=>n+recent.length);
+        const last=recent[0];
+        const cl=clients.find(c=>c.proc&&c.proc.id===last.process_id);
+        showToast(`📄 Novo documento de ${cl?cl.name:"cliente"}: "${last.name}"`);
+      }
+      lastDocCheck.current=new Date().toISOString();
+    };
+    lastDocCheck.current=new Date().toISOString();
+    const iv=setInterval(check,30000);
+    return()=>clearInterval(iv);
+  },[auth,clients]);
+
   const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
-    {id:"documents",label:"Documentos",ic:"file"},
+    {id:"documents",label:"Documentos",ic:"file",badge:newDocs||undefined},
     {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
   ];
 
@@ -1199,7 +1222,7 @@ export default function App(){
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
-              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);}}>
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);}}>
                 <Icon name={n.ic} size={16}/>{n.label}
                 {n.badge>0&&<span className="nbdg">{n.badge}</span>}
               </div>
@@ -1212,7 +1235,7 @@ export default function App(){
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="documents"?<AllDocuments clients={clients} showToast={showToast}/>:
+          tab==="documents"?<AllDocuments clients={clients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
           tab==="meetings"?<AllMeetings clients={clients}/>:null}
         </main>
       </div>
