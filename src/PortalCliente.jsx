@@ -9,19 +9,18 @@ const db = {
   post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method: "POST", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
   patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
   upload: async (path, file) => {
-    const mime = file.type || "application/octet-stream";
-    const safePath = path.split("/").map(p => encodeURIComponent(p)).join("/");
-    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`, {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": mime, "x-upsert": "true" },
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type, "x-upsert": "true" },
       body: file
     });
-    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err, "MIME:", mime, "Path:", safePath); }
+    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err); }
     return r.ok;
   },
   signedUrl: async (path) => `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`,
 };
 
+const safeName = n => n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]/g,"_");
 const MO = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
@@ -791,36 +790,28 @@ function Dashboard({ client, proc, steps }) {
 }
 
 /* ── DOCUMENTS ────────────────────────────────────────────────────────── */
-function Docs({ proc, client, toast }) {
+function Docs({ proc, toast }) {
   const [docs, setDocs] = useState([]);
   const [ld,   setLd]   = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
-  const [subTab, setSubTab] = useState("enviados");
   const ref = useRef();
 
   useEffect(() => {
     if (!proc) return;
-    const load=()=>db.get("documents", `?process_id=eq.${proc.id}&order=created_at.desc`).then(d=>{if(d&&!d.error)setDocs(d);}).finally(() => setLd(false));
-    load();
-    const iv=setInterval(load,10000);
-    return()=>clearInterval(iv);
+    db.get("documents", `?process_id=eq.${proc.id}&order=created_at.desc`).then(setDocs).finally(() => setLd(false));
   }, [proc]);
 
   const upload = async f => {
     if (!f) return;
     if (f.size > 20 * 1024 * 1024) { toast("Ficheiro demasiado grande. Máximo 20 MB."); return; }
     setUploading(true);
-    const path = `${proc.id}/${Date.now()}_${f.name}`;
+    const path = `${proc.id}/${Date.now()}_${safeName(f.name)}`;
     const ok = await db.upload(path, f);
     if (!ok) { toast("Erro ao enviar ficheiro. Tente novamente."); setUploading(false); return; }
     const row = { process_id:proc.id, name:f.name, size:`${(f.size/1024).toFixed(0)} KB`, date:new Date().toISOString().split("T")[0], status:"aguardando", uploaded_by:"cliente", storage_path:path };
     const saved = await db.post("documents", row);
-    if (saved[0]) {
-      setDocs(d => [saved[0], ...d]);
-      toast(`"${f.name}" enviado com sucesso!`);
-      if (client) db.post("notifications", { client_id: client.id, text: `📄 Novo documento enviado: "${f.name}". Aguarda revisão do advogado.`, icon: "📄", read: false });
-    }
+    if (saved[0]) { setDocs(d => [saved[0], ...d]); toast(`"${f.name}" enviado com sucesso!`); }
     setUploading(false);
   };
 
@@ -833,131 +824,68 @@ function Docs({ proc, client, toast }) {
     else toast("Erro ao gerar link de download.");
   };
 
-  const meusDocs = docs.filter(d => d.uploaded_by === "cliente");
-  const docsAdv = docs.filter(d => d.uploaded_by === "advogado");
-
-  const statusIcon = s => s==="aprovado" ? "✅" : s==="aguardando" ? "⏳" : "📄";
-  const statusText = s => s==="aprovado" ? "Aprovado pelo advogado" : s==="aguardando" ? "Enviado · Aguardando revisão" : "Disponível";
-  const statusColor = s => s==="aprovado" ? "#34d399" : s==="aguardando" ? "#fbbf24" : "#60a5fa";
+  const badge = s => s==="aprovado" ? <span className="bd bg">Aprovado</span> : s==="aguardando" ? <span className="bd ba">Aguardando</span> : <span className="bd bb">Disponível</span>;
 
   return (
     <div>
       <div className="ph"><h1>Documentos</h1><p>Envie e consulte documentos do seu processo.</p></div>
-
-      {/* ── Mini-abas ── */}
-      <div style={{ display:"flex", gap:"0", marginBottom:"1.25rem", borderRadius:12, overflow:"hidden", border:"1px solid rgba(255,255,255,.08)" }}>
-        <button onClick={()=>setSubTab("enviados")} style={{ flex:1, padding:".75rem 1rem", border:"none", cursor:"pointer", fontWeight:600, fontSize:".85rem", transition:"all .2s",
-          background: subTab==="enviados" ? "rgba(52,211,153,.15)" : "rgba(255,255,255,.03)",
-          color: subTab==="enviados" ? "#34d399" : "var(--mu)",
-          borderBottom: subTab==="enviados" ? "2px solid #34d399" : "2px solid transparent"
-        }}>
-          📤 Meus Envios {meusDocs.length > 0 && <span style={{ marginLeft:6, background:"rgba(52,211,153,.2)", padding:"2px 8px", borderRadius:99, fontSize:".72rem" }}>{meusDocs.length}</span>}
-        </button>
-        <button onClick={()=>setSubTab("recebidos")} style={{ flex:1, padding:".75rem 1rem", border:"none", cursor:"pointer", fontWeight:600, fontSize:".85rem", transition:"all .2s",
-          background: subTab==="recebidos" ? "rgba(96,165,250,.15)" : "rgba(255,255,255,.03)",
-          color: subTab==="recebidos" ? "#60a5fa" : "var(--mu)",
-          borderBottom: subTab==="recebidos" ? "2px solid #60a5fa" : "2px solid transparent"
-        }}>
-          📥 Do Advogado {docsAdv.length > 0 && <span style={{ marginLeft:6, background:"rgba(96,165,250,.2)", padding:"2px 8px", borderRadius:99, fontSize:".72rem" }}>{docsAdv.length}</span>}
-        </button>
+      <div className="card" style={{ marginBottom:"1.25rem" }}>
+        <div className="ct">Enviar Documento</div>
+        <div
+          className="uz"
+          onClick={() => ref.current.click()}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleDrop}
+          style={dragOver ? { borderColor:"var(--g)", background:"var(--gd)" } : {}}
+        >
+          {uploading ? (
+            <>
+              <Icon name="spin" size={32} />
+              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem" }}>A enviar ficheiro…</div>
+            </>
+          ) : (
+            <>
+              <div className="uz-icon"><Icon name="upload" size={36} /></div>
+              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem", color:"#fff" }}>
+                {dragOver ? "Solte o ficheiro aqui" : "Arraste um ficheiro ou clique para selecionar"}
+              </div>
+              <div style={{ fontSize:".78rem", marginTop:6, color:"var(--mu)" }}>PDF, DOC, JPG, PNG — até 20 MB</div>
+            </>
+          )}
+          <input ref={ref} type="file" style={{ display:"none" }} onChange={e => upload(e.target.files[0])} />
+        </div>
       </div>
-
-      {/* ── ABA: Meus Envios ── */}
-      {subTab==="enviados" && (<>
-        <div className="card" style={{ marginBottom:"1.25rem" }}>
-          <div className="ct">Enviar Documento</div>
-          <div
-            className="uz"
-            onClick={() => ref.current.click()}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-            style={dragOver ? { borderColor:"var(--g)", background:"var(--gd)" } : {}}
-          >
-            {uploading ? (
-              <>
-                <Icon name="spin" size={32} />
-                <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem" }}>A enviar ficheiro…</div>
-              </>
-            ) : (
-              <>
-                <div className="uz-icon"><Icon name="upload" size={36} /></div>
-                <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem", color:"#fff" }}>
-                  {dragOver ? "Solte o ficheiro aqui" : "Arraste um ficheiro ou clique para selecionar"}
+      <div className="card">
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
+          <div className="ct" style={{ margin:0 }}>Todos os Documentos</div>
+          {docs.length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:".25rem .65rem", borderRadius:99 }}>{docs.length} ficheiro{docs.length!==1?"s":""}</span>}
+        </div>
+        {ld ? <Loader /> : (
+          <div className="dl">
+            {docs.map(d => (
+              <div key={d.id} className="dit">
+                <div className="dic"><Icon name="file" size={18} /></div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div className="dn2">{d.name}</div>
+                  <div className="dm">{d.size} · {d.date} · {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
                 </div>
-                <div style={{ fontSize:".78rem", marginTop:6, color:"var(--mu)" }}>PDF, DOC, JPG, PNG — até 20 MB</div>
-              </>
+                <div style={{ marginRight:8 }}>{badge(d.status)}</div>
+                <button className="ib" onClick={() => download(d)} title="Download">
+                  <Icon name="dl" size={14} />
+                </button>
+              </div>
+            ))}
+            {!docs.length && (
+              <div className="empty-state">
+                <span className="emoji">📁</span>
+                <div className="title">Nenhum documento</div>
+                <div className="desc">Envie o seu primeiro documento usando a área acima.</div>
+              </div>
             )}
-            <input ref={ref} type="file" style={{ display:"none" }} onChange={e => upload(e.target.files[0])} />
           </div>
-        </div>
-        <div className="card">
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
-            <div className="ct" style={{ margin:0 }}>Documentos Enviados</div>
-            {meusDocs.length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:".25rem .65rem", borderRadius:99 }}>{meusDocs.length} ficheiro{meusDocs.length!==1?"s":""}</span>}
-          </div>
-          {ld ? <Loader /> : (
-            <div className="dl">
-              {meusDocs.map(d => (
-                <div key={d.id} className="dit" style={{ borderLeft:`3px solid ${statusColor(d.status)}` }}>
-                  <div className="dic" style={{ background:"rgba(52,211,153,.15)" }}><Icon name="file" size={18} /></div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div className="dn2">{d.name}</div>
-                    <div className="dm">{d.size} · {d.date}</div>
-                    <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4 }}>
-                      <span style={{ fontSize:".72rem" }}>{statusIcon(d.status)}</span>
-                      <span style={{ fontSize:".72rem", fontWeight:600, color:statusColor(d.status) }}>{statusText(d.status)}</span>
-                    </div>
-                  </div>
-                  <button className="ib" onClick={() => download(d)} title="Download"><Icon name="dl" size={14} /></button>
-                </div>
-              ))}
-              {!meusDocs.length && (
-                <div className="empty-state">
-                  <span className="emoji">📁</span>
-                  <div className="title">Nenhum documento enviado</div>
-                  <div className="desc">Envie o seu primeiro documento usando a área acima.</div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </>)}
-
-      {/* ── ABA: Recebidos do Advogado ── */}
-      {subTab==="recebidos" && (
-        <div className="card">
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
-            <div className="ct" style={{ margin:0 }}>Documentos do Advogado</div>
-            {docsAdv.length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:".25rem .65rem", borderRadius:99 }}>{docsAdv.length} ficheiro{docsAdv.length!==1?"s":""}</span>}
-          </div>
-          {ld ? <Loader /> : (
-            <div className="dl">
-              {docsAdv.map(d => (
-                <div key={d.id} className="dit" style={{ borderLeft:"3px solid #60a5fa" }}>
-                  <div className="dic" style={{ background:"rgba(96,165,250,.15)" }}><Icon name="file" size={18} /></div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div className="dn2">{d.name}</div>
-                    <div className="dm">{d.size} · {d.date}</div>
-                    <div style={{ display:"flex", alignItems:"center", gap:6, marginTop:4 }}>
-                      <span style={{ fontSize:".72rem" }}>⚖️</span>
-                      <span style={{ fontSize:".72rem", fontWeight:600, color:"#60a5fa" }}>Enviado pelo escritório Bono & Lacerda</span>
-                    </div>
-                  </div>
-                  <button className="ib" onClick={() => download(d)} title="Download"><Icon name="dl" size={14} /></button>
-                </div>
-              ))}
-              {!docsAdv.length && (
-                <div className="empty-state">
-                  <span className="emoji">📬</span>
-                  <div className="title">Nenhum documento recebido</div>
-                  <div className="desc">O seu advogado ainda não enviou documentos. Será notificado quando isso acontecer.</div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -968,10 +896,7 @@ function Notifs({ client }) {
   const [ld, setLd] = useState(true);
 
   useEffect(() => {
-    const load=()=>db.get("notifications", `?client_id=eq.${client.id}&order=created_at.desc`).then(d=>{if(d&&!d.error)setNs(d);}).finally(() => setLd(false));
-    load();
-    const iv=setInterval(load,10000);
-    return()=>clearInterval(iv);
+    db.get("notifications", `?client_id=eq.${client.id}&order=created_at.desc`).then(setNs).finally(() => setLd(false));
   }, []);
 
   const markAll = async () => {
@@ -1031,10 +956,7 @@ function Meetings({ proc, client }) {
 
   useEffect(() => {
     if (!proc) return;
-    const load=()=>db.get("meetings", `?process_id=eq.${proc.id}&order=date.asc`).then(d=>{if(d&&!d.error)setMs(d);}).finally(() => setLd(false));
-    load();
-    const iv=setInterval(load,10000);
-    return()=>clearInterval(iv);
+    db.get("meetings", `?process_id=eq.${proc.id}&order=date.asc`).then(setMs).finally(() => setLd(false));
   }, [proc]);
 
   const submit = async () => {
@@ -1606,7 +1528,7 @@ export default function App() {
           {loading ? <Loader text="A carregar o seu processo…" /> : (
             <>
               {tab === "home"     && <Dashboard client={client} proc={proc} steps={steps} />}
-              {tab === "docs"     && <Docs proc={proc} client={client} toast={showToast} />}
+              {tab === "docs"     && <Docs proc={proc} toast={showToast} />}
               {tab === "meetings" && <Meetings proc={proc} client={client} />}
               {tab === "notifs"   && <Notifs client={client} />}
               {tab === "chat"     && <Chat client={client} proc={proc} />}
