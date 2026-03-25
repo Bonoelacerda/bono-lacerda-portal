@@ -10,19 +10,17 @@ const api = {
   patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
   del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
   upload: async (path, file) => {
-    const mime = file.type || "application/octet-stream";
-    const safePath = path.split("/").map(p => encodeURIComponent(p)).join("/");
-    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`, {
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
-      headers: {
-        apikey: SUPA_KEY,
+      headers: { 
+        apikey: SUPA_KEY, 
         Authorization: `Bearer ${SUPA_KEY}`,
-        "Content-Type": mime,
+        "Content-Type": file.type,
         "x-upsert": "true"
       },
       body: file
     });
-    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err, "MIME:", mime, "Path:", safePath); }
+    if (!r.ok) console.error("Upload error:", await r.text());
     return r.ok;
   },
   signedUrl: async (path) => {
@@ -52,7 +50,6 @@ function Icon({ name, size=18 }) {
     file:   <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>,
     upload: <svg {...p}><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>,
     bell:   <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
-    chat:   <svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
     spin:   <svg {...p} style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
   };
   return map[name] || null;
@@ -172,6 +169,33 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
 .ld{display:flex;align-items:center;justify-content:center;min-height:200px;flex-direction:column;gap:1rem;color:var(--mu);font-size:.9rem}
 .toast{position:fixed;bottom:2rem;right:2rem;background:var(--n);color:#fff;padding:.9rem 1.3rem;border-radius:12px;font-size:.85rem;z-index:9999;box-shadow:var(--shm);border-left:3px solid var(--g);animation:rin .3s ease}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bo);border-radius:99px}
+.ham{display:none;position:fixed;top:1rem;left:1rem;z-index:150;width:44px;height:44px;border-radius:12px;background:var(--n);border:none;cursor:pointer;align-items:center;justify-content:center;box-shadow:var(--shm)}
+.ham svg{stroke:#fff;stroke-width:2;stroke-linecap:round}
+.mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99}
+@media(max-width:768px){
+  .ham{display:flex}
+  .sb{transform:translateX(-100%);transition:transform .25s ease;z-index:110}
+  .sb.open{transform:translateX(0)}
+  .mob-ov{display:block}
+  .mc{margin-left:0!important;padding:1.25rem!important;padding-top:4.5rem!important}
+  .sg{grid-template-columns:repeat(2,1fr)!important}
+  .alc{width:calc(100vw - 2rem)!important;padding:2rem!important}
+  .alog::before{font-size:28vw!important}
+  .mo{max-width:100%!important;border-radius:16px!important;margin:.5rem}
+  .tbl{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .fr{grid-template-columns:1fr!important}
+  .tabs{flex-wrap:wrap}
+  .tab{padding:.4rem .8rem;font-size:.78rem}
+  .pt{font-size:1.5rem!important}
+  .tb{flex-direction:column;gap:.75rem}
+  .toast{bottom:1rem;right:1rem;left:1rem;text-align:center}
+}
+@media(max-width:480px){
+  .sg{grid-template-columns:1fr!important}
+  .mc{padding:.75rem!important;padding-top:4rem!important}
+  .stv{font-size:1.7rem!important}
+  .cp{padding:1rem!important}
+}
 `;
 
 function Toast({msg,onClose}){useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t)},[]);return<div className="toast">✓ {msg}</div>;}
@@ -293,7 +317,7 @@ function Dash({ clients }) {
         </div>
       )}
 
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:"1.25rem",marginBottom:"1.25rem"}}>
 
         {/* 2. BUSCA RÁPIDA ────────────────────────────────────────────────── */}
         <div className="card cp">
@@ -355,7 +379,7 @@ function Dash({ clients }) {
         </div>
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:"1.25rem",marginBottom:"1.25rem"}}>
 
         {/* 4. DISTRIBUIÇÃO DOS PROCESSOS ─────────────────────────────────── */}
         <div className="card cp">
@@ -396,7 +420,7 @@ function Dash({ clients }) {
             ))}
           </div>
 
-          <div style={{marginTop:"1rem",paddingTop:"1rem",borderTop:"1px solid var(--bo)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:".5rem"}}>
+          <div style={{marginTop:"1rem",paddingTop:"1rem",borderTop:"1px solid var(--bo)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:".5rem"}}>
             {[
               ["Art.º 6º n.º 7",         974+233],
               ["Art.º 1º C/D",            43+26],
@@ -592,7 +616,7 @@ function WhatsAppNotify({ client, proc, showToast }) {
               {/* Templates */}
               <div style={{marginBottom:"1rem"}}>
                 <label style={{display:"block",fontSize:".75rem",fontWeight:600,color:"#666",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Tipo de Mensagem</label>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:".5rem"}}>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:".5rem"}}>
                   {WA_TEMPLATES.map(t => (
                     <button key={t.id} onClick={() => selectTemplate(t)} style={{
                       padding:".6rem .8rem",borderRadius:10,border:`2px solid ${sel===t.id?"#25D366":"#e2e8f0"}`,
@@ -706,7 +730,7 @@ function ContactCard({client, setClients, showToast}){
             </div>
         }
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:".75rem"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:".75rem"}}>
         {fields.map(f=>(
           <div key={f.key}>
             <div style={{fontSize:".68rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:4}}>{f.label}</div>
@@ -740,8 +764,8 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   // Load full data when client is opened
   useEffect(()=>{
     if(!client) return;
-    const load=async(initial)=>{
-      if(initial) setLdData(true);
+    const load=async()=>{
+      setLdData(true);
       const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
       const proc=procs[0]||null;
       if(proc){
@@ -751,17 +775,13 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
           api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
         ]);
-        if(ss&&!ss.error) setSteps(ss);
-        if(dd&&!dd.error) setDocs(dd);
-        if(mm&&!mm.error) setMsgs(mm);
-        if(mt&&!mt.error) setMeets(mt);
+        setSteps(ss); setDocs(dd); setMsgs(mm); setMeets(mt);
+        // Update client proc in state
         setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
       }
-      if(initial) setLdData(false);
+      setLdData(false);
     };
-    load(true);
-    const iv=setInterval(()=>load(false),10000);
-    return()=>clearInterval(iv);
+    load();
   },[cid]);
 
   if(!client) return null;
@@ -808,29 +828,12 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   };
   const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
   const uploadDoc=async f=>{
-    if(!f) return;
-    if(!proc){showToast("Erro: processo não encontrado. Recarregue a página.");return;}
-    if(f.size>20*1024*1024){showToast("Ficheiro demasiado grande. Máximo 20 MB.");return;}
+    if(!f||!proc) return;
     const path=`${proc.id}/${Date.now()}_${f.name}`;
-    try{
-      const ok=await api.upload(path,f);
-      if(!ok){showToast("Erro ao enviar ficheiro. Verifique o formato e tente novamente.");return;}
-      const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
-      if(r&&r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
-      else{showToast("Ficheiro enviado mas erro ao registar. Tente novamente.");}
-    }catch(e){console.error("Upload exception:",e);showToast("Erro de conexão ao enviar ficheiro.");}
-  };
-  const delDoc=async d=>{
-    if(!confirm(`Eliminar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
-    try{
-      if(d.storage_path){
-        const safePath=d.storage_path.split("/").map(p=>encodeURIComponent(p)).join("/");
-        await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`,{method:"DELETE",headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}});
-      }
-      await api.del("documents",d.id);
-      setDocs(ds=>ds.filter(x=>x.id!==d.id));
-      showToast(`"${d.name}" eliminado.`);
-    }catch(e){console.error("Delete error:",e);showToast("Erro ao eliminar documento.");}
+    const ok=await api.upload(path,f);
+    if(!ok){showToast("Erro ao enviar ficheiro.");return;}
+    const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
+    if(r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
   };
   const notify=async()=>{
     await api.post("notifications",{client_id:client.id,text:"Nova atualização no seu processo. Acesse o portal para ver.",icon:"🔔",read:false});
@@ -916,7 +919,6 @@ function Detail({cid,clients,setClients,showToast,onBack}){
               <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
-              <button className="ib" style={{marginLeft:4,color:"#ef4444"}} onClick={()=>delDoc(d)} title="Eliminar">🗑️</button>
             </div>
           ))}
           {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"1.5rem",fontSize:".85rem"}}>Nenhum documento ainda.</p>}
@@ -1087,181 +1089,26 @@ function Clients({clients,setClients,showToast,openClient}){
 }
 
 // ── ALL MEETINGS ──────────────────────────────────────────────────────────────
-function AllMeetings({clients,openClient}){
-  const [allMeets,setAllMeets]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const procMap=useRef({});
-
-  useEffect(()=>{
-    const load=async(initial)=>{
-      if(initial) setLoading(true);
-      const meets=await api.get("meetings","?order=date.asc&limit=500");
-      if(!meets||meets.error){if(initial)setLoading(false);return;}
-      // Find process_ids we don't have mapped yet
-      const unknown=[...new Set(meets.map(m=>m.process_id).filter(id=>id&&!procMap.current[id]))];
-      if(unknown.length>0){
-        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
-        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
-      }
-      const enriched=meets.map(m=>{
-        const cid=procMap.current[m.process_id]||null;
-        const cl=cid?clients.find(c=>c.id===cid):null;
-        return{...m,clientName:cl?cl.name:"—",clientId:cid};
-      });
-      setAllMeets(enriched);
-      if(initial) setLoading(false);
-    };
-    load(true);
-    const iv=setInterval(()=>load(false),10000);
-    return()=>clearInterval(iv);
-  },[clients]);
-
-  const pendentes=allMeets.filter(m=>m.status==="pendente");
+function AllMeetings({clients}){
+  const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const pendentes=all.filter(m=>m.status==="pendente");
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{allMeets.length} reuniões · {pendentes.length} pendentes</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{all.length} reuniões · {pendentes.length} pendentes</p></div></div>
       {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
       <div className="card cp">
-        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando reuniões…</span></div>}
-        {!loading&&!allMeets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
-        {!loading&&allMeets.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
+        {!all.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
+        {all.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
           <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)"}}>
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
               {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
             </div>
             <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
           </div>
         );})}
-      </div>
-    </div>
-  );
-}
-
-// ── ALL DOCUMENTS ────────────────────────────────────────────────────────────
-function AllDocuments({clients,showToast,openClient}){
-  const [allDocs,setAllDocs]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [filter,setFilter]=useState("todos");
-  const procMap=useRef({});
-
-  useEffect(()=>{
-    const load=async(initial)=>{
-      if(initial) setLoading(true);
-      const docs=await api.get("documents","?order=created_at.desc&limit=500");
-      if(!docs||docs.error){if(initial)setLoading(false);return;}
-      const unknown=[...new Set(docs.map(d=>d.process_id).filter(id=>id&&!procMap.current[id]))];
-      if(unknown.length>0){
-        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
-        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
-      }
-      const enriched=docs.map(d=>{
-        const cid=procMap.current[d.process_id]||null;
-        const cl=cid?clients.find(c=>c.id===cid):null;
-        return{...d,clientName:cl?cl.name:"—",clientId:cid};
-      });
-      setAllDocs(enriched);
-      if(initial) setLoading(false);
-    };
-    load(true);
-    const iv=setInterval(()=>load(false),10000);
-    return()=>clearInterval(iv);
-  },[clients]);
-
-  const filtered=filter==="todos"?allDocs:filter==="cliente"?allDocs.filter(d=>d.uploaded_by==="cliente"):allDocs.filter(d=>d.uploaded_by==="advogado");
-  const aguardando=allDocs.filter(d=>d.uploaded_by==="cliente"&&d.status==="aguardando").length;
-
-  return(
-    <div>
-      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos · {aguardando} aguardando revisão</p></div></div>
-      {aguardando>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {aguardando} documento(s) enviados por clientes aguardando revisão</div></div>}
-      <div style={{display:"flex",gap:".5rem",marginBottom:"1.25rem"}}>
-        {["todos","cliente","advogado"].map(f=>(
-          <button key={f} onClick={()=>setFilter(f)} className={`btn${filter===f?" btn-dk":" btn-gh"}`} style={{padding:".5rem 1rem",fontSize:".8rem"}}>
-            {f==="todos"?"📋 Todos":f==="cliente"?"👤 Do Cliente":"⚖️ Do Advogado"}
-          </button>
-        ))}
-      </div>
-      <div className="card cp">
-        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando documentos…</span></div>}
-        {!loading&&!filtered.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento encontrado.</p>}
-        {!loading&&filtered.map(d=>(
-          <div key={d.id} className="mcard" style={{borderColor:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fcd34d":"var(--bo)",background:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fffbf0":"var(--bg)"}}>
-            <div className="mdb" style={{background:d.uploaded_by==="cliente"?"#dbeafe":"#f0fdf4",borderColor:d.uploaded_by==="cliente"?"#93c5fd":"#86efac"}}>
-              <div className="day" style={{fontSize:"1.2rem"}}>📄</div>
-              <div className="mon">{d.uploaded_by==="cliente"?"CLI":"ADV"}</div>
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{fontWeight:600,fontSize:".9rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} · 📦 {d.size} · 📅 {d.date}</div>
-            </div>
-            <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"👤 Cliente":"⚖️ Advogado"}</span>
-            {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── ALL CHATS ────────────────────────────────────────────────────────────────
-function AllChats({clients,openClient,showToast}){
-  const [allMsgs,setAllMsgs]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const procMap=useRef({});
-
-  useEffect(()=>{
-    const load=async(initial)=>{
-      if(initial) setLoading(true);
-      const msgs=await api.get("messages","?from_role=eq.client&order=created_at.desc&limit=200");
-      if(!msgs||msgs.error){if(initial)setLoading(false);return;}
-      const unknown=[...new Set(msgs.map(m=>m.process_id).filter(id=>id&&!procMap.current[id]))];
-      if(unknown.length>0){
-        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
-        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
-      }
-      // Group by client — show latest message per client
-      const byClient={};
-      msgs.forEach(m=>{
-        const cid=procMap.current[m.process_id]||null;
-        if(cid&&!byClient[cid]) byClient[cid]=m;
-      });
-      const grouped=Object.entries(byClient).map(([cid,m])=>{
-        const cl=clients.find(c=>c.id===cid);
-        return{...m,clientName:cl?cl.name:"—",clientId:cid};
-      }).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
-      setAllMsgs(grouped);
-      if(initial) setLoading(false);
-    };
-    load(true);
-    const iv=setInterval(()=>load(false),10000);
-    return()=>clearInterval(iv);
-  },[clients]);
-
-  return(
-    <div>
-      <div className="tb"><div><h1 className="pt">Mensagens de Clientes</h1><p className="ps">{allMsgs.length} conversa(s) com mensagens recentes</p></div></div>
-      <div className="card cp">
-        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando mensagens…</span></div>}
-        {!loading&&!allMsgs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma mensagem de clientes ainda.</p>}
-        {!loading&&allMsgs.map(m=>(
-          <div className="mcard" key={m.id} style={{cursor:"pointer"}} onClick={()=>openClient&&openClient(m.clientId)}>
-            <div className="mdb" style={{background:"#dbeafe",borderColor:"#93c5fd"}}>
-              <div className="day" style={{fontSize:"1.2rem"}}>💬</div>
-              <div className="mon">MSG</div>
-            </div>
-            <div style={{flex:1,minWidth:0}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <strong style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline",fontSize:".9rem"}}>{m.clientName}</strong>
-              </div>
-              <div style={{fontSize:".82rem",color:"var(--mu)",marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>"{m.text}"</div>
-              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>📅 {fmtd(m.created_at)} · ⏰ {fmtt(m.created_at)}</div>
-            </div>
-            <span className="bd ba">Abrir Chat →</span>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -1275,6 +1122,7 @@ export default function App(){
   const [loading,setLoading]=useState(false);
   const [openC,setOpenC]=useState(null);
   const [toast,setToast]=useState(null);
+  const [sideOpen,setSideOpen]=useState(false);
   const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),3500);};
 
   const loadClients=async()=>{
@@ -1297,74 +1145,12 @@ export default function App(){
     setLoading(false);
   };
 
-  const [newDocs,setNewDocs]=useState(0);
-  const [pendentes,setPendentes]=useState(0);
-  const [newMsgs,setNewMsgs]=useState(0);
-  const lastDocCheck=useRef(null);
-  const lastMsgCheck=useRef(null);
-
   const onLogin=()=>{setAuth(true);loadClients();};
-
-  // Poll for new client documents every 10s
-  useEffect(()=>{
-    if(!auth) return;
-    const check=async()=>{
-      const since=lastDocCheck.current||new Date().toISOString();
-      const recent=await api.get("documents",`?uploaded_by=eq.cliente&created_at=gt.${since}&order=created_at.desc`);
-      if(recent&&recent.length>0){
-        setNewDocs(n=>n+recent.length);
-        const last=recent[0];
-        const cl=clients.find(c=>c.proc&&c.proc.id===last.process_id);
-        showToast(`📄 Novo documento de ${cl?cl.name:"cliente"}: "${last.name}"`);
-      }
-      lastDocCheck.current=new Date().toISOString();
-    };
-    lastDocCheck.current=new Date().toISOString();
-    const iv=setInterval(check,10000);
-    return()=>clearInterval(iv);
-  },[auth,clients]);
-
-  // Poll for new client chat messages every 10s
-  useEffect(()=>{
-    if(!auth) return;
-    const check=async()=>{
-      const since=lastMsgCheck.current||new Date().toISOString();
-      const recent=await api.get("messages",`?from_role=eq.client&created_at=gt.${since}&order=created_at.desc`);
-      if(recent&&recent.length>0){
-        setNewMsgs(n=>n+recent.length);
-        showToast(`💬 ${recent.length} nova(s) mensagem(ns) de cliente(s)`);
-      }
-      lastMsgCheck.current=new Date().toISOString();
-    };
-    lastMsgCheck.current=new Date().toISOString();
-    const iv=setInterval(check,10000);
-    return()=>clearInterval(iv);
-  },[auth]);
-
-  // Poll for pending meetings count every 10s (only update badge when NOT on meetings tab)
-  const seenMeetRef=useRef(0);
-  useEffect(()=>{
-    if(!auth) return;
-    const check=async()=>{
-      const r=await api.get("meetings","?status=eq.pendente&select=id");
-      if(r&&!r.error){
-        const total=r.length;
-        const newOnes=total-seenMeetRef.current;
-        if(tab!=="meetings") setPendentes(newOnes>0?newOnes:0);
-        else seenMeetRef.current=total;
-      }
-    };
-    check();
-    const iv=setInterval(check,10000);
-    return()=>clearInterval(iv);
-  },[auth,tab]);
-
+  const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
-    {id:"documents",label:"Documentos",ic:"file",badge:newDocs||undefined},
     {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
-    {id:"chat",label:"Chat",ic:"chat",badge:newMsgs||undefined},
   ];
 
   if(!auth) return<><style>{css}</style><Login onLogin={onLogin}/></>;
@@ -1373,7 +1159,18 @@ export default function App(){
     <>
       <style>{css}</style>
       <div className="al">
-        <aside className="sb">
+        {/* Hamburger button for mobile */}
+        <button className="ham" onClick={()=>setSideOpen(o=>!o)}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            {sideOpen
+              ?<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
+              :<><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>
+            }
+          </svg>
+        </button>
+        {/* Mobile overlay */}
+        {sideOpen&&<div className="mob-ov" onClick={()=>setSideOpen(false)}/>}
+        <aside className={`sb${sideOpen?" open":""}`}>
           <div className="sbb"><h2>Bono & Lacerda</h2><span>Painel Administrativo</span></div>
           <div className="sbw"><div className="av" style={{width:36,height:36,fontSize:".78rem"}}>RL</div>
             <div>
@@ -1383,7 +1180,7 @@ export default function App(){
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
-              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);if(n.id==="meetings"){setPendentes(0);api.get("meetings","?status=eq.pendente&select=id").then(r=>{if(r&&!r.error)seenMeetRef.current=r.length;});}if(n.id==="chat")setNewMsgs(0);}}>
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);setSideOpen(false);}}>
                 <Icon name={n.ic} size={16}/>{n.label}
                 {n.badge>0&&<span className="nbdg">{n.badge}</span>}
               </div>
@@ -1396,9 +1193,7 @@ export default function App(){
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="documents"?<AllDocuments clients={clients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="meetings"?<AllMeetings clients={clients} openClient={id=>setOpenC(id)}/>:
-          tab==="chat"?<AllChats clients={clients} openClient={id=>setOpenC(id)} showToast={showToast}/>:null}
+          tab==="meetings"?<AllMeetings clients={clients}/>:null}
         </main>
       </div>
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
