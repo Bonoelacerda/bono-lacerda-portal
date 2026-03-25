@@ -1086,21 +1086,40 @@ function Clients({clients,setClients,showToast,openClient}){
 }
 
 // ── ALL MEETINGS ──────────────────────────────────────────────────────────────
-function AllMeetings({clients}){
-  const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-  const pendentes=all.filter(m=>m.status==="pendente");
+function AllMeetings({clients,openClient}){
+  const [allMeets,setAllMeets]=useState([]);
+  const [loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    const load=async(initial)=>{
+      if(initial) setLoading(true);
+      const meets=await api.get("meetings","?order=date.asc&limit=500");
+      const enriched=(meets||[]).map(m=>{
+        const cl=clients.find(c=>c.proc&&c.proc.id===m.process_id);
+        return{...m,clientName:cl?cl.name:"—",clientId:cl?cl.id:null};
+      });
+      setAllMeets(enriched);
+      if(initial) setLoading(false);
+    };
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
+  },[clients]);
+
+  const pendentes=allMeets.filter(m=>m.status==="pendente");
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{all.length} reuniões · {pendentes.length} pendentes</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{allMeets.length} reuniões · {pendentes.length} pendentes</p></div></div>
       {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
       <div className="card cp">
-        {!all.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
-        {all.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando reuniões…</span></div>}
+        {!loading&&!allMeets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
+        {!loading&&allMeets.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
           <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)"}}>
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
               {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
             </div>
             <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
@@ -1118,18 +1137,19 @@ function AllDocuments({clients,showToast,openClient}){
   const [filter,setFilter]=useState("todos");
 
   useEffect(()=>{
-    const load=async()=>{
-      setLoading(true);
+    const load=async(initial)=>{
+      if(initial) setLoading(true);
       const docs=await api.get("documents","?order=created_at.desc&limit=500");
-      // Enrich with client name and id
       const enriched=(docs||[]).map(d=>{
         const cl=clients.find(c=>c.proc&&c.proc.id===d.process_id);
         return{...d,clientName:cl?cl.name:"—",clientId:cl?cl.id:null};
       });
       setAllDocs(enriched);
-      setLoading(false);
+      if(initial) setLoading(false);
     };
-    load();
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
   },[clients]);
 
   const filtered=filter==="todos"?allDocs:filter==="cliente"?allDocs.filter(d=>d.uploaded_by==="cliente"):allDocs.filter(d=>d.uploaded_by==="advogado");
@@ -1260,7 +1280,7 @@ export default function App(){
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
           tab==="documents"?<AllDocuments clients={clients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="meetings"?<AllMeetings clients={clients}/>:null}
+          tab==="meetings"?<AllMeetings clients={clients} openClient={id=>setOpenC(id)}/>:null}
         </main>
       </div>
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
