@@ -9,12 +9,13 @@ const db = {
   post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method: "POST", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
   patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
   upload: async (path, file) => {
+    const mime = file.type || "application/octet-stream";
     const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type, "x-upsert": "true" },
+      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": mime, "x-upsert": "true" },
       body: file
     });
-    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err); }
+    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err, "MIME:", mime); }
     return r.ok;
   },
   signedUrl: async (path) => `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`,
@@ -859,36 +860,54 @@ function Docs({ proc, client, toast }) {
           <input ref={ref} type="file" style={{ display:"none" }} onChange={e => upload(e.target.files[0])} />
         </div>
       </div>
+      {ld ? <div className="card"><Loader /></div> : (<>
+      {/* ── Recebidos do Advogado ── */}
+      <div className="card" style={{ marginBottom:"1.25rem" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
+          <div className="ct" style={{ margin:0 }}>📥 Recebidos do Advogado</div>
+          {docs.filter(d=>d.uploaded_by==="advogado").length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:".25rem .65rem", borderRadius:99 }}>{docs.filter(d=>d.uploaded_by==="advogado").length} ficheiro{docs.filter(d=>d.uploaded_by==="advogado").length!==1?"s":""}</span>}
+        </div>
+        <div className="dl">
+          {docs.filter(d=>d.uploaded_by==="advogado").map(d => (
+            <div key={d.id} className="dit" style={{ borderLeft:"3px solid #60a5fa" }}>
+              <div className="dic" style={{ background:"rgba(96,165,250,.15)" }}><Icon name="file" size={18} /></div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div className="dn2">{d.name}</div>
+                <div className="dm">{d.size} · {d.date}</div>
+              </div>
+              <div style={{ marginRight:8 }}>{badge(d.status)}</div>
+              <button className="ib" onClick={() => download(d)} title="Download"><Icon name="dl" size={14} /></button>
+            </div>
+          ))}
+          {!docs.filter(d=>d.uploaded_by==="advogado").length && (
+            <div style={{ textAlign:"center", padding:"1.5rem", color:"var(--mu)", fontSize:".85rem" }}>Nenhum documento recebido do advogado ainda.</div>
+          )}
+        </div>
+      </div>
+      {/* ── Enviados por Si ── */}
       <div className="card">
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
-          <div className="ct" style={{ margin:0 }}>Todos os Documentos</div>
-          {docs.length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:".25rem .65rem", borderRadius:99 }}>{docs.length} ficheiro{docs.length!==1?"s":""}</span>}
+          <div className="ct" style={{ margin:0 }}>📤 Enviados por Si</div>
+          {docs.filter(d=>d.uploaded_by==="cliente").length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:".25rem .65rem", borderRadius:99 }}>{docs.filter(d=>d.uploaded_by==="cliente").length} ficheiro{docs.filter(d=>d.uploaded_by==="cliente").length!==1?"s":""}</span>}
         </div>
-        {ld ? <Loader /> : (
-          <div className="dl">
-            {docs.map(d => (
-              <div key={d.id} className="dit">
-                <div className="dic"><Icon name="file" size={18} /></div>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div className="dn2">{d.name}</div>
-                  <div className="dm">{d.size} · {d.date} · {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
-                </div>
-                <div style={{ marginRight:8 }}>{badge(d.status)}</div>
-                <button className="ib" onClick={() => download(d)} title="Download">
-                  <Icon name="dl" size={14} />
-                </button>
+        <div className="dl">
+          {docs.filter(d=>d.uploaded_by==="cliente").map(d => (
+            <div key={d.id} className="dit" style={{ borderLeft:"3px solid #34d399" }}>
+              <div className="dic" style={{ background:"rgba(52,211,153,.15)" }}><Icon name="file" size={18} /></div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div className="dn2">{d.name}</div>
+                <div className="dm">{d.size} · {d.date} · {d.status==="aguardando"?"⏳ Aguardando revisão":d.status==="aprovado"?"✅ Aprovado":"📄 Disponível"}</div>
               </div>
-            ))}
-            {!docs.length && (
-              <div className="empty-state">
-                <span className="emoji">📁</span>
-                <div className="title">Nenhum documento</div>
-                <div className="desc">Envie o seu primeiro documento usando a área acima.</div>
-              </div>
-            )}
-          </div>
-        )}
+              <div style={{ marginRight:8 }}>{badge(d.status)}</div>
+              <button className="ib" onClick={() => download(d)} title="Download"><Icon name="dl" size={14} /></button>
+            </div>
+          ))}
+          {!docs.filter(d=>d.uploaded_by==="cliente").length && (
+            <div style={{ textAlign:"center", padding:"1.5rem", color:"var(--mu)", fontSize:".85rem" }}>Ainda não enviou nenhum documento. Use a área acima para enviar.</div>
+          )}
+        </div>
       </div>
+      </>)}
     </div>
   );
 }
