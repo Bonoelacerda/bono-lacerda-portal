@@ -22,6 +22,7 @@ jobs:
       - name: Create TWA Project
         run: |
           mkdir -p twa-build/app/src/main/res/{values,drawable,xml,mipmap-mdpi,mipmap-hdpi,mipmap-xhdpi,mipmap-xxhdpi,mipmap-xxxhdpi}
+          mkdir -p twa-build/gradle/wrapper
           cat > twa-build/settings.gradle <<'EOF'
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
@@ -36,8 +37,17 @@ jobs:
           android.useAndroidX=true
           android.nonTransitiveRClass=true
           EOF
-          cat > twa-build/app/build.gradle <<'EOF'
-          plugins { id 'com.android.application' }
+          cat > twa-build/gradle/wrapper/gradle-wrapper.properties <<'EOF'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.4-bin.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          EOF
+          cat > twa-build/app/build.gradle <<'APPEOF'
+          plugins {
+              id 'com.android.application'
+          }
           android {
               namespace 'com.bonolacerda.portal'
               compileSdk 34
@@ -62,41 +72,102 @@ jobs:
                       keyPassword "bonolacerda2024"
                   }
               }
-              buildTypes { release { signingConfig signingConfigs.release; minifyEnabled false } }
-              compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
-              bundle { language { enableSplit = false } }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
+              }
+              bundle {
+                  language { enableSplit = false }
+              }
           }
-          dependencies { implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0' }
-          EOF
+          dependencies {
+              implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+          }
+          APPEOF
           cat > twa-build/app/src/main/AndroidManifest.xml <<'MANIFESTEOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <application android:allowBackup="true" android:icon="@mipmap/ic_launcher" android:label="Bono e Lacerda Portal" android:supportsRtl="true" android:theme="@android:style/Theme.Translucent.NoTitleBar">
-                  <meta-data android:name="asset_statements" android:value='${assetStatements}' />
-                  <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity" android:exported="true">
-                      <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL" android:value="${defaultUrl}" />
-                      <meta-data android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR" android:resource="@color/colorPrimary" />
-                      <meta-data android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR" android:resource="@color/navigationColor" />
-                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE" android:resource="@drawable/splash" />
-                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR" android:resource="@color/backgroundColor" />
-                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION" android:value="300" />
-                      <meta-data android:name="android.support.customtabs.trusted.FILE_PROVIDER_AUTHORITY" android:value="${applicationId}.fileprovider" />
-                      <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
-                      <intent-filter android:autoVerify="true"><action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" /><data android:scheme="https" android:host="${hostName}" /></intent-filter>
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="Bono e Lacerda Portal"
+                  android:supportsRtl="true"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar">
+                  <meta-data
+                      android:name="asset_statements"
+                      android:value='${assetStatements}' />
+                  <activity
+                      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+                      android:exported="true">
+                      <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL"
+                          android:value="${defaultUrl}" />
+                      <meta-data android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
+                          android:resource="@color/colorPrimary" />
+                      <meta-data android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR"
+                          android:resource="@color/navigationColor" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE"
+                          android:resource="@drawable/splash" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
+                          android:resource="@color/backgroundColor" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION"
+                          android:value="300" />
+                      <meta-data android:name="android.support.customtabs.trusted.FILE_PROVIDER_AUTHORITY"
+                          android:value="${applicationId}.fileprovider" />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                      <intent-filter android:autoVerify="true">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="https" android:host="${hostName}" />
+                      </intent-filter>
                   </activity>
-                  <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:grantUriPermissions="true" android:exported="false"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/filepaths" /></provider>
-                  <service android:name="com.google.androidbrowserhelper.trusted.DelegationService" android:enabled="true" android:exported="true"><intent-filter><action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" /><category android:name="android.intent.category.DEFAULT" /></intent-filter></service>
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="${applicationId}.fileprovider"
+                      android:grantUriPermissions="true"
+                      android:exported="false">
+                      <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/filepaths" />
+                  </provider>
+                  <service
+                      android:name="com.google.androidbrowserhelper.trusted.DelegationService"
+                      android:enabled="true"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                      </intent-filter>
+                  </service>
               </application>
           </manifest>
           MANIFESTEOF
           cat > twa-build/app/src/main/res/values/colors.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?><resources><color name="colorPrimary">#16213e</color><color name="colorPrimaryDark">#0f1729</color><color name="navigationColor">#16213e</color><color name="backgroundColor">#ffffff</color></resources>
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="colorPrimary">#16213e</color>
+              <color name="colorPrimaryDark">#0f1729</color>
+              <color name="navigationColor">#16213e</color>
+              <color name="backgroundColor">#ffffff</color>
+          </resources>
           EOF
           cat > twa-build/app/src/main/res/values/strings.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?><resources><string name="app_name">Bono e Lacerda Portal</string></resources>
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Bono e Lacerda Portal</string>
+          </resources>
           EOF
           cat > twa-build/app/src/main/res/xml/filepaths.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?><paths><files-path name="twa_image" path="/twa_image"/></paths>
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths><files-path name="twa_image" path="/twa_image"/></paths>
           EOF
 
       - name: Generate icons
@@ -120,6 +191,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.4'
 
       - name: Build AAB
         run: |
