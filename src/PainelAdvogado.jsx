@@ -52,6 +52,7 @@ function Icon({ name, size=18 }) {
     file:   <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>,
     upload: <svg {...p}><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>,
     bell:   <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+    chat:   <svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
     spin:   <svg {...p} style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
   };
   return map[name] || null;
@@ -1205,6 +1206,67 @@ function AllDocuments({clients,showToast,openClient}){
   );
 }
 
+// ── ALL CHATS ────────────────────────────────────────────────────────────────
+function AllChats({clients,openClient,showToast}){
+  const [allMsgs,setAllMsgs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const procMap=useRef({});
+
+  useEffect(()=>{
+    const load=async(initial)=>{
+      if(initial) setLoading(true);
+      const msgs=await api.get("messages","?from_role=eq.client&order=created_at.desc&limit=200");
+      if(!msgs||msgs.error){if(initial)setLoading(false);return;}
+      const unknown=[...new Set(msgs.map(m=>m.process_id).filter(id=>id&&!procMap.current[id]))];
+      if(unknown.length>0){
+        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
+        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
+      }
+      // Group by client — show latest message per client
+      const byClient={};
+      msgs.forEach(m=>{
+        const cid=procMap.current[m.process_id]||null;
+        if(cid&&!byClient[cid]) byClient[cid]=m;
+      });
+      const grouped=Object.entries(byClient).map(([cid,m])=>{
+        const cl=clients.find(c=>c.id===cid);
+        return{...m,clientName:cl?cl.name:"—",clientId:cid};
+      }).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
+      setAllMsgs(grouped);
+      if(initial) setLoading(false);
+    };
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
+  },[clients]);
+
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Mensagens de Clientes</h1><p className="ps">{allMsgs.length} conversa(s) com mensagens recentes</p></div></div>
+      <div className="card cp">
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando mensagens…</span></div>}
+        {!loading&&!allMsgs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma mensagem de clientes ainda.</p>}
+        {!loading&&allMsgs.map(m=>(
+          <div className="mcard" key={m.id} style={{cursor:"pointer"}} onClick={()=>openClient&&openClient(m.clientId)}>
+            <div className="mdb" style={{background:"#dbeafe",borderColor:"#93c5fd"}}>
+              <div className="day" style={{fontSize:"1.2rem"}}>💬</div>
+              <div className="mon">MSG</div>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <strong style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline",fontSize:".9rem"}}>{m.clientName}</strong>
+              </div>
+              <div style={{fontSize:".82rem",color:"var(--mu)",marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>"{m.text}"</div>
+              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>📅 {fmtd(m.created_at)} · ⏰ {fmtt(m.created_at)}</div>
+            </div>
+            <span className="bd ba">Abrir Chat →</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── APP ───────────────────────────────────────────────────────────────────────
 export default function App(){
   const [auth,setAuth]=useState(false);
@@ -1237,7 +1299,9 @@ export default function App(){
 
   const [newDocs,setNewDocs]=useState(0);
   const [pendentes,setPendentes]=useState(0);
+  const [newMsgs,setNewMsgs]=useState(0);
   const lastDocCheck=useRef(null);
+  const lastMsgCheck=useRef(null);
 
   const onLogin=()=>{setAuth(true);loadClients();};
 
@@ -1259,6 +1323,23 @@ export default function App(){
     const iv=setInterval(check,10000);
     return()=>clearInterval(iv);
   },[auth,clients]);
+
+  // Poll for new client chat messages every 10s
+  useEffect(()=>{
+    if(!auth) return;
+    const check=async()=>{
+      const since=lastMsgCheck.current||new Date().toISOString();
+      const recent=await api.get("messages",`?from_role=eq.client&created_at=gt.${since}&order=created_at.desc`);
+      if(recent&&recent.length>0){
+        setNewMsgs(n=>n+recent.length);
+        showToast(`💬 ${recent.length} nova(s) mensagem(ns) de cliente(s)`);
+      }
+      lastMsgCheck.current=new Date().toISOString();
+    };
+    lastMsgCheck.current=new Date().toISOString();
+    const iv=setInterval(check,10000);
+    return()=>clearInterval(iv);
+  },[auth]);
 
   // Poll for pending meetings count every 10s (only update badge when NOT on meetings tab)
   const seenMeetRef=useRef(0);
@@ -1283,6 +1364,7 @@ export default function App(){
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
     {id:"documents",label:"Documentos",ic:"file",badge:newDocs||undefined},
     {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
+    {id:"chat",label:"Chat",ic:"chat",badge:newMsgs||undefined},
   ];
 
   if(!auth) return<><style>{css}</style><Login onLogin={onLogin}/></>;
@@ -1301,7 +1383,7 @@ export default function App(){
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
-              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);if(n.id==="meetings"){setPendentes(0);api.get("meetings","?status=eq.pendente&select=id").then(r=>{if(r&&!r.error)seenMeetRef.current=r.length;});}}}>
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);if(n.id==="meetings"){setPendentes(0);api.get("meetings","?status=eq.pendente&select=id").then(r=>{if(r&&!r.error)seenMeetRef.current=r.length;});}if(n.id==="chat")setNewMsgs(0);}}>
                 <Icon name={n.ic} size={16}/>{n.label}
                 {n.badge>0&&<span className="nbdg">{n.badge}</span>}
               </div>
@@ -1315,7 +1397,8 @@ export default function App(){
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
           tab==="documents"?<AllDocuments clients={clients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="meetings"?<AllMeetings clients={clients} openClient={id=>setOpenC(id)}/>:null}
+          tab==="meetings"?<AllMeetings clients={clients} openClient={id=>setOpenC(id)}/>:
+          tab==="chat"?<AllChats clients={clients} openClient={id=>setOpenC(id)} showToast={showToast}/>:null}
         </main>
       </div>
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
