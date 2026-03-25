@@ -1089,16 +1089,20 @@ function Clients({clients,setClients,showToast,openClient}){
 function AllMeetings({clients,openClient}){
   const [allMeets,setAllMeets]=useState([]);
   const [loading,setLoading]=useState(true);
-  const clientsRef=useRef(clients);
-  clientsRef.current=clients;
+  const procMapRef=useRef({});
 
   useEffect(()=>{
     const load=async(initial)=>{
       if(initial) setLoading(true);
-      const meets=await api.get("meetings","?order=date.asc&limit=500");
+      const [meets,procs]=await Promise.all([
+        api.get("meetings","?order=date.asc&limit=500"),
+        Object.keys(procMapRef.current).length===0?api.get("processes","?select=id,client_id&limit=10000"):null
+      ]);
+      if(procs&&!procs.error) procs.forEach(p=>{procMapRef.current[p.id]=p.client_id;});
       const enriched=(meets||[]).map(m=>{
-        const cl=clientsRef.current.find(c=>c.proc&&c.proc.id===m.process_id);
-        return{...m,clientName:cl?cl.name:"—",clientId:cl?cl.id:null};
+        const clientId=procMapRef.current[m.process_id]||null;
+        const cl=clientId?clients.find(c=>c.id===clientId):null;
+        return{...m,clientName:cl?cl.name:"—",clientId};
       });
       setAllMeets(enriched);
       if(initial) setLoading(false);
@@ -1106,7 +1110,7 @@ function AllMeetings({clients,openClient}){
     load(true);
     const iv=setInterval(()=>load(false),10000);
     return()=>clearInterval(iv);
-  },[]);
+  },[clients]);
 
   const pendentes=allMeets.filter(m=>m.status==="pendente");
   return(
@@ -1137,16 +1141,20 @@ function AllDocuments({clients,showToast,openClient}){
   const [allDocs,setAllDocs]=useState([]);
   const [loading,setLoading]=useState(true);
   const [filter,setFilter]=useState("todos");
-  const clientsRef=useRef(clients);
-  clientsRef.current=clients;
+  const procMapRef=useRef({});
 
   useEffect(()=>{
     const load=async(initial)=>{
       if(initial) setLoading(true);
-      const docs=await api.get("documents","?order=created_at.desc&limit=500");
+      const [docs,procs]=await Promise.all([
+        api.get("documents","?order=created_at.desc&limit=500"),
+        Object.keys(procMapRef.current).length===0?api.get("processes","?select=id,client_id&limit=10000"):null
+      ]);
+      if(procs&&!procs.error) procs.forEach(p=>{procMapRef.current[p.id]=p.client_id;});
       const enriched=(docs||[]).map(d=>{
-        const cl=clientsRef.current.find(c=>c.proc&&c.proc.id===d.process_id);
-        return{...d,clientName:cl?cl.name:"—",clientId:cl?cl.id:null};
+        const clientId=procMapRef.current[d.process_id]||null;
+        const cl=clientId?clients.find(c=>c.id===clientId):null;
+        return{...d,clientName:cl?cl.name:"—",clientId};
       });
       setAllDocs(enriched);
       if(initial) setLoading(false);
@@ -1154,7 +1162,7 @@ function AllDocuments({clients,showToast,openClient}){
     load(true);
     const iv=setInterval(()=>load(false),10000);
     return()=>clearInterval(iv);
-  },[]);
+  },[clients]);
 
   const filtered=filter==="todos"?allDocs:filter==="cliente"?allDocs.filter(d=>d.uploaded_by==="cliente"):allDocs.filter(d=>d.uploaded_by==="advogado");
   const aguardando=allDocs.filter(d=>d.uploaded_by==="cliente"&&d.status==="aguardando").length;
@@ -1282,7 +1290,7 @@ export default function App(){
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
-              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);}}>
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);if(n.id==="meetings")setPendentes(0);}}>
                 <Icon name={n.ic} size={16}/>{n.label}
                 {n.badge>0&&<span className="nbdg">{n.badge}</span>}
               </div>
