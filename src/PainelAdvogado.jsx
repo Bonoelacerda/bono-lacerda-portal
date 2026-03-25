@@ -10,17 +10,18 @@ const api = {
   patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
   del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
   upload: async (path, file) => {
+    const mime = file.type || "application/octet-stream";
     const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
       method: "POST",
-      headers: { 
-        apikey: SUPA_KEY, 
+      headers: {
+        apikey: SUPA_KEY,
         Authorization: `Bearer ${SUPA_KEY}`,
-        "Content-Type": file.type,
+        "Content-Type": mime,
         "x-upsert": "true"
       },
       body: file
     });
-    if (!r.ok) console.error("Upload error:", await r.text());
+    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err, "MIME:", mime); }
     return r.ok;
   },
   signedUrl: async (path) => {
