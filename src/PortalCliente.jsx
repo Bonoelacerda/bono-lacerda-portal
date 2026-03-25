@@ -1,21 +1,55 @@
 import { useState, useEffect, useRef } from "react";
 
+/* ── SECURITY: Prototype Pollution Protection (V-008) ─────────────────── */
+if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object.freeze(Array.prototype);}catch(e){}}
+
+/* ── SECURITY: Strip Meta Pixel fbclid tracking parameter (V-007 LGPD) ── */
+(function stripFbclid(){
+  try{
+    const url=new URL(window.location.href);
+    if(url.searchParams.has("fbclid")){
+      url.searchParams.delete("fbclid");
+      window.history.replaceState({},"",url.pathname+url.search+url.hash);
+    }
+  }catch(e){}
+})();
+
 const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
 
+/* ── SECURITY: Input sanitization (V-008) ─────────────────────────────── */
+const sanitizeInput = (str) => {
+  if(typeof str !== "string") return "";
+  return str.replace(/[<>'"]/g, c => ({"<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]||c);
+};
+const sanitizeQueryParam = (str) => {
+  if(typeof str !== "string") return "";
+  return str.replace(/__proto__|constructor\[|prototype\[/gi, "");
+};
+
+/* ── SECURITY: Safe JSON parse (V-010) ────────────────────────────────── */
+const safeJsonParse = async (response) => {
+  try {
+    const data = await response.json();
+    if(data && data.error) { console.warn("API error"); return []; }
+    return data;
+  } catch { return []; }
+};
+
 const db = {
-  get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
-  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method: "POST", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
-  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
+  get:   async (t, q="")  => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}${sanitizeQueryParam(q)}`, { headers: H }); return safeJsonParse(r); } catch { return []; } },
+  post:  async (t, b)     => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}`, { method: "POST", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }); return safeJsonParse(r); } catch { return []; } },
+  patch: async (t, id, b) => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }); return safeJsonParse(r); } catch { return []; } },
   upload: async (path, file) => {
-    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
-      method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type, "x-upsert": "true" },
-      body: file
-    });
-    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err); }
-    return r.ok;
+    try {
+      const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
+        method: "POST",
+        headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": file.type, "x-upsert": "true" },
+        body: file
+      });
+      return r.ok;
+    } catch { return false; }
   },
   signedUrl: async (path) => `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`,
 };
@@ -324,6 +358,9 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
   const [chave, setChave] = useState("");
   const [err,   setErr]   = useState("");
   const [busy,  setBusy]  = useState(false);
+  /* ── SECURITY: Rate limiting on login (V-006) ── */
+  const [attempts,setAttempts] = useState(0);
+  const [locked,setLocked] = useState(false);
 
   const fmt = (val) => {
     const d = val.replace(/[^0-9a-zA-Z]/g, "").slice(0, 12);
@@ -333,13 +370,18 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
   };
 
   const go = async () => {
+    if(locked){setErr("Muitas tentativas. Aguarde 30 segundos.");return;}
     const c = chave.trim();
     if (!c) { setErr("Insira a sua chave de acesso."); return; }
     setBusy(true); setErr("");
     try {
       const rows = await db.get("clients", `?chave_acesso=eq.${encodeURIComponent(c)}&select=*`);
-      if (rows.length > 0) onLogin(rows[0]);
-      else setErr("Chave não encontrada. Verifique e tente novamente.");
+      if (rows.length > 0) { setAttempts(0); onLogin(rows[0]); }
+      else {
+        const n=attempts+1;setAttempts(n);
+        setErr("Chave não encontrada. Verifique e tente novamente.");
+        if(n>=5){setLocked(true);setTimeout(()=>{setLocked(false);setAttempts(0);},30000);}
+      }
     } catch { setErr("Erro de ligação. Tente novamente."); }
     setBusy(false);
   };
@@ -1442,6 +1484,26 @@ function LegalFooter({ onOpen }) {
 }
 
 /* ── APP ──────────────────────────────────────────────────────────────── */
+/* ── LGPD CONSENT BANNER (V-007) ──────────────────────────────────────── */
+function LGPDConsent(){
+  const [show,setShow]=useState(()=>{try{return !localStorage.getItem("bl_lgpd_consent");}catch{return true;}});
+  if(!show)return null;
+  const accept=()=>{try{localStorage.setItem("bl_lgpd_consent","accepted_"+new Date().toISOString());}catch{}setShow(false);};
+  const decline=()=>{try{localStorage.setItem("bl_lgpd_consent","declined_"+new Date().toISOString());}catch{}setShow(false);};
+  return(
+    <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:9999,background:"rgba(6,14,26,.95)",backdropFilter:"blur(12px)",borderTop:"1px solid rgba(212,168,67,.2)",padding:"1.2rem 1.5rem",display:"flex",alignItems:"center",gap:"1rem",flexWrap:"wrap",justifyContent:"space-between",animation:"fadeUp .3s ease"}}>
+      <div style={{flex:"1 1 300px",color:"rgba(255,255,255,.8)",fontSize:".84rem",lineHeight:1.6}}>
+        Este portal utiliza cookies essenciais para funcionamento. Não utilizamos cookies de rastreamento ou Meta Pixel.
+        Seus dados pessoais são tratados conforme a <strong style={{color:"#d4a843"}}>LGPD (Lei 13.709/2018)</strong>.
+      </div>
+      <div style={{display:"flex",gap:".6rem",flexShrink:0}}>
+        <button onClick={decline} style={{padding:".55rem 1.1rem",borderRadius:10,border:"1px solid rgba(255,255,255,.15)",background:"transparent",color:"rgba(255,255,255,.6)",fontFamily:"'DM Sans',sans-serif",fontSize:".82rem",cursor:"pointer"}}>Recusar</button>
+        <button onClick={accept} style={{padding:".55rem 1.1rem",borderRadius:10,border:"none",background:"linear-gradient(135deg,#d4a843,#e8c76a)",color:"#0a1628",fontFamily:"'DM Sans',sans-serif",fontSize:".82rem",fontWeight:700,cursor:"pointer"}}>Aceitar</button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [client,  setClient]  = useState(null);
   const [proc,    setProc]    = useState(null);
@@ -1556,6 +1618,7 @@ export default function App() {
       </div>
       {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
       {legalDoc && <LegalModal docKey={legalDoc} onClose={() => setLegalDoc(null)} />}
+      <LGPDConsent />
     </>
   );
 }
