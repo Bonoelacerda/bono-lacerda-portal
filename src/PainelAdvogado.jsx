@@ -835,6 +835,17 @@ function Detail({cid,clients,setClients,showToast,onBack}){
     const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
     if(r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
   };
+  const deleteDoc=async d=>{
+    if(!confirm(`Apagar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
+    // Delete from storage if path exists
+    if(d.storage_path){
+      await fetch(`${SUPA_URL}/storage/v1/object/documentos/${d.storage_path}`,{method:"DELETE",headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}}).catch(()=>{});
+    }
+    // Delete from database
+    await api.del("documents",d.id);
+    setDocs(ds=>ds.filter(x=>x.id!==d.id));
+    showToast(`"${d.name}" apagado!`);
+  };
   const notify=async()=>{
     await api.post("notifications",{client_id:client.id,text:"Nova atualização no seu processo. Acesse o portal para ver.",icon:"🔔",read:false});
     showToast("Notificação enviada!");
@@ -919,6 +930,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
               <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
+              <button className="ib d" style={{marginLeft:4}} onClick={()=>deleteDoc(d)} title="Apagar documento"><Icon name="trash" size={13}/></button>
             </div>
           ))}
           {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"1.5rem",fontSize:".85rem"}}>Nenhum documento ainda.</p>}
@@ -1089,7 +1101,7 @@ function Clients({clients,setClients,showToast,openClient}){
 }
 
 // ── ALL DOCUMENTS (uses global polling data) ─────────────────────────────────
-function AllDocuments({docs,clientMap,openClient}){
+function AllDocuments({docs,clientMap,openClient,onDelete}){
   const fromClients=docs.filter(d=>d.uploaded_by==="cliente");
   return(
     <div>
@@ -1108,6 +1120,7 @@ function AllDocuments({docs,clientMap,openClient}){
               </div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async(e)=>{e.stopPropagation();const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");}} title="Download"><Icon name="upload" size={13}/></button>}
+              <button className="ib d" style={{marginLeft:4}} onClick={(e)=>{e.stopPropagation();onDelete(d);}} title="Apagar documento"><Icon name="trash" size={13}/></button>
             </div>
           );
         })}
@@ -1263,6 +1276,17 @@ export default function App(){
   const newClientMsgs=gMsgs.filter(m=>m.from_role==="client"&&!seenMsgs.has(m.id));
   const pendingMeets=gMeets.filter(m=>m.status==="pendente"&&!seenMeets.has(m.id));
 
+  // ── Delete document from global view ──
+  const deleteDocGlobal=async(d)=>{
+    if(!confirm(`Apagar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
+    if(d.storage_path){
+      await fetch(`${SUPA_URL}/storage/v1/object/documentos/${d.storage_path}`,{method:"DELETE",headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}}).catch(()=>{});
+    }
+    await api.del("documents",d.id);
+    setGDocs(ds=>ds.filter(x=>x.id!==d.id));
+    showToast(`"${d.name}" apagado!`);
+  };
+
   // ── Clear badges when clicking sidebar ──
   const handleNav=(id)=>{
     if(id==="documents") setSeenDocs(new Set(gDocs.filter(d=>d.uploaded_by==="cliente").map(d=>d.id)));
@@ -1319,7 +1343,7 @@ export default function App(){
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="documents"?<AllDocuments docs={gDocs} clientMap={clientMap} openClient={id=>setOpenC(id)}/>:
+          tab==="documents"?<AllDocuments docs={gDocs} clientMap={clientMap} openClient={id=>setOpenC(id)} onDelete={deleteDocGlobal}/>:
           tab==="messages"?<AllMessages msgs={gMsgs} clientMap={clientMap} openClient={id=>setOpenC(id)}/>:
           tab==="meetings"?<AllMeetings meetings={gMeets} clientMap={clientMap} openClient={id=>setOpenC(id)}/>:null}
         </main>
