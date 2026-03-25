@@ -28,6 +28,7 @@ const api = {
   }
 };
 
+const safeName = n => n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]/g,"_");
 const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const ini  = n => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
@@ -829,7 +830,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
   const uploadDoc=async f=>{
     if(!f||!proc) return;
-    const path=`${proc.id}/${Date.now()}_${f.name}`;
+    const path=`${proc.id}/${Date.now()}_${safeName(f.name)}`;
     const ok=await api.upload(path,f);
     if(!ok){showToast("Erro ao enviar ficheiro.");return;}
     const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
