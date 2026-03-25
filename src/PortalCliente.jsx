@@ -799,7 +799,10 @@ function Docs({ proc, client, toast }) {
 
   useEffect(() => {
     if (!proc) return;
-    db.get("documents", `?process_id=eq.${proc.id}&order=created_at.desc`).then(setDocs).finally(() => setLd(false));
+    const load=()=>db.get("documents", `?process_id=eq.${proc.id}&order=created_at.desc`).then(d=>{if(d&&!d.error)setDocs(d);}).finally(() => setLd(false));
+    load();
+    const iv=setInterval(load,10000);
+    return()=>clearInterval(iv);
   }, [proc]);
 
   const upload = async f => {
@@ -918,7 +921,10 @@ function Notifs({ client }) {
   const [ld, setLd] = useState(true);
 
   useEffect(() => {
-    db.get("notifications", `?client_id=eq.${client.id}&order=created_at.desc`).then(setNs).finally(() => setLd(false));
+    const load=()=>db.get("notifications", `?client_id=eq.${client.id}&order=created_at.desc`).then(d=>{if(d&&!d.error)setNs(d);}).finally(() => setLd(false));
+    load();
+    const iv=setInterval(load,10000);
+    return()=>clearInterval(iv);
   }, []);
 
   const markAll = async () => {
@@ -978,7 +984,10 @@ function Meetings({ proc, client }) {
 
   useEffect(() => {
     if (!proc) return;
-    db.get("meetings", `?process_id=eq.${proc.id}&order=date.asc`).then(setMs).finally(() => setLd(false));
+    const load=()=>db.get("meetings", `?process_id=eq.${proc.id}&order=date.asc`).then(d=>{if(d&&!d.error)setMs(d);}).finally(() => setLd(false));
+    load();
+    const iv=setInterval(load,10000);
+    return()=>clearInterval(iv);
   }, [proc]);
 
   const submit = async () => {
