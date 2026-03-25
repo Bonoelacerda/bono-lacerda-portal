@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.bonolacerda.portal",
+      "sha256_cert_fingerprints": [
+        "F0:B8:FE:5C:27:F0:ED:38:17:A9:13:EE:19:66:D9:F8:26:FA:9D:3A:E5:F1:B2:53:A7:7D:20:79:73:C9:3F:B6"
+      ]
+    }
+  }
+]
