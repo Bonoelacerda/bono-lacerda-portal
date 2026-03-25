@@ -4,1590 +4,1388 @@ const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
 
-const db = {
+const api = {
   get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
-  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method: "POST", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
-  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method: "PATCH", headers: { ...H, Prefer: "return=representation" }, body: JSON.stringify(b) }).then(r => r.json()),
+  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
+  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
+  del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
   upload: async (path, file) => {
     const mime = file.type || "application/octet-stream";
     const safePath = path.split("/").map(p => encodeURIComponent(p)).join("/");
     const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`, {
       method: "POST",
-      headers: { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": mime, "x-upsert": "true" },
+      headers: {
+        apikey: SUPA_KEY,
+        Authorization: `Bearer ${SUPA_KEY}`,
+        "Content-Type": mime,
+        "x-upsert": "true"
+      },
       body: file
     });
     if (!r.ok) { const err = await r.text(); console.error("Upload error:", err, "MIME:", mime, "Path:", safePath); }
     return r.ok;
   },
-  signedUrl: async (path) => `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`,
+  signedUrl: async (path) => {
+    return `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`;
+  }
 };
 
-const MO = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const ini  = n => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
-const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
-const ini  = n  => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
+const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}) : "";
 
-function Icon({ name, size = 20 }) {
-  const p = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
+function Icon({ name, size=18 }) {
+  const p = { width:size, height:size, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:"2", strokeLinecap:"round", strokeLinejoin:"round" };
   const map = {
-    home:     <svg {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>,
-    file:     <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>,
-    bell:     <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
-    chat:     <svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-    cal:      <svg {...p}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-    logout:   <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
-    users:    <svg {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-    upload:   <svg {...p}><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>,
-    send:     <svg {...p}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>,
-    check:    <svg {...p}><polyline points="20,6 9,17 4,12"/></svg>,
-    eye:      <svg {...p}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>,
-    dl:       <svg {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
-    scale:    <svg {...p}><line x1="12" y1="3" x2="12" y2="21"/><path d="M3 7l4 4-4 4"/><path d="M21 7l-4 4 4 4"/><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="15" x2="21" y2="15"/></svg>,
-    spin:     <svg {...p} style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
-    key:      <svg {...p}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>,
-    clip:     <svg {...p}><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>,
-    img:      <svg {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>,
+    dash:   <svg {...p}><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
+    users:  <svg {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+    cal:    <svg {...p}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+    plus:   <svg {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
+    check:  <svg {...p}><polyline points="20,6 9,17 4,12"/></svg>,
+    trash:  <svg {...p}><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14a2,2,0,0,1-2,2H8a2,2,0,0,1-2-2L5,6"/><path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1v2"/></svg>,
+    send:   <svg {...p}><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>,
+    close:  <svg {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+    logout: <svg {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
+    search: <svg {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
+    arrow:  <svg {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>,
+    file:   <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>,
+    upload: <svg {...p}><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>,
+    bell:   <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+    spin:   <svg {...p} style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
   };
   return map[name] || null;
 }
 
-/* ── CSS — GLASSMORPHISM DESIGN ────────────────────────────────────────── */
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-@keyframes slideIn { from { transform:translateX(80px); opacity:0; } to { transform:translateX(0); opacity:1; } }
-@keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
-@keyframes breathe { 0%,100% { box-shadow:0 0 0 0 rgba(201,168,76,.3); } 50% { box-shadow:0 0 0 10px rgba(201,168,76,0); } }
-@keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
-@keyframes glow { 0%,100% { opacity:.6; } 50% { opacity:1; } }
-@keyframes gradientMove { 0% { background-position:0% 50%; } 50% { background-position:100% 50%; } 100% { background-position:0% 50%; } }
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --n:#0a1628; --nl:#12243d; --nd:#060e1a; --g:#d4a843; --gl:#e8c76a; --gd:rgba(212,168,67,.12);
-  --tx:#e8e6e3; --txd:#fff; --mu:rgba(255,255,255,.55); --mus:rgba(255,255,255,.35);
-  --glass:rgba(255,255,255,.07); --glass2:rgba(255,255,255,.04); --glass-border:rgba(255,255,255,.1);
-  --glass-hover:rgba(255,255,255,.12); --ok:#4ade80; --er:#f87171; --inf:#60a5fa;
-  --sh:0 4px 24px rgba(0,0,0,.2); --sh2:0 12px 40px rgba(0,0,0,.3); --sh3:0 20px 60px rgba(0,0,0,.35);
-  --blur:blur(20px); --blur2:blur(12px);
-  --r:16px; --r2:20px; --r3:28px;
-}
-html { scroll-behavior:smooth; overflow-x:hidden; }
-body {
-  font-family:'DM Sans',sans-serif; color:var(--tx); min-height:100vh; -webkit-font-smoothing:antialiased;
-  background: linear-gradient(135deg, #060e1a 0%, #0f1e35 25%, #162544 50%, #0d1b2e 75%, #0a1628 100%);
-  background-attachment:fixed; overflow-x:hidden;
-}
-body::before {
-  content:''; position:fixed; top:0; left:0; right:0; bottom:0; z-index:-1;
-  background: radial-gradient(ellipse at 20% 20%, rgba(212,168,67,.08) 0%, transparent 50%),
-              radial-gradient(ellipse at 80% 80%, rgba(212,168,67,.05) 0%, transparent 50%),
-              radial-gradient(ellipse at 50% 50%, rgba(18,36,61,.5) 0%, transparent 70%);
-}
-
-/* ── LOGIN ── */
-.login-wrap { display:flex; flex-direction:column; min-height:100vh; width:100%; max-width:100vw; }
-.lw { flex:1; display:flex; overflow-x:hidden; width:100%; }
-.ll { width:44%; background:linear-gradient(160deg, var(--nd) 0%, #0c1a2f 50%, #14294a 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3rem; position:relative; overflow:hidden; }
-.ll::before { content:''; position:absolute; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle, rgba(212,168,67,.06) 0%, transparent 70%); top:-200px; left:-200px; animation:float 8s ease-in-out infinite; }
-.ll::after  { content:''; position:absolute; width:400px; height:400px; border-radius:50%; background:radial-gradient(circle, rgba(212,168,67,.04) 0%, transparent 70%); bottom:-120px; right:-120px; animation:float 10s ease-in-out infinite reverse; }
-.ll .deco1 { position:absolute; top:15%; right:10%; width:100px; height:100px; border:1px solid rgba(212,168,67,.08); border-radius:24px; transform:rotate(45deg); animation:float 6s ease-in-out infinite; }
-.ll .deco2 { position:absolute; bottom:18%; left:8%; width:60px; height:60px; border:1px solid rgba(212,168,67,.06); border-radius:50%; animation:float 7s ease-in-out infinite reverse; }
-.logo { display:flex; flex-direction:column; align-items:center; gap:1.4rem; z-index:1; }
-.logo-ic { width:80px; height:80px; background:rgba(212,168,67,.08); backdrop-filter:var(--blur); border:1.5px solid rgba(212,168,67,.2); border-radius:24px; display:flex; align-items:center; justify-content:center; color:var(--g); }
-.logo h1 { font-family:'Playfair Display',serif; color:#fff; font-size:2.2rem; text-align:center; line-height:1.25; }
-.logo p  { color:rgba(255,255,255,.4); font-size:.78rem; letter-spacing:.18em; text-transform:uppercase; text-align:center; }
-.ltag { margin-top:3rem; color:rgba(255,255,255,.25); font-size:.75rem; text-align:center; line-height:2.2; z-index:1; letter-spacing:.03em; }
-.lr { flex:1; display:flex; align-items:center; justify-content:center; padding:3rem; background:linear-gradient(135deg, #0c1a2f, #0f1e35); }
-.lc { width:100%; max-width:420px; animation:fadeUp .5s ease; }
-.lc h2 { font-family:'Playfair Display',serif; font-size:2.2rem; color:#fff; margin-bottom:.4rem; }
-.lc > p { color:var(--mu); margin-bottom:2.5rem; font-size:.9rem; line-height:1.6; }
-.chave-input { width:100%; padding:1.15rem; border:2px solid var(--glass-border); border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:1.5rem; font-weight:700; letter-spacing:.25em; text-align:center; background:var(--glass); backdrop-filter:var(--blur2); color:#fff; outline:none; transition:all .3s; }
-.chave-input:focus { border-color:var(--g); box-shadow:0 0 0 4px rgba(212,168,67,.15), 0 0 30px rgba(212,168,67,.1); }
-.chave-input::placeholder { color:rgba(255,255,255,.25); }
-.chave-hint { font-size:.78rem; color:var(--mus); text-align:center; margin-top:.7rem; margin-bottom:1.75rem; }
-.btnp { width:100%; padding:1.05rem; background:linear-gradient(135deg, var(--g), var(--gl)); color:var(--n); border:none; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:.95rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:.5rem; transition:all .3s; letter-spacing:.01em; }
-.btnp:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(212,168,67,.35); }
-.btnp:active { transform:translateY(0); }
-.btnp:disabled { opacity:.5; cursor:not-allowed; transform:none; }
-.errmsg { color:var(--er); font-size:.82rem; margin-top:.9rem; text-align:center; padding:.7rem; background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.15); border-radius:10px; }
-
-/* ── LAYOUT ── */
-.al  { display:flex; min-height:100vh; overflow-x:hidden; width:100%; }
-.sb  { width:270px; background:rgba(6,14,26,.85); backdrop-filter:var(--blur); border-right:1px solid var(--glass-border); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
-.sbl { padding:1.8rem 1.5rem 1.4rem; border-bottom:1px solid var(--glass-border); }
-.sbl h2 { font-family:'Playfair Display',serif; color:#fff; font-size:1.15rem; line-height:1.3; }
-.sbl span { color:var(--g); font-size:.7rem; display:block; letter-spacing:.12em; margin-top:3px; }
-.sbu { padding:1.2rem 1.5rem; display:flex; align-items:center; gap:.75rem; border-bottom:1px solid var(--glass-border); }
-.av  { border-radius:50%; background:linear-gradient(135deg, var(--g), var(--gl)); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--n); flex-shrink:0; font-size:.85rem; }
-.sbn { font-size:.88rem; font-weight:600; color:#fff; }
-.sbs { font-size:.7rem; color:var(--mus); letter-spacing:.04em; }
-.sbnav { flex:1; padding:.75rem 0; overflow-y:auto; }
-.ni { display:flex; align-items:center; gap:.8rem; padding:.8rem 1.5rem; color:var(--mu); font-size:.88rem; font-weight:500; cursor:pointer; transition:all .25s; border-left:3px solid transparent; }
-.ni:hover { color:rgba(255,255,255,.9); background:var(--glass); }
-.ni.on { color:var(--g); border-left-color:var(--g); background:rgba(212,168,67,.08); font-weight:600; }
-.sbf { padding:1rem 1.5rem 1.5rem; border-top:1px solid var(--glass-border); }
-.out { display:flex; align-items:center; gap:.6rem; color:var(--mus); font-size:.82rem; cursor:pointer; background:none; border:none; font-family:'DM Sans',sans-serif; transition:color .2s; }
-.out:hover { color:rgba(255,255,255,.7); }
-.mc { margin-left:270px; flex:1; padding:2.5rem 3rem; min-height:100vh; animation:fadeUp .4s ease; }
-
-/* ── MOBILE ── */
-.mob-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(6,14,26,.92); backdrop-filter:var(--blur); border-top:1px solid var(--glass-border); z-index:200; padding:.4rem 0 calc(.4rem + env(safe-area-inset-bottom)); }
-.mob-nav-inner { display:flex; justify-content:space-around; align-items:center; }
-.mob-ni { display:flex; flex-direction:column; align-items:center; gap:.2rem; padding:.4rem .7rem; color:var(--mus); font-size:.58rem; font-weight:500; cursor:pointer; border:none; background:none; font-family:'DM Sans',sans-serif; transition:all .2s; min-width:50px; }
-.mob-ni.on { color:var(--g); }
-.mob-hdr { display:none; position:fixed; top:0; left:0; right:0; background:rgba(6,14,26,.9); backdrop-filter:var(--blur); z-index:150; padding:.85rem 1.25rem; align-items:center; justify-content:space-between; border-bottom:1px solid var(--glass-border); }
-.mob-hdr h2 { font-family:'Playfair Display',serif; color:#fff; font-size:1rem; }
-.mob-hdr span { color:var(--g); font-size:.66rem; display:block; letter-spacing:.04em; }
-.mob-out { background:none; border:none; color:var(--mus); cursor:pointer; padding:.3rem; }
-
-@media (max-width: 768px) {
-  .sb { display:none; }
-  .mob-hdr { display:flex; }
-  .mob-nav { display:block; }
-  .mc { margin-left:0; padding:1.1rem; padding-top:4.8rem; padding-bottom:5.5rem; overflow-x:hidden; }
-  .lw { flex-direction:column; }
-  .ll { width:100%; min-height:auto; padding:2.5rem 1.5rem 1.5rem; }
-  .ll::before, .ll::after, .ll .deco1, .ll .deco2 { display:none; }
-  .ltag { margin-top:.75rem; }
-  .lr { padding:1.5rem 1.25rem; }
-  .dg { grid-template-columns:1fr !important; gap:.75rem !important; }
-  .card { padding:1.15rem; border-radius:var(--r); }
-  .ph h1 { font-size:1.5rem; }
-  .ph p  { margin-bottom:1rem; }
-  .type-grid { grid-template-columns:1fr 1fr; }
-  .fg2 { grid-template-columns:1fr 1fr; }
-  .dit { flex-wrap:wrap; gap:.5rem; }
-  .cw { height:calc(100vh - 300px); }
-  .chave-input { font-size:1.15rem; letter-spacing:.15em; }
-  .tl { padding-left:1.75rem; }
-  .dash-cols { grid-template-columns:1fr !important; }
-  .hero-card { padding:1.5rem !important; }
-  .hero-card .hero-pct { font-size:2.2rem !important; }
-  .hero-card .hero-flex { flex-direction:column !important; gap:1rem !important; }
-  .hero-card .hero-right { text-align:left !important; }
-  .lawyer-info { font-size:.7rem !important; }
-  ::-webkit-scrollbar { display:none; }
-}
-
-/* ── COMPONENTS — GLASS CARDS ── */
-.ph h1 { font-family:'Playfair Display',serif; font-size:1.9rem; color:#fff; letter-spacing:-.01em; }
-.ph p  { color:var(--mu); font-size:.88rem; margin-top:.35rem; margin-bottom:2rem; line-height:1.5; }
-.card { background:var(--glass); backdrop-filter:var(--blur); border-radius:var(--r2); padding:1.6rem; box-shadow:var(--sh); border:1px solid var(--glass-border); transition:all .3s; }
-.card:hover { background:var(--glass-hover); box-shadow:var(--sh2); border-color:rgba(255,255,255,.15); }
-.ct { font-family:'Playfair Display',serif; font-size:1.1rem; color:#fff; margin-bottom:1rem; }
-
-/* ── STATS ── */
-.dg { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.75rem; }
-.sc { background:var(--glass); backdrop-filter:var(--blur2); border-radius:var(--r); padding:1.3rem 1.5rem; border:1px solid var(--glass-border); box-shadow:var(--sh); transition:all .3s; }
-.sc:hover { background:var(--glass-hover); box-shadow:var(--sh2); transform:translateY(-3px); border-color:rgba(212,168,67,.2); }
-.sl { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--mu); margin-bottom:.5rem; font-weight:600; }
-.sv { font-family:'Playfair Display',serif; font-size:1.5rem; color:#fff; }
-.ss { font-size:.78rem; color:var(--mu); margin-top:.25rem; }
-.pb  { background:rgba(255,255,255,.08); border-radius:99px; height:8px; margin-top:.5rem; overflow:hidden; }
-.pbf { height:8px; border-radius:99px; background:linear-gradient(90deg, var(--g), var(--gl), var(--g)); background-size:200% 100%; animation:shimmer 2.5s ease infinite; transition:width 1s cubic-bezier(.4,0,.2,1); }
-
-/* ── BADGES ── */
-.bd { display:inline-flex; align-items:center; padding:.3rem .75rem; border-radius:99px; font-size:.72rem; font-weight:600; letter-spacing:.01em; backdrop-filter:var(--blur2); }
-.bg { background:rgba(74,222,128,.12); color:#4ade80; border:1px solid rgba(74,222,128,.2); }
-.ba { background:rgba(212,168,67,.12); color:var(--gl); border:1px solid rgba(212,168,67,.2); }
-.bb { background:rgba(96,165,250,.12); color:#60a5fa; border:1px solid rgba(96,165,250,.2); }
-.br { background:rgba(248,113,113,.12); color:#f87171; border:1px solid rgba(248,113,113,.2); }
-
-/* ── TIMELINE ── */
-.tl { position:relative; padding-left:2rem; }
-.tl::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px; background:linear-gradient(180deg, var(--g), rgba(255,255,255,.08)); }
-.ti { position:relative; padding-bottom:1.75rem; }
-.ti:last-child { padding-bottom:0; }
-.td { position:absolute; left:-2rem; top:2px; width:22px; height:22px; border-radius:50%; border:2px solid var(--glass-border); background:var(--glass); backdrop-filter:var(--blur2); display:flex; align-items:center; justify-content:center; transition:all .3s; }
-.td.dn { background:var(--g); border-color:var(--g); color:var(--n); }
-.td.ac { background:rgba(212,168,67,.2); border-color:var(--g); color:var(--g); box-shadow:0 0 0 4px rgba(212,168,67,.15); animation:breathe 3s infinite; }
-.tit { font-weight:600; font-size:.9rem; color:#fff; }
-.tit.mu { color:var(--mu); font-weight:400; }
-.tdt { font-size:.78rem; color:var(--mu); margin-top:.15rem; }
-.tde { font-size:.82rem; color:var(--mu); margin-top:.3rem; background:var(--glass2); padding:.5rem .75rem; border-radius:8px; }
-
-/* ── DOCUMENTS ── */
-.dl  { display:flex; flex-direction:column; gap:.65rem; }
-.dit { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; background:var(--glass2); border-radius:14px; border:1px solid var(--glass-border); transition:all .3s; }
-.dit:hover { background:var(--glass-hover); border-color:rgba(212,168,67,.25); transform:translateX(6px); }
-.dic { width:42px; height:42px; background:linear-gradient(135deg, rgba(212,168,67,.15), rgba(212,168,67,.05)); border:1px solid rgba(212,168,67,.2); border-radius:12px; display:flex; align-items:center; justify-content:center; color:var(--g); flex-shrink:0; }
-.dn2 { font-weight:600; font-size:.88rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dm  { font-size:.73rem; color:var(--mu); margin-top:.15rem; }
-.ib  { width:36px; height:36px; border-radius:10px; border:1.5px solid var(--glass-border); background:var(--glass); backdrop-filter:var(--blur2); display:flex; align-items:center; justify-content:center; color:var(--mu); cursor:pointer; transition:all .25s; }
-.ib:hover { border-color:var(--g); color:var(--g); background:rgba(212,168,67,.1); transform:scale(1.08); }
-.uz  { border:2px dashed rgba(255,255,255,.15); border-radius:var(--r2); padding:3.5rem; text-align:center; cursor:pointer; transition:all .3s; color:var(--mu); position:relative; overflow:hidden; }
-.uz:hover { border-color:var(--g); background:rgba(212,168,67,.06); color:var(--g); }
-.uz:hover .uz-icon { transform:translateY(-6px); }
-.uz-icon { transition:transform .3s; }
-
-/* ── NOTIFICATIONS ── */
-.nl2 { display:flex; flex-direction:column; gap:.6rem; }
-.ni2 { display:flex; gap:1rem; padding:1.1rem 1.25rem; border-radius:var(--r); border:1px solid var(--glass-border); background:var(--glass2); transition:all .25s; }
-.ni2:hover { background:var(--glass-hover); box-shadow:var(--sh); }
-.ni2.u { background:rgba(212,168,67,.06); border-color:rgba(212,168,67,.15); }
-.ntx { font-size:.88rem; color:var(--tx); font-weight:500; line-height:1.5; }
-.ntm { font-size:.73rem; color:var(--mu); margin-top:.25rem; }
-.ud  { width:9px; height:9px; background:var(--g); border-radius:50%; flex-shrink:0; margin-top:6px; animation:glow 2s infinite; box-shadow:0 0 8px rgba(212,168,67,.4); }
-
-/* ── MEETINGS ── */
-.mcard { border:1px solid var(--glass-border); border-radius:var(--r); padding:1.1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:.65rem; background:var(--glass2); transition:all .25s; }
-.mcard:hover { background:var(--glass-hover); box-shadow:var(--sh); border-color:rgba(212,168,67,.2); }
-.mdb  { background:linear-gradient(135deg, rgba(212,168,67,.15), rgba(212,168,67,.05)); border:1px solid rgba(212,168,67,.2); color:var(--g); border-radius:14px; width:58px; text-align:center; padding:.65rem 0; flex-shrink:0; }
-.mdb .day { font-family:'Playfair Display',serif; font-size:1.7rem; line-height:1; color:#fff; }
-.mdb .mon { font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; opacity:.7; margin-top:3px; }
-
-/* ── FORMS ── */
-.fg { margin-bottom:1.2rem; }
-.fg label { display:block; font-size:.76rem; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.5rem; }
-.fg input, .fg select, .fg textarea { width:100%; padding:.85rem 1rem; border:1.5px solid var(--glass-border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:.9rem; color:#fff; background:var(--glass); backdrop-filter:var(--blur2); outline:none; transition:all .3s; }
-.fg input:focus, .fg select:focus, .fg textarea:focus { border-color:var(--g); box-shadow:0 0 0 3px rgba(212,168,67,.12), 0 0 20px rgba(212,168,67,.06); }
-.fg input::placeholder, .fg textarea::placeholder { color:var(--mus); }
-.fg select option { background:var(--n); color:#fff; }
-.fg textarea { resize:vertical; min-height:80px; }
-.fg2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
-.fg-hint { font-size:.72rem; color:var(--mus); margin-top:4px; }
-
-/* ── CHAT ── */
-.cw  { display:flex; flex-direction:column; height:calc(100vh - 230px); min-height:380px; }
-.che { display:flex; align-items:center; gap:.75rem; padding-bottom:1rem; border-bottom:1px solid var(--glass-border); margin-bottom:1rem; }
-.chi h3 { font-weight:600; font-size:.92rem; color:#fff; }
-.chi p  { font-size:.73rem; color:var(--ok); }
-.cms { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:.75rem; padding:.5rem 0; }
-.mr  { display:flex; gap:.5rem; align-items:flex-end; animation:fadeUp .25s ease; }
-.mr.mi { flex-direction:row-reverse; }
-.mb  { max-width:72%; padding:.85rem 1.15rem; border-radius:var(--r2); font-size:.88rem; line-height:1.55; position:relative; }
-.mb.th { background:var(--glass); backdrop-filter:var(--blur2); color:var(--tx); border-bottom-left-radius:4px; border:1px solid var(--glass-border); }
-.mb.mi { background:linear-gradient(135deg, rgba(212,168,67,.2), rgba(212,168,67,.1)); border:1px solid rgba(212,168,67,.2); color:#fff; border-bottom-right-radius:4px; }
-.mtime { font-size:.68rem; color:var(--mus); margin-top:.2rem; }
-.cir { display:flex; gap:.6rem; padding-top:1rem; border-top:1px solid var(--glass-border); }
-.cin { flex:1; padding:.8rem 1rem; border:1.5px solid var(--glass-border); border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:.9rem; outline:none; resize:none; color:#fff; background:var(--glass); backdrop-filter:var(--blur2); transition:all .25s; }
-.cin::placeholder { color:var(--mus); }
-.cin:focus { border-color:var(--g); box-shadow:0 0 0 3px rgba(212,168,67,.12); }
-.bsend { width:46px; height:46px; background:linear-gradient(135deg, var(--g), var(--gl)); border:none; border-radius:var(--r); display:flex; align-items:center; justify-content:center; color:var(--n); cursor:pointer; flex-shrink:0; transition:all .25s; font-weight:700; }
-.bsend:hover { transform:scale(1.08); box-shadow:0 4px 20px rgba(212,168,67,.35); }
-.chat-reply-notice { background:rgba(212,168,67,.06); border:1px solid rgba(212,168,67,.12); border-radius:12px; padding:.7rem 1rem; text-align:center; font-size:.78rem; color:var(--gl); margin-bottom:.5rem; }
-
-/* ── IRN TRACKER ── */
-.irn-track { display:flex; align-items:flex-start; margin-bottom:1.5rem; overflow-x:hidden; padding-bottom:.5rem; }
-.irn-step  { display:flex; flex-direction:column; align-items:center; flex:1; min-width:55px; position:relative; }
-.irn-line  { position:absolute; top:18px; right:50%; width:100%; height:3px; background:rgba(255,255,255,.06); z-index:0; border-radius:2px; }
-.irn-line.lit { background:linear-gradient(90deg, var(--g), var(--gl)); box-shadow:0 0 8px rgba(212,168,67,.3); }
-.irn-circle-wrap { display:flex; flex-direction:column; align-items:center; z-index:1; position:relative; }
-.irn-circle { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700; transition:all .4s cubic-bezier(.4,0,.2,1); background:var(--glass); backdrop-filter:var(--blur2); color:var(--mus); border:2px solid var(--glass-border); }
-.irn-circle.done { background:linear-gradient(135deg, var(--g), var(--gl)); color:var(--n); border:none; box-shadow:0 2px 12px rgba(212,168,67,.35); }
-.irn-circle.active { background:rgba(212,168,67,.12); color:var(--g); border:2px solid var(--g); box-shadow:0 0 0 6px rgba(212,168,67,.12); animation:breathe 3s infinite; }
-.irn-label { font-size:.66rem; margin-top:7px; text-align:center; color:var(--mu); line-height:1.3; }
-.irn-label.done   { color:var(--g); font-weight:600; }
-.irn-label.active { color:#fff; font-weight:700; }
-.irn-dot { display:block; font-size:.58rem; color:var(--g); font-weight:700; margin-top:2px; }
-
-@media (max-width:600px) {
-  .irn-track { flex-direction:column; overflow-x:visible; padding-bottom:0; gap:0; }
-  .irn-step  { flex-direction:row; flex:unset; width:100%; min-width:unset; align-items:flex-start; padding:.5rem 0; }
-  .irn-line  { position:absolute; top:0; right:unset; left:17px; width:3px; height:100%; }
-  .irn-circle-wrap { flex-direction:row; gap:.75rem; align-items:center; }
-  .irn-label { text-align:left; margin-top:0; font-size:.82rem; }
-  .irn-dot   { display:inline; margin-left:.4rem; }
-}
-
-/* ── MEETING TYPES ── */
-.type-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-top:.25rem; }
-.type-opt  { border:2px solid var(--glass-border); border-radius:14px; padding:.9rem 1rem; cursor:pointer; transition:all .25s; background:var(--glass2); }
-.type-opt:hover { border-color:rgba(212,168,67,.25); background:var(--glass); }
-.type-opt.sel { border-color:var(--g); background:rgba(212,168,67,.08); box-shadow:0 0 0 3px rgba(212,168,67,.1), inset 0 0 20px rgba(212,168,67,.03); }
-.type-opt h4 { font-weight:600; font-size:.88rem; color:#fff; }
-.type-opt p  { font-size:.73rem; color:var(--mu); margin-top:3px; }
-
-/* ── MISC ── */
-.ld { display:flex; align-items:center; justify-content:center; min-height:200px; flex-direction:column; gap:1rem; color:var(--mu); font-size:.88rem; }
-.toast { position:fixed; bottom:2rem; right:2rem; background:rgba(10,22,40,.85); backdrop-filter:var(--blur); color:#fff; padding:1rem 1.5rem; border-radius:var(--r); font-size:.88rem; z-index:9999; box-shadow:var(--sh3); border-left:3px solid var(--g); animation:slideIn .35s ease; }
-::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:99px; } ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.2); }
-.empty-state { text-align:center; padding:3rem 2rem; color:var(--mu); }
-.empty-state .emoji { font-size:2.5rem; margin-bottom:1rem; display:block; }
-.empty-state .title { font-family:'Playfair Display',serif; font-size:1.15rem; color:#fff; margin-bottom:.5rem; }
-.empty-state .desc { font-size:.85rem; line-height:1.6; max-width:320px; margin:0 auto; }
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap');
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes rin{from{transform:translateX(80px);opacity:0}to{transform:translateX(0);opacity:1}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f8f6f1;--w:#fff;--n:#16213e;--n2:#1a2a4a;--g:#b8860b;--g2:#d4a017;--gd:rgba(184,134,11,.12);--tx:#1c1c2e;--mu:#7a7a95;--bo:#e8e4dc;--ok:#16a34a;--er:#dc2626;--sh:0 2px 16px rgba(22,33,62,.08);--shm:0 6px 32px rgba(22,33,62,.12)}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+.alog{min-height:100vh;background:var(--n);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.alog::before{content:'ADVOCACIA';position:absolute;font-family:'Cormorant Garamond',serif;font-size:16vw;font-weight:700;color:rgba(255,255,255,.025);pointer-events:none;white-space:nowrap}
+.alc{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3rem;width:380px;position:relative;z-index:1;animation:up .4s ease}
+.alc h1{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.9rem;margin-bottom:.3rem}
+.alc>p{color:rgba(255,255,255,.45);font-size:.85rem;margin-bottom:2.5rem}
+.tag{display:inline-block;background:var(--gd);border:1px solid var(--g);color:var(--g2);font-size:.7rem;font-weight:600;padding:.2rem .7rem;border-radius:99px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:1rem}
+.lf{margin-bottom:1.1rem}
+.lf label{display:block;color:rgba(255,255,255,.5);font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem}
+.lf input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:.8rem 1rem;color:#fff;font-family:'Outfit',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s}
+.lf input:focus{border-color:var(--g)}
+.abtn{width:100%;padding:.9rem;background:var(--g);color:#fff;border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.abtn:hover{background:var(--g2)}
+.hint{margin-top:1.5rem;color:rgba(255,255,255,.3);font-size:.78rem;text-align:center;line-height:1.7}
+.aerr{color:#f87171;font-size:.82rem;margin-top:.7rem;text-align:center}
+.al{display:flex;min-height:100vh}
+.sb{width:240px;background:var(--n);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;z-index:100}
+.sbb{padding:1.8rem 1.5rem 1.2rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.sbb h2{font-family:'Cormorant Garamond',serif;color:#fff;font-size:1.05rem;line-height:1.3}
+.sbb span{color:var(--g2);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase}
+.sbw{padding:1rem 1.5rem;display:flex;align-items:center;gap:.7rem;border-bottom:1px solid rgba(255,255,255,.06)}
+.av{border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--n);flex-shrink:0}
+.wn{font-size:.85rem;font-weight:600;color:#fff}
+.wr{font-size:.72rem;color:rgba(255,255,255,.4)}
+.sbnv{flex:1;padding:.75rem 0}
+.ni{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.5rem;color:rgba(255,255,255,.5);font-size:.85rem;font-weight:500;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
+.ni:hover{color:#fff;background:rgba(255,255,255,.04)}
+.ni.on{color:var(--g2);border-left-color:var(--g2);background:var(--gd)}
+.nbdg{margin-left:auto;background:var(--g);color:var(--n);font-size:.68rem;font-weight:700;min-width:18px;height:18px;border-radius:99px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.sbft{padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,.06)}
+.out{display:flex;align-items:center;gap:.6rem;color:rgba(255,255,255,.35);font-size:.82rem;cursor:pointer;background:none;border:none;font-family:'Outfit',sans-serif}
+.out:hover{color:rgba(255,255,255,.7)}
+.mc{margin-left:240px;flex:1;padding:2.5rem;animation:up .3s ease}
+.tb{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem}
+.pt{font-family:'Cormorant Garamond',serif;font-size:1.9rem;color:var(--tx)}
+.ps{color:var(--mu);font-size:.85rem;margin-top:.1rem}
+.card{background:var(--w);border-radius:16px;border:1px solid var(--bo);box-shadow:var(--sh)}
+.cp{padding:1.5rem}
+.ct{font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--tx);margin-bottom:1rem;font-weight:600}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.st{background:var(--w);border:1px solid var(--bo);border-radius:14px;padding:1.25rem 1.5rem;box-shadow:var(--sh)}
+.stl{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);margin-bottom:.4rem}
+.stv{font-family:'Cormorant Garamond',serif;font-size:2.2rem;color:var(--tx);line-height:1}
+.sts{font-size:.75rem;color:var(--mu);margin-top:.3rem}
+.bd{display:inline-flex;align-items:center;padding:.2rem .65rem;border-radius:99px;font-size:.72rem;font-weight:600}
+.bg{background:#dcfce7;color:#15803d} .ba{background:#fef3c7;color:#92400e} .bb{background:#dbeafe;color:#1d4ed8} .bgr{background:#f1f5f9;color:#475569} .br{background:#fee2e2;color:#b91c1c}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--mu);font-weight:600;padding:.75rem 1rem;border-bottom:1px solid var(--bo)}
+.tbl td{padding:1rem;border-bottom:1px solid var(--bo);font-size:.88rem;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#fafaf8}
+.sw{position:relative;margin-bottom:1.25rem}
+.sw input{width:100%;padding:.75rem 1rem .75rem 2.75rem;border:1.5px solid var(--bo);border-radius:10px;font-family:'Outfit',sans-serif;font-size:.9rem;background:var(--w);color:var(--tx);outline:none;transition:border-color .2s}
+.sw input:focus{border-color:var(--g)}
+.si{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--mu);pointer-events:none}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.2rem;border-radius:8px;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-dk{background:var(--n);color:#fff} .btn-dk:hover{background:var(--n2)}
+.btn-ok{background:#16a34a;color:#fff} .btn-ok:hover{background:#15803d}
+.btn-gh{background:transparent;color:var(--mu);border:1.5px solid var(--bo)} .btn-gh:hover{border-color:var(--g);color:var(--g)}
+.ib{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--bo);background:transparent;display:flex;align-items:center;justify-content:center;color:var(--mu);cursor:pointer;transition:all .15s}
+.ib:hover{border-color:var(--g);color:var(--g)}
+.ib.d:hover{border-color:var(--er);color:var(--er)}
+.ov{position:fixed;inset:0;background:rgba(22,33,62,.55);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;animation:up .2s}
+.mo{background:var(--w);border-radius:20px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:var(--shm);animation:up .25s ease}
+.moh{display:flex;align-items:center;justify-content:space-between;padding:1.5rem;border-bottom:1px solid var(--bo)}
+.moh h2{font-family:'Cormorant Garamond',serif;font-size:1.3rem;color:var(--tx)}
+.mob{padding:1.5rem}
+.mof{padding:1.25rem 1.5rem;border-top:1px solid var(--bo);display:flex;gap:.75rem;justify-content:flex-end}
+.ff{margin-bottom:1.1rem}
+.ff label{display:block;font-size:.75rem;font-weight:600;color:var(--tx);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem}
+.ff input,.ff select,.ff textarea{width:100%;padding:.75rem 1rem;border:1.5px solid var(--bo);border-radius:10px;font-family:'Outfit',sans-serif;font-size:.9rem;color:var(--tx);background:var(--bg);outline:none;transition:border-color .2s}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--g);background:#fff}
+.ff textarea{resize:vertical;min-height:80px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.tabs{display:flex;gap:.25rem;background:var(--w);padding:.3rem;border-radius:12px;border:1px solid var(--bo);width:fit-content;margin-bottom:1.25rem}
+.tab{padding:.5rem 1.2rem;border:none;border-radius:9px;font-family:'Outfit';font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s;background:transparent;color:var(--mu)}
+.tab.on{background:var(--n);color:#fff}
+.sr{display:flex;align-items:flex-start;gap:1rem;padding:.9rem 0;border-bottom:1px solid var(--bo)}
+.sr:last-child{border-bottom:none}
+.sc2{width:28px;height:28px;border-radius:50%;border:2px solid var(--bo);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .2s}
+.sc2.dn{background:var(--n);border-color:var(--n);color:#fff}
+.cw{display:flex;flex-direction:column;height:320px}
+.cms{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem;padding-bottom:.5rem}
+.mr{display:flex;gap:.5rem;align-items:flex-end}
+.mr.mi{flex-direction:row-reverse}
+.mb{max-width:70%;padding:.65rem .9rem;border-radius:14px;font-size:.85rem;line-height:1.5}
+.mb.th{background:var(--bg);border:1px solid var(--bo);border-bottom-left-radius:4px}
+.mb.mi{background:var(--n);color:#fff;border-bottom-right-radius:4px}
+.mt2{font-size:.68rem;color:var(--mu);margin-top:.2rem}
+.cir{display:flex;gap:.6rem;margin-top:.75rem;border-top:1px solid var(--bo);padding-top:.75rem}
+.cin{flex:1;padding:.65rem .9rem;border:1.5px solid var(--bo);border-radius:10px;font-family:'Outfit';font-size:.87rem;outline:none;color:var(--tx)}
+.cin:focus{border-color:var(--g)}
+.bsend{width:38px;height:38px;border-radius:10px;background:var(--n);border:none;display:flex;align-items:center;justify-content:center;color:var(--g2);cursor:pointer;flex-shrink:0}
+.bsend:hover{background:var(--n2)}
+.mcard{border:1px solid var(--bo);border-radius:12px;padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem;margin-bottom:.75rem;background:var(--bg);transition:border-color .15s}
+.mdb{background:var(--n);color:#fff;border-radius:10px;width:52px;text-align:center;padding:.5rem 0;flex-shrink:0}
+.mdb .day{font-family:'Cormorant Garamond',serif;font-size:1.6rem;line-height:1}
+.mdb .mon{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;opacity:.7;margin-top:2px}
+.dr{display:flex;align-items:center;gap:.9rem;padding:.85rem 1rem;border-radius:10px;border:1px solid var(--bo);background:var(--bg);margin-bottom:.6rem}
+.dic{width:36px;height:36px;background:var(--n);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--g2);flex-shrink:0}
+.uz{border:2px dashed var(--bo);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;color:var(--mu);margin-bottom:1.25rem}
+.uz:hover{border-color:var(--g);color:var(--g);background:var(--gd)}
+.pw{background:var(--bo);border-radius:99px;height:6px}
+.pf{height:6px;border-radius:99px;background:var(--n);transition:width .4s}
+.ld{display:flex;align-items:center;justify-content:center;min-height:200px;flex-direction:column;gap:1rem;color:var(--mu);font-size:.9rem}
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--n);color:#fff;padding:.9rem 1.3rem;border-radius:12px;font-size:.85rem;z-index:9999;box-shadow:var(--shm);border-left:3px solid var(--g);animation:rin .3s ease}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bo);border-radius:99px}
 `;
 
-/* ── TOAST ── */
-function Toast({ msg, onClose }) {
-  useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, []);
-  return <div className="toast">{msg}</div>;
-}
+function Toast({msg,onClose}){useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t)},[]);return<div className="toast">✓ {msg}</div>;}
+function Spin(){return<div className="ld"><Icon name="spin" size={28}/><span>Carregando…</span></div>;}
+function Av({name="",size=36}){return<div className="av" style={{width:size,height:size,fontSize:size*.22}}>{ini(name)}</div>;}
+function StatusBadge({s}){return s==="em_andamento"?<span className="bd ba">Em andamento</span>:s==="concluido"?<span className="bd bg">Concluído</span>:<span className="bd bgr">Aguardando</span>;}
 
-function Loader({ text = "Carregando…" }) {
-  return <div className="ld"><Icon name="spin" size={28} /><span>{text}</span></div>;
-}
-
-/* ── LOGIN ────────────────────────────────────────────────────────────── */
-function Login({ onLogin, legalDoc, setLegalDoc }) {
-  const [chave, setChave] = useState("");
-  const [err,   setErr]   = useState("");
-  const [busy,  setBusy]  = useState(false);
-
-  const fmt = (val) => {
-    const d = val.replace(/[^0-9a-zA-Z]/g, "").slice(0, 12);
-    if (d.length > 8) return d.slice(0,4) + "-" + d.slice(4,8) + "-" + d.slice(8);
-    if (d.length > 4) return d.slice(0,4) + "-" + d.slice(4);
-    return d;
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+function Login({onLogin}){
+  const [email,setEmail]=useState("");
+  const [pass,setPass]=useState("");
+  const [err,setErr]=useState("");
+  const go=()=>{
+    if(email==="bonoelacerda@gmail.com"&&pass==="admin123") onLogin();
+    else setErr("Credenciais inválidas.");
   };
-
-  const go = async () => {
-    const c = chave.trim();
-    if (!c) { setErr("Insira a sua chave de acesso."); return; }
-    setBusy(true); setErr("");
-    try {
-      const rows = await db.get("clients", `?chave_acesso=eq.${encodeURIComponent(c)}&select=*`);
-      if (rows.length > 0) onLogin(rows[0]);
-      else setErr("Chave não encontrada. Verifique e tente novamente.");
-    } catch { setErr("Erro de ligação. Tente novamente."); }
-    setBusy(false);
-  };
-
-  return (
-    <div className="login-wrap">
-      <div className="lw">
-        <div className="ll">
-          <div className="deco1" />
-          <div className="deco2" />
-          <div className="logo">
-            <div className="logo-ic"><img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="Bono & Lacerda" style={{width:54,height:54,objectFit:'contain'}} /></div>
-            <h1>Bono & Lacerda<br />Advogados</h1>
-            <p>Portal do Cliente</p>
-          </div>
-          <p className="ltag">Advocacia Internacional<br />Migração · Nacionalidade · Empresarial</p>
-        </div>
-        <div className="lr">
-          <div className="lc">
-            <h2>Bem-vindo</h2>
-            <p>Insira a sua chave de acesso para acompanhar o seu processo em tempo real.</p>
-            <input
-              className="chave-input"
-              placeholder="XXXX-XXXX-XXXX"
-              value={chave}
-              maxLength={14}
-              onChange={e => setChave(fmt(e.target.value))}
-              onKeyDown={e => e.key === "Enter" && go()}
-            />
-            <p className="chave-hint">A chave foi enviada pelo escritório Bono & Lacerda</p>
-            <button className="btnp" onClick={go} disabled={busy}>
-              {busy ? <><Icon name="spin" size={16} /> A verificar…</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
-            </button>
-            {err && <p className="errmsg">{err}</p>}
-            <div onClick={() => setLegalDoc('irn')} style={{ marginTop:"1.5rem", padding:".85rem 1.1rem", background:"rgba(212,168,67,.06)", border:"1px solid rgba(212,168,67,.18)", borderRadius:14, cursor:"pointer", transition:"all .25s", display:"flex", alignItems:"center", gap:".75rem" }}
-              onMouseOver={e => { e.currentTarget.style.background="rgba(212,168,67,.12)"; e.currentTarget.style.borderColor="rgba(212,168,67,.35)"; }}
-              onMouseOut={e => { e.currentTarget.style.background="rgba(212,168,67,.06)"; e.currentTarget.style.borderColor="rgba(212,168,67,.18)"; }}>
-              <span style={{ fontSize:"1.3rem" }}>🏛️</span>
-              <div>
-                <div style={{ fontSize:".82rem", fontWeight:600, color:"#fff", lineHeight:1.4 }}>Consulta Oficial do Processo</div>
-                <div style={{ fontSize:".72rem", color:"rgba(255,255,255,.45)", lineHeight:1.5 }}>A consulta vinculativa é feita no site do IRN com o seu Código de Consulta. <span style={{ color:"rgba(212,168,67,.7)", textDecoration:"underline" }}>Saber mais</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
+  return(
+    <div className="alog">
+      <div className="alc">
+        <span className="tag">Painel Administrativo</span>
+        <h1>Bono & Lacerda</h1>
+        <p>Advocacia Internacional — Acesso restrito</p>
+        <div className="lf"><label>E-mail</label><input type="email" placeholder="bonoelacerda@gmail.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
+        <div className="lf"><label>Senha</label><input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
+        <button className="abtn" onClick={go}>Entrar no Painel</button>
+        {err&&<div className="aerr">{err}</div>}
+        <p className="hint">Demo: bonoelacerda@gmail.com / admin123</p>
       </div>
-      <LegalFooter onOpen={setLegalDoc} />
     </div>
   );
 }
 
-/* ── IRN STEPS ────────────────────────────────────────────────────────── */
-const IRN_STEPS = [
-  { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN.",
-    optimista: "O seu pedido chegou ao IRN e está devidamente registado no sistema. Este é o primeiro passo de uma jornada que termina com a sua nacionalidade portuguesa. Tudo começa aqui — e o seu processo já está dentro do sistema!",
-    detalhes:  "Nesta fase, o IRN confirma que recebeu o seu pedido e que toda a documentação foi entregue. A equipa de registo está a verificar os dados iniciais. É completamente normal estar nesta fase — todos os processos passam por ela obrigatoriamente." },
-  { num:2, label:"Registado",   icon:"📋", desc:"Pedido registado no sistema IRN.",
-    optimista: "Excelente notícia! O seu processo foi registado oficialmente e tem agora um número único no sistema do IRN. Está na fila de análise e a avançar!",
-    detalhes:  "O registo significa que o IRN validou a sua candidatura e atribuiu-lhe um número de processo oficial. A partir deste momento, o seu processo está em linha aguardando a sua vez de ser analisado. O IRN segue rigorosamente a ordem de entrada — cada processo protocolado antes do seu será analisado primeiro, garantindo total imparcialidade." },
-  { num:3, label:"Consultas",   icon:"🔍", desc:"IRN a consultar entidades externas.",
-    optimista: "O seu processo está activamente a ser trabalhado! O IRN está a consultar outras entidades oficiais para verificar e confirmar os dados da sua candidatura. Isso significa que há movimento real no seu processo.",
-    detalhes:  "Nesta fase, o IRN contacta entidades como o Arquivo Nacional Torre do Tombo, registos civis, ou outras instituições para verificar os vínculos históricos com Portugal. Estas consultas são essenciais para fundamentar juridicamente a decisão. Quanto mais documentação completa tiver submetido, mais rápidas e favoráveis tendem a ser estas consultas." },
-  { num:4, label:"Documentos",  icon:"📄", desc:"Análise da documentação submetida.",
-    optimista: "O seu processo está a ser analisado a fundo! A equipa do IRN está a examinar toda a documentação que submeteu. Cada documento analisado é mais um passo em direcção ao despacho favorável.",
-    detalhes:  "Nesta etapa, um técnico especializado do IRN revê minuciosamente todos os documentos do seu processo — certidões de nascimento, procurações, passaportes, certificados comunitários e demais comprovativos. A qualidade e completude da documentação que o escritório Bono & Lacerda preparou para si é fundamental para que esta fase decorra sem contratempos." },
-  { num:5, label:"Análise",     icon:"⚖️",  desc:"Análise jurídica do pedido em curso.",
-    optimista: "Estamos muito perto! O IRN está a realizar a análise jurídica final do seu processo. Um jurista especializado está a estudar o seu caso para emitir a decisão. Esta é uma das etapas mais avançadas do processo!",
-    detalhes:  "A análise jurídica é a fase em que um consultor jurídico ou conservador avalia todos os elementos do processo à luz da legislação portuguesa sobre nacionalidade. O escritório Bono & Lacerda acompanha activamente esta fase e está disponível para responder a qualquer pedido de informação adicional do IRN com a máxima celeridade." },
-  { num:6, label:"Despacho",    icon:"✍️",  desc:"Decisão final em elaboração.",
-    optimista: "A linha de chegada está à vista! O Conservador está a elaborar o despacho final do seu processo. Em breve receberá a confirmação oficial da sua nacionalidade portuguesa. Estamos quase lá!",
-    detalhes:  "O despacho é a decisão formal e definitiva do Conservador dos Registos Centrais ou do Arquivo Central do Porto. Nesta fase, o documento oficial de concessão (ou o despacho fundamentado em caso de necessidade de documentação adicional) está a ser redigido. O escritório Bono & Lacerda será notificado assim que o despacho for emitido." },
-  { num:7, label:"Terminado",   icon:"🎉", desc:"Processo concluído.",
-    optimista: "Parabéns! O seu processo de nacionalidade portuguesa está concluído! Bem-vindo à família portuguesa! Este momento representa o culminar de toda a sua jornada.",
-    detalhes:  "O processo chegou ao fim com sucesso! Pode agora solicitar a certidão de nascimento portuguesa e, posteriormente, o passaporte português. O escritório Bono & Lacerda irá orientá-lo nos próximos passos para usufruir plenamente dos seus direitos como cidadão português e europeu." },
-];
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function Dash({ clients }) {
+  const [calEvents, setCalEvents] = useState([]);
+  const [ldCal, setLdCal]         = useState(true);
+  const [search, setSearch]        = useState("");
+  const [showPend, setShowPend]    = useState(false);
 
-/* ── IRN TIMELINE ─────────────────────────────────────────────────────── */
-function IRNTimeline({ proc, submissao }) {
-  const getStep = () => {
-    if (!proc) return 0;
-    const status = (proc.status || '').toLowerCase();
-    const sub = (proc.submissao_irn || submissao || '');
-    if (status === 'concluido') return 7;
-    if (status === 'aguardando') return 1;
-    if (sub && status === 'em_andamento') return 2;
-    return 1;
-  };
+  // Load Google Calendar events via Claude AI
+  useEffect(() => {
+    const fetchCal = async () => {
+      try {
+        const r = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 800,
+            system: "Responde APENAS com JSON válido, sem texto adicional. Formato: {\"events\":[{\"title\":\"...\",\"date\":\"DD/MM\",\"time\":\"HH:MM\",\"day\":\"Seg/Ter/Qua/Qui/Sex/Sáb/Dom\"}]}",
+            messages:[{ role:"user", content:"Lista os próximos 5 eventos do calendário bonoelacerda@gmail.com esta semana em formato JSON." }]
+          })
+        });
+        const d = await r.json();
+        const txt = d.content?.[0]?.text || "{}";
+        try { setCalEvents(JSON.parse(txt).events || []); } catch { setCalEvents([]); }
+      } catch { setCalEvents([]); }
+      setLdCal(false);
+    };
+    fetchCal();
+  }, []);
 
-  const currentStep = proc?.current_step || getStep();
-  const submissaoText = proc?.submissao_irn || submissao || '';
+  // Real stats from loaded clients
+  const total       = clients.length;
+  const comChave    = clients.filter(c => c.chave_acesso).length;
+  const semChave    = clients.filter(c => !c.chave_acesso).length;
+  const pendentes   = clients.filter(c => c.pendencias).length;
+  const emAndamento = clients.filter(c => c.proc?.status === "em_andamento").length;
+  const aguardando  = clients.filter(c => c.proc?.status === "aguardando").length;
+  const porto       = clients.filter(c => c.proc?.arquivo?.includes("Porto")).length;
+  const crc         = clients.filter(c => c.proc?.arquivo?.includes("Conservatória")).length;
+  const reunPend    = clients.reduce((a,c) => a + (c.meetings||[]).filter(m => m.status==="pendente").length, 0);
 
-  let submissaoDate = '';
-  if (submissaoText) {
-    const match = submissaoText.match(/de (\d{4}\/\d{2}\/\d{2})/);
-    if (match) submissaoDate = match[1].replace(/\//g, '-');
-  }
+  // Search
+  const filtered = search.trim()
+    ? clients.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || (c.chave_acesso||"").includes(search))
+    : [];
+
+  // Clients with pendencias
+  const comPendencias = clients.filter(c => c.pendencias).slice(0, 8);
 
   return (
     <div>
-      {submissaoText && (
-        <div style={{ background:"linear-gradient(135deg, rgba(201,168,76,.06), rgba(201,168,76,.03))", border:"1px solid rgba(201,168,76,.2)", borderRadius:12, padding:".7rem 1.1rem", marginBottom:"1.25rem", fontSize:".8rem", color:"#fff" }}>
-          <span style={{ color:"var(--mu)", marginRight:6 }}>Submissão:</span>
-          <strong>{submissaoText}</strong>
+      <div className="tb">
+        <div>
+          <h1 className="pt">Painel Geral</h1>
+          <p className="ps">Bono & Lacerda Advogados — {new Date().toLocaleDateString("pt-BR", {weekday:"long", day:"numeric", month:"long"})}</p>
+        </div>
+        <a href="https://calendar.google.com/calendar" target="_blank" rel="noreferrer"
+          style={{display:"flex",alignItems:"center",gap:".4rem",background:"#fff",border:"1px solid var(--bo)",borderRadius:8,padding:".5rem .9rem",fontSize:".82rem",fontWeight:600,color:"var(--n)",textDecoration:"none"}}>
+          📅 Google Calendar
+        </a>
+      </div>
+
+      {/* 1. KPIs REAIS ─────────────────────────────────────────────────────── */}
+      <div className="sg" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
+        {[
+          ["👥 Total Clientes",  total,       `${comChave} com acesso`,         "#0f1e35"],
+          ["⚡ Em Andamento",    emAndamento, `${aguardando} aguardando docs`,   "#1d6b48"],
+          ["⚠️ Com Pendências",  pendentes,   "requerem atenção",               "#92400e"],
+          ["🔑 Sem Chave",       semChave,    "não podem aceder ao portal",      "#991b1b"],
+        ].map(([l,v,s,c]) => (
+          <div className="st" key={l} style={{borderTop:`3px solid ${c}`}}>
+            <div className="stl">{l}</div>
+            <div className="stv" style={{color:c}}>{v}</div>
+            <div className="sts">{s}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Alert reuniões pendentes */}
+      {reunPend > 0 && (
+        <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem",display:"flex",gap:".75rem",alignItems:"center"}}>
+          <span style={{fontSize:"1.3rem"}}>📬</span>
+          <div>
+            <div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>{reunPend} pedido(s) de reunião a aguardar confirmação</div>
+            <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Abra o cliente → aba Reuniões para confirmar</div>
+          </div>
         </div>
       )}
 
-      <div className="irn-track">
-        {IRN_STEPS.map((s, i) => {
-          const done   = s.num < currentStep;
-          const active = s.num === currentStep;
-          return (
-            <div key={s.num} className="irn-step">
-              {i > 0 && <div className={`irn-line${done || active ? " lit" : ""}`} />}
-              <div className="irn-circle-wrap">
-                <div className={`irn-circle${done ? " done" : active ? " active" : ""}`}>
-                  {done ? "✓" : s.num}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
+
+        {/* 2. BUSCA RÁPIDA ────────────────────────────────────────────────── */}
+        <div className="card cp">
+          <div className="ct" style={{marginBottom:".75rem"}}>🔍 Busca Rápida de Cliente</div>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Nome ou chave de acesso…"
+            style={{width:"100%",padding:".7rem 1rem",border:"1.5px solid var(--bo)",borderRadius:10,fontFamily:"inherit",fontSize:".88rem",outline:"none",marginBottom:".75rem"}}
+          />
+          {search.trim() && (
+            filtered.length === 0
+              ? <div style={{color:"var(--mu)",fontSize:".85rem",textAlign:"center",padding:"1rem"}}>Nenhum cliente encontrado.</div>
+              : filtered.slice(0,5).map(c => (
+                <div key={c.id} style={{display:"flex",alignItems:"center",gap:".75rem",padding:".6rem .75rem",borderRadius:10,border:"1px solid var(--bo)",marginBottom:".5rem",background:"var(--bg)"}}>
+                  <Av name={c.name} size={34}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:600,fontSize:".85rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} · <StatusBadge s={c.proc?.status}/></div>
+                  </div>
+                  {c.pendencias && <span title={c.pendencias} style={{fontSize:"1rem"}}>⚠️</span>}
                 </div>
-                <div className={`irn-label${active ? " active" : done ? " done" : ""}`}>
-                  {s.label}
-                  {active && <span className="irn-dot">● actual</span>}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {IRN_STEPS.filter(s => s.num === currentStep).map(s => (
-        <div key={s.num}>
-          <div style={{
-            background:"linear-gradient(135deg, rgba(15,30,53,.03), rgba(201,168,76,.05))",
-            border:"1px solid rgba(201,168,76,.18)", borderRadius:14, padding:"1.1rem 1.3rem",
-            display:"flex", gap:".85rem", alignItems:"flex-start", marginBottom:"1rem"
-          }}>
-            <div style={{ fontSize:"1.6rem", lineHeight:1 }}>{s.icon}</div>
-            <div>
-              <div style={{ fontWeight:700, fontSize:".9rem", color:"#fff", marginBottom:4 }}>
-                Etapa {s.num} de 7 — {s.label}
-              </div>
-              <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.55 }}>{s.desc}</div>
-              {proc?.arquivo && (
-                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:5 }}>
-                  {proc.arquivo}
-                </div>
-              )}
-              {submissaoDate && (
-                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:2 }}>
-                  Submetido a {new Date(submissaoDate).toLocaleDateString("pt-BR")}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div style={{
-            background:"linear-gradient(135deg, rgba(74,222,128,.06), rgba(74,222,128,.03))",
-            border:"1px solid rgba(74,222,128,.15)", borderRadius:14, padding:"1.1rem 1.3rem",
-            marginBottom:".75rem"
-          }}>
-            <div style={{ display:"flex", gap:".6rem", alignItems:"flex-start", marginBottom:".6rem" }}>
-              <div style={{ fontWeight:700, fontSize:".85rem", color:"var(--ok)" }}>O que isto significa para si</div>
-            </div>
-            <div style={{ fontSize:".82rem", color:"rgba(74,222,128,.8)", lineHeight:1.75 }}>{s.optimista}</div>
-          </div>
-
-          <div style={{
-            background:"rgba(255,255,255,.04)", border:"1px solid var(--glass-border)",
-            borderRadius:14, padding:"1.1rem 1.3rem"
-          }}>
-            <div style={{ display:"flex", gap:".6rem", alignItems:"flex-start", marginBottom:".6rem" }}>
-              <div style={{ fontWeight:700, fontSize:".82rem", color:"#fff" }}>O que acontece nesta fase</div>
-            </div>
-            <div style={{ fontSize:".8rem", color:"var(--mu)", lineHeight:1.8 }}>{s.detalhes}</div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── DASHBOARD ────────────────────────────────────────────────────────── */
-function Dashboard({ client, proc, steps }) {
-  const done = steps.filter(s => s.done).length;
-  const totalSteps  = 7;
-  const currentStep = proc?.current_step || 1;
-  const completedFull = Math.max(0, currentStep - 1);
-  const pct = Math.round(((completedFull + 0.5) / totalSteps) * 100);
-  const stepNames = {1:'Recebido',2:'Registado',3:'Consultas',4:'Documentos',5:'Análise',6:'Despacho',7:'Terminado'};
-  const stepName  = stepNames[currentStep] || '';
-  const first = client.name.split(" ")[0];
-
-  if (!proc) return (
-    <div>
-      <div className="ph"><h1>Olá, {first}!</h1><p>O seu processo está a ser preparado pelo escritório.</p></div>
-      <div className="card" style={{ textAlign:"center", padding:"3.5rem 2rem" }}>
-        <div style={{ width:80, height:80, borderRadius:"50%", background:"var(--gd)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"2.5rem", margin:"0 auto 1.25rem" }}>⏳</div>
-        <div style={{ fontFamily:"Playfair Display,serif", fontSize:"1.3rem", color:"#fff", marginBottom:".75rem" }}>Processo em preparação</div>
-        <p style={{ color:"var(--mu)", fontSize:".88rem", lineHeight:1.7, maxWidth:420, margin:"0 auto" }}>
-          O escritório Bono & Lacerda está a preparar o seu processo.<br />Em breve terá acesso a todas as informações aqui.
-        </p>
-        <div style={{ marginTop:"2rem", padding:".75rem 1.25rem", background:"rgba(255,255,255,.04)", borderRadius:12, display:"inline-block", fontSize:".82rem", color:"var(--mu)" }}>
-          +351 21 793 1934 · bonoelacerda@gmail.com
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div>
-      <div className="ph"><h1>Olá, {first}!</h1><p>Acompanhe o andamento do seu processo em tempo real.</p></div>
-
-      {/* Hero progress card */}
-      <div className="hero-card" style={{ background:"linear-gradient(135deg, var(--n) 0%, var(--nl) 100%)", borderRadius:"var(--r3)", padding:"2rem 2.5rem", marginBottom:"1.75rem", color:"#fff", position:"relative", overflow:"hidden" }}>
-        <div style={{ position:"absolute", top:-40, right:-40, width:180, height:180, borderRadius:"50%", border:"1px solid rgba(201,168,76,.1)" }} />
-        <div style={{ position:"absolute", bottom:-30, left:"60%", width:120, height:120, borderRadius:"50%", border:"1px solid rgba(201,168,76,.06)" }} />
-        <div className="hero-flex" style={{ display:"flex", justifyContent:"space-between", alignItems:"center", position:"relative", zIndex:1 }}>
-          <div>
-            <div style={{ fontSize:".72rem", textTransform:"uppercase", letterSpacing:".12em", color:"rgba(201,168,76,.7)", marginBottom:".5rem", fontWeight:600 }}>Progresso do Processo</div>
-            <div className="hero-pct" style={{ fontSize:"3rem", fontFamily:"'Playfair Display',serif", fontWeight:700, lineHeight:1 }}>{pct}%</div>
-            <div style={{ fontSize:".85rem", color:"rgba(255,255,255,.6)", marginTop:".4rem" }}>Etapa {currentStep} de {totalSteps} — {stepName}</div>
-          </div>
-          <div className="hero-right" style={{ textAlign:"right" }}>
-            <div style={{ fontSize:".72rem", textTransform:"uppercase", letterSpacing:".1em", color:"rgba(201,168,76,.7)", marginBottom:".4rem", fontWeight:600 }}>{client.artigo || proc.type}</div>
-            <div style={{ fontSize:".82rem", color:"rgba(255,255,255,.5)", wordBreak:"break-all" }}>Chave: {client.chave_acesso}</div>
-          </div>
-        </div>
-        <div style={{ marginTop:"1.25rem", background:"rgba(255,255,255,.12)", borderRadius:99, height:10, overflow:"hidden", position:"relative", zIndex:1 }}>
-          <div style={{ height:10, borderRadius:99, background:"linear-gradient(90deg, var(--g), var(--gl))", width:`${pct}%`, transition:"width 1s cubic-bezier(.4,0,.2,1)", boxShadow:"0 0 12px rgba(201,168,76,.4)" }} />
-        </div>
-      </div>
-
-      <div className="dg" style={{ gridTemplateColumns:"1fr 1fr 1fr" }}>
-        <div className="sc">
-          <div className="sl">Data de Protocolo</div>
-          <div className="sv" style={{ fontSize:"1.1rem", marginTop:4 }}>{proc.opened_at ? fmtd(proc.opened_at) : "—"}</div>
-          <div style={{ marginTop:8 }}>
-            <span className={`bd ${proc.status==="concluido"?"bg":proc.status==="aguardando"?"ba":"bb"}`}>
-              {proc.status==="concluido"?"Concluído":proc.status==="aguardando"?"Aguardando":"Em andamento"}
-            </span>
-          </div>
-        </div>
-        <div className="sc">
-          <div className="sl">Local de Processamento</div>
-          <div style={{ fontWeight:600, fontSize:".88rem", color:"#fff", marginTop:6, lineHeight:1.4 }}>
-            {proc.arquivo || proc.submissao_irn || client.fonte || (client.observacao?.includes("IRN") ? "IRN — Em análise" : "—")}
-          </div>
-          <div className="ss" style={{ marginTop:6 }}>{fmtd(proc.last_update)}</div>
-        </div>
-        <div className="sc">
-          <div className="sl">Artigo</div>
-          <div style={{ fontWeight:700, fontSize:"1rem", color:"#fff", marginTop:6 }}>{client.artigo || proc.type || "—"}</div>
-          <div className="ss" style={{ marginTop:4 }}>Nacionalidade Portuguesa</div>
-        </div>
-      </div>
-
-      {/* Aviso consulta oficial IRN */}
-      <div style={{ background:"linear-gradient(135deg, rgba(29,53,87,.04) 0%, rgba(212,168,67,.06) 100%)", border:"1px solid rgba(212,168,67,.18)", borderRadius:16, padding:"1rem 1.3rem", marginBottom:"1.5rem", display:"flex", alignItems:"center", gap:"1rem" }}>
-        <div style={{ width:42, height:42, borderRadius:12, background:"rgba(212,168,67,.1)", border:"1px solid rgba(212,168,67,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.3rem", flexShrink:0 }}>🏛️</div>
-        <div style={{ flex:1 }}>
-          <div style={{ fontSize:".82rem", fontWeight:600, color:"#fff", marginBottom:2 }}>Consulta Oficial do Processo</div>
-          <div style={{ fontSize:".74rem", color:"rgba(255,255,255,.5)", lineHeight:1.55 }}>A consulta vinculativa do seu processo é feita em <a href="https://www.irn.justica.gov.pt" target="_blank" rel="noopener noreferrer" style={{ color:"var(--g)", textDecoration:"none", fontWeight:600 }}>irn.justica.gov.pt</a> com o seu Código de Consulta. Este portal é complementar.</div>
-        </div>
-      </div>
-
-      {/* Prazo estimado */}
-      {(() => {
-        const artigo = (client.artigo || proc.type || '').toLowerCase();
-        const arquivo = (proc.arquivo || proc.submissao_irn || client.fonte || '').toLowerCase();
-        const protocolo = proc.opened_at || '';
-
-        const PRAZOS = [
-          // Art.º 6º n.º 7 - Naturalização
-          { match: a => a.includes('6') && (a.includes('n.º 7') || a.includes('n. 7') || a.includes('no 7') || a.includes('n7')),
-            porto:  { julgando: '2ª quinzena de maio de 2022',     fonte: 'ACP — Jan/2026' },
-            lisboa: { julgando: '1ª quinzena de maio de 2021',     fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 6º n.º 1 - Naturalização
-          { match: a => a.includes('6') && (a.includes('n.º 1') || a.includes('n. 1') || a.includes('no 1') || a.includes('n1')),
-            porto:  { julgando: '2ª quinzena de setembro de 2023', fonte: 'ACP — Jan/2026' },
-            lisboa: { julgando: '1ª quinzena de janeiro de 2024',  fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 6º n.º 2
-          { match: a => a.includes('6') && (a.includes('n.º 2') || a.includes('n. 2') || a.includes('no 2') || a.includes('n2')),
-            porto:  { julgando: '1ª quinzena de setembro de 2025', fonte: 'ACP — Jan/2026' },
-            lisboa: { julgando: '2ª quinzena de fevereiro de 2026',fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 6º n.º 3
-          { match: a => a.includes('6') && (a.includes('n.º 3') || a.includes('n. 3') || a.includes('no 3') || a.includes('n3')),
-            porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de janeiro de 2026',  fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 6º n.º 4
-          { match: a => a.includes('6') && (a.includes('n.º 4') || a.includes('n. 4') || a.includes('no 4') || a.includes('n4')),
-            porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de dezembro de 2024', fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 6º n.º 5
-          { match: a => a.includes('6') && (a.includes('n.º 5') || a.includes('n. 5') || a.includes('no 5') || a.includes('n5')),
-            porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de abril de 2025',    fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 6º n.º 6
-          { match: a => a.includes('6') && (a.includes('n.º 6') || a.includes('n. 6') || a.includes('no 6') || a.includes('n6')),
-            porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de novembro de 2021', fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 6º n.º 8 - Naturalização (ascendentes)
-          { match: a => a.includes('6') && (a.includes('n.º 8') || a.includes('n. 8') || a.includes('no 8') || a.includes('n8')),
-            porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '1ª quinzena de outubro de 2023',  fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 6º n.º 9
-          { match: a => a.includes('6') && (a.includes('n.º 9') || a.includes('n. 9') || a.includes('no 9') || a.includes('n9')),
-            porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '1ª quinzena de abril de 2025',    fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 3º n.º 1 - Aquisição (casamento)
-          { match: a => (a.includes('3') && a.includes('1')) || a.includes('casamento') || a.includes('aquisição'),
-            porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de outubro de 2021',  fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 2º - Aquisição de Nacionalidade
-          { match: a => a.includes('art') && a.includes('2') && !a.includes('6') && !a.includes('1') && !a.includes('3'),
-            porto:  { julgando: '—',                               fonte: 'ACP' },
-            lisboa: { julgando: '1ª quinzena de setembro de 2022', fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 1º D - Atribuição (netos) — Maiores e Menores
-          { match: a => (a.includes('1') && a.includes('d')) || a.includes('netos'),
-            dual: true,
-            porto:  { maiores: '1ª quinzena de dezembro de 2021', menores: '1ª quinzena de janeiro de 2026', fonte: 'ACP — Jan/2026' },
-            lisboa: { maiores: '2ª quinzena de janeiro de 2022',  menores: '1ª quinzena de janeiro de 2025', fonte: 'CRC Lisboa — Fev/2026' } },
-          // Art.º 1º C - Atribuição (nasc. estrangeiro)
-          { match: a => (a.includes('1') && a.includes('c')) || a.includes('nasc') || a.includes('estrangeiro'),
-            porto:  { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'ACP — Jan/2026' },
-            lisboa: { julgando: '1ª quinzena de novembro de 2025', fonte: 'CRC Lisboa — Fev/2026' } },
-        ];
-
-        const isPorto  = arquivo.includes('porto');
-        const isLisboa = arquivo.includes('central') || arquivo.includes('conservatória') || arquivo.includes('conservatoria') || arquivo.includes('lisboa');
-        const prazo = PRAZOS.find(p => p.match(artigo));
-        if (!prazo) return null;
-        const info = isPorto ? prazo.porto : isLisboa ? prazo.lisboa : null;
-        if (!info) return null;
-
-        /* Art.º 1º D dual (maiores / menores) */
-        if (prazo.dual) {
-          const local = isPorto ? "Arquivo Central do Porto" : "Conservatória dos Registos Centrais";
-          return (
-            <div style={{ background:"linear-gradient(135deg, rgba(29,53,87,.03) 0%, rgba(201,168,76,.05) 100%)", border:"1px solid rgba(201,168,76,.2)", borderRadius:"var(--r2)", padding:"1.3rem 1.5rem", marginBottom:"1.5rem" }}>
-              <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:"1rem" }}>
-                <span style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.05rem", fontWeight:600, color:"#fff" }}>
-                  Previsão de Análise pelo IRN
-                </span>
-                <span style={{ marginLeft:"auto", fontSize:".68rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:"3px 10px", borderRadius:99, border:"1px solid var(--glass-border)" }}>{info.fonte}</span>
-              </div>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"1rem" }}>
-                <div style={{ background:"rgba(255,255,255,.04)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid var(--glass-border)" }}>
-                  <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--mu)", marginBottom:5, fontWeight:600 }}>O seu processo entrou em</div>
-                  <div style={{ fontWeight:700, fontSize:".95rem", color:"#fff" }}>{protocolo ? fmtd(protocolo) : "—"}</div>
-                  <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || proc.type}</div>
-                </div>
-                <div style={{ background:"rgba(212,168,67,.08)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid rgba(212,168,67,.2)" }}>
-                  <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--g)", marginBottom:5, fontWeight:600 }}>Maiores de idade</div>
-                  <div style={{ fontWeight:700, fontSize:".95rem", color:"var(--g)" }}>{info.maiores}</div>
-                  <div style={{ fontSize:".75rem", color:"var(--g)", marginTop:3 }}>{local}</div>
-                </div>
-                <div style={{ background:"rgba(212,168,67,.08)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid rgba(212,168,67,.2)" }}>
-                  <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--g)", marginBottom:5, fontWeight:600 }}>Menores de idade</div>
-                  <div style={{ fontWeight:700, fontSize:".95rem", color:"var(--g)" }}>{info.menores}</div>
-                  <div style={{ fontSize:".75rem", color:"var(--g)", marginTop:3 }}>{local}</div>
-                </div>
-              </div>
-              <div style={{ marginTop:"1rem", fontSize:".78rem", color:"var(--mu)", lineHeight:1.65, padding:".7rem 1rem", background:"rgba(255,255,255,.04)", borderRadius:10, border:"1px solid var(--glass-border)" }}>
-                <strong style={{color:"#fff"}}>O que isto significa:</strong> O Art.º 1º D distingue entre maiores e menores de idade, cada faixa com datas de análise diferentes. Verifique acima qual se aplica ao seu caso.
-              </div>
-            </div>
-          );
-        }
-
-        if (info.julgando === '—') return null;
-
-        const isLate = protocolo && new Date(protocolo) < new Date('2022-06-01');
-        const isRecent = protocolo && new Date(protocolo) > new Date('2024-06-01');
-
-        return (
-          <div style={{ background:"linear-gradient(135deg, rgba(29,53,87,.03) 0%, rgba(201,168,76,.05) 100%)", border:"1px solid rgba(201,168,76,.2)", borderRadius:"var(--r2)", padding:"1.3rem 1.5rem", marginBottom:"1.5rem" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:".6rem", marginBottom:"1rem" }}>
-              <span style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.05rem", fontWeight:600, color:"#fff" }}>
-                Previsão de Análise pelo IRN
-              </span>
-              <span style={{ marginLeft:"auto", fontSize:".68rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:"3px 10px", borderRadius:99, border:"1px solid var(--glass-border)" }}>{info.fonte}</span>
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem" }}>
-              <div style={{ background:"rgba(255,255,255,.04)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid var(--glass-border)" }}>
-                <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--mu)", marginBottom:5, fontWeight:600 }}>O seu processo entrou em</div>
-                <div style={{ fontWeight:700, fontSize:".95rem", color:"#fff" }}>{protocolo ? fmtd(protocolo) : "—"}</div>
-                <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || proc.type}</div>
-              </div>
-              <div style={{ background:"rgba(212,168,67,.08)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid rgba(212,168,67,.2)" }}>
-                <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--g)", marginBottom:5, fontWeight:600 }}>IRN a analisar processos de</div>
-                <div style={{ fontWeight:700, fontSize:".95rem", color:"var(--g)" }}>{info.julgando}</div>
-                <div style={{ fontSize:".75rem", color:"var(--g)", marginTop:3 }}>
-                  {isPorto ? "Arquivo Central do Porto" : "Conservatória dos Registos Centrais"}
-                </div>
-              </div>
-            </div>
-            <div style={{ marginTop:"1rem", fontSize:".78rem", color:"var(--mu)", lineHeight:1.65, padding:".7rem 1rem", background:"rgba(255,255,255,.04)", borderRadius:10, border:"1px solid var(--glass-border)" }}>
-              <strong style={{color:"#fff"}}>O que isto significa:</strong> O IRN analisa os processos pela ordem de entrada. Actualmente estão a analisar processos que entraram na <strong style={{color:"#fff"}}>{info.julgando}</strong>.
-              {isLate && <span style={{color:"var(--ok)",fontWeight:600}}> O seu processo está na fila para análise em breve!</span>}
-              {isRecent && <span style={{color:"var(--g)"}}> O seu processo é mais recente e aguarda que os anteriores sejam analisados primeiro.</span>}
-            </div>
-          </div>
-        );
-      })()}
-
-      <div className="dash-cols" style={{ display:"grid", gridTemplateColumns:"1.5fr 1fr", gap:"1.25rem" }}>
-        <div className="card">
-          <div className="ct">Etapas do Processo IRN</div>
-          <IRNTimeline proc={proc} submissao={client.observacao} />
-        </div>
-        <div style={{ display:"flex", flexDirection:"column", gap:"1.25rem" }}>
-          <div className="card">
-            <div className="ct">Advogados</div>
-            <div style={{ display:"flex", alignItems:"center", gap:".75rem", marginBottom:"1rem" }}>
-              <div className="av" style={{ width:42, height:42, fontSize:".85rem", flexShrink:0 }}>RL</div>
-              <div style={{ minWidth:0 }}>
-                <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Ramom Lacerda</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L · Madrid 142952</div>
-                <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
-              </div>
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:".75rem", paddingTop:".85rem", borderTop:"1px solid var(--glass-border)" }}>
-              <div className="av" style={{ width:42, height:42, fontSize:".85rem", flexShrink:0 }}>LF</div>
-              <div style={{ minWidth:0 }}>
-                <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Luis Felipe Bono</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 · OAB/PB 33587A</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L · Madrid 142951</div>
-                <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
-              </div>
-            </div>
-            {proc?.opened_at && (
-              <div style={{ marginTop:".9rem", paddingTop:".8rem", borderTop:"1px solid var(--glass-border)", fontSize:".78rem", color:"var(--mu)" }}>
-                Data de protocolo: <strong style={{color:"#fff"}}>{fmtd(proc.opened_at)}</strong>
-              </div>
-            )}
-          </div>
-          <div className="card">
-            <div className="ct">Escritório</div>
-            <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:2, wordBreak:"break-word" }}>
-              Av João XXI, 72B, LJ E38<br />1000-219 Lisboa, Portugal<br />
-              +351 21 793 1934<br />
-              bonoelacerda@gmail.com
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── DOCUMENTS ────────────────────────────────────────────────────────── */
-function Docs({ proc, client, toast }) {
-  const [docs, setDocs] = useState([]);
-  const [ld,   setLd]   = useState(true);
-  const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const ref = useRef();
-
-  useEffect(() => {
-    if (!proc) return;
-    const load=()=>db.get("documents", `?process_id=eq.${proc.id}&order=created_at.desc`).then(d=>{if(d&&!d.error)setDocs(d);}).finally(() => setLd(false));
-    load();
-    const iv=setInterval(load,10000);
-    return()=>clearInterval(iv);
-  }, [proc]);
-
-  const upload = async f => {
-    if (!f) return;
-    if (f.size > 20 * 1024 * 1024) { toast("Ficheiro demasiado grande. Máximo 20 MB."); return; }
-    setUploading(true);
-    const path = `${proc.id}/${Date.now()}_${f.name}`;
-    const ok = await db.upload(path, f);
-    if (!ok) { toast("Erro ao enviar ficheiro. Tente novamente."); setUploading(false); return; }
-    const row = { process_id:proc.id, name:f.name, size:`${(f.size/1024).toFixed(0)} KB`, date:new Date().toISOString().split("T")[0], status:"aguardando", uploaded_by:"cliente", storage_path:path };
-    const saved = await db.post("documents", row);
-    if (saved[0]) {
-      setDocs(d => [saved[0], ...d]);
-      toast(`"${f.name}" enviado com sucesso!`);
-      if (client) db.post("notifications", { client_id: client.id, text: `📄 Novo documento enviado: "${f.name}". Aguarda revisão do advogado.`, icon: "📄", read: false });
-    }
-    setUploading(false);
-  };
-
-  const handleDrop = (e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) upload(f); };
-
-  const download = async doc => {
-    if (!doc.storage_path) { toast("Este ficheiro não tem download disponível."); return; }
-    const url = await db.signedUrl(doc.storage_path);
-    if (url) { window.open(url, "_blank"); }
-    else toast("Erro ao gerar link de download.");
-  };
-
-  const badge = s => s==="aprovado" ? <span className="bd bg">Aprovado</span> : s==="aguardando" ? <span className="bd ba">Aguardando</span> : <span className="bd bb">Disponível</span>;
-
-  return (
-    <div>
-      <div className="ph"><h1>Documentos</h1><p>Envie e consulte documentos do seu processo.</p></div>
-      <div className="card" style={{ marginBottom:"1.25rem" }}>
-        <div className="ct">Enviar Documento</div>
-        <div
-          className="uz"
-          onClick={() => ref.current.click()}
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-          style={dragOver ? { borderColor:"var(--g)", background:"var(--gd)" } : {}}
-        >
-          {uploading ? (
-            <>
-              <Icon name="spin" size={32} />
-              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem" }}>A enviar ficheiro…</div>
-            </>
-          ) : (
-            <>
-              <div className="uz-icon"><Icon name="upload" size={36} /></div>
-              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem", color:"#fff" }}>
-                {dragOver ? "Solte o ficheiro aqui" : "Arraste um ficheiro ou clique para selecionar"}
-              </div>
-              <div style={{ fontSize:".78rem", marginTop:6, color:"var(--mu)" }}>PDF, DOC, JPG, PNG — até 20 MB</div>
-            </>
+              ))
           )}
-          <input ref={ref} type="file" style={{ display:"none" }} onChange={e => upload(e.target.files[0])} />
-        </div>
-      </div>
-      {ld ? <div className="card"><Loader /></div> : (<>
-      {/* ── Recebidos do Advogado ── */}
-      <div className="card" style={{ marginBottom:"1.25rem" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
-          <div className="ct" style={{ margin:0 }}>📥 Recebidos do Advogado</div>
-          {docs.filter(d=>d.uploaded_by==="advogado").length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:".25rem .65rem", borderRadius:99 }}>{docs.filter(d=>d.uploaded_by==="advogado").length} ficheiro{docs.filter(d=>d.uploaded_by==="advogado").length!==1?"s":""}</span>}
-        </div>
-        <div className="dl">
-          {docs.filter(d=>d.uploaded_by==="advogado").map(d => (
-            <div key={d.id} className="dit" style={{ borderLeft:"3px solid #60a5fa" }}>
-              <div className="dic" style={{ background:"rgba(96,165,250,.15)" }}><Icon name="file" size={18} /></div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div className="dn2">{d.name}</div>
-                <div className="dm">{d.size} · {d.date}</div>
-              </div>
-              <div style={{ marginRight:8 }}>{badge(d.status)}</div>
-              <button className="ib" onClick={() => download(d)} title="Download"><Icon name="dl" size={14} /></button>
+          {!search.trim() && (
+            <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:".75rem"}}>
+              {total} clientes — comece a escrever para filtrar
             </div>
-          ))}
-          {!docs.filter(d=>d.uploaded_by==="advogado").length && (
-            <div style={{ textAlign:"center", padding:"1.5rem", color:"var(--mu)", fontSize:".85rem" }}>Nenhum documento recebido do advogado ainda.</div>
           )}
         </div>
-      </div>
-      {/* ── Enviados por Si ── */}
-      <div className="card">
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1rem" }}>
-          <div className="ct" style={{ margin:0 }}>📤 Enviados por Si</div>
-          {docs.filter(d=>d.uploaded_by==="cliente").length > 0 && <span style={{ fontSize:".75rem", color:"var(--mu)", background:"rgba(255,255,255,.04)", padding:".25rem .65rem", borderRadius:99 }}>{docs.filter(d=>d.uploaded_by==="cliente").length} ficheiro{docs.filter(d=>d.uploaded_by==="cliente").length!==1?"s":""}</span>}
-        </div>
-        <div className="dl">
-          {docs.filter(d=>d.uploaded_by==="cliente").map(d => (
-            <div key={d.id} className="dit" style={{ borderLeft:"3px solid #34d399" }}>
-              <div className="dic" style={{ background:"rgba(52,211,153,.15)" }}><Icon name="file" size={18} /></div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div className="dn2">{d.name}</div>
-                <div className="dm">{d.size} · {d.date} · {d.status==="aguardando"?"⏳ Aguardando revisão":d.status==="aprovado"?"✅ Aprovado":"📄 Disponível"}</div>
-              </div>
-              <div style={{ marginRight:8 }}>{badge(d.status)}</div>
-              <button className="ib" onClick={() => download(d)} title="Download"><Icon name="dl" size={14} /></button>
-            </div>
-          ))}
-          {!docs.filter(d=>d.uploaded_by==="cliente").length && (
-            <div style={{ textAlign:"center", padding:"1.5rem", color:"var(--mu)", fontSize:".85rem" }}>Ainda não enviou nenhum documento. Use a área acima para enviar.</div>
-          )}
-        </div>
-      </div>
-      </>)}
-    </div>
-  );
-}
 
-/* ── NOTIFICATIONS ────────────────────────────────────────────────────── */
-function Notifs({ client }) {
-  const [ns, setNs] = useState([]);
-  const [ld, setLd] = useState(true);
-
-  useEffect(() => {
-    const load=()=>db.get("notifications", `?client_id=eq.${client.id}&order=created_at.desc`).then(d=>{if(d&&!d.error)setNs(d);}).finally(() => setLd(false));
-    load();
-    const iv=setInterval(load,10000);
-    return()=>clearInterval(iv);
-  }, []);
-
-  const markAll = async () => {
-    await Promise.all(ns.filter(n => !n.read).map(n => db.patch("notifications", n.id, { read:true })));
-    setNs(ns => ns.map(n => ({ ...n, read:true })));
-  };
-
-  const unread = ns.filter(n => !n.read).length;
-
-  return (
-    <div>
-      <div className="ph"><h1>Notificações</h1><p>Atualizações sobre o seu processo.</p></div>
-      <div className="card">
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"1.25rem" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:".6rem" }}>
-            <div className="ct" style={{ margin:0 }}>Todas as notificações</div>
-            {unread > 0 && <span style={{ background:"var(--g)", color:"#000", fontSize:".68rem", fontWeight:700, padding:".15rem .5rem", borderRadius:99, minWidth:20, textAlign:"center" }}>{unread}</span>}
+        {/* 3. AGENDA DA SEMANA ─────────────────────────────────────────────── */}
+        <div className="card cp">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
+            <div className="ct" style={{margin:0}}>📅 Agenda desta semana</div>
+            <a href="https://calendar.google.com/calendar" target="_blank" rel="noreferrer"
+              style={{fontSize:".72rem",color:"var(--g)",textDecoration:"none",fontWeight:600}}>Ver tudo →</a>
           </div>
-          {unread > 0 && <button onClick={markAll} style={{ fontSize:".78rem", color:"var(--g)", background:"var(--gd)", border:"1px solid rgba(201,168,76,.2)", borderRadius:8, padding:".4rem .8rem", cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontWeight:600, transition:"all .2s" }}>Marcar como lidas</button>}
-        </div>
-        {ld ? <Loader /> : (
-          <div className="nl2">
-            {ns.map(n => (
-              <div key={n.id} className={`ni2${!n.read?" u":""}`}>
-                <div style={{ fontSize:"1.3rem", width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center", background:!n.read?"var(--gd)":"var(--cr)", borderRadius:10, flexShrink:0 }}>{n.icon}</div>
-                <div style={{ flex:1 }}>
-                  <div className="ntx">{n.text}</div>
-                  <div className="ntm">{fmtd(n.created_at)}</div>
+          {ldCal
+            ? <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:"1.5rem"}}>A carregar agenda…</div>
+            : [
+                {title:"Marcelo",      date:"24/03",time:"13:30",day:"Seg"},
+                {title:"Keily",        date:"27/03",time:"18:00",day:"Qui"},
+                {title:"Camila Mendes",date:"31/03",time:"10:00",day:"Ter"},
+              ].map((ev,i) => (
+                <div key={i} style={{display:"flex",alignItems:"center",gap:".75rem",padding:".65rem .85rem",borderRadius:10,border:"1px solid var(--bo)",marginBottom:".5rem",background:"var(--bg)"}}>
+                  <div style={{background:"var(--n)",color:"#fff",borderRadius:8,width:42,textAlign:"center",padding:".35rem 0",flexShrink:0}}>
+                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.2rem",lineHeight:1}}>{ev.date.split("/")[0]}</div>
+                    <div style={{fontSize:".6rem",textTransform:"uppercase",letterSpacing:".05em",opacity:.7}}>{ev.day}</div>
+                  </div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:600,fontSize:".85rem"}}>{ev.title}</div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{ev.time} · {ev.date}</div>
+                  </div>
+                  <span style={{fontSize:".7rem",background:"var(--gd)",color:"var(--g)",border:"1px solid var(--g)",borderRadius:99,padding:".15rem .5rem",fontWeight:600}}>Confirmado</span>
                 </div>
-                {!n.read && <div className="ud" />}
+              ))
+          }
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
+
+        {/* 4. DISTRIBUIÇÃO DOS PROCESSOS ─────────────────────────────────── */}
+        <div className="card cp">
+          <div className="ct" style={{marginBottom:"1rem"}}>📊 Distribuição dos Processos</div>
+
+          <div style={{marginBottom:"1rem"}}>
+            <div style={{fontSize:".75rem",color:"var(--mu)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:".5rem"}}>Por local de processamento</div>
+            {[
+              ["🏛️ Arquivo Central do Porto", porto,  "#0f1e35"],
+              ["🏛️ Conservatória Reg. Centrais", crc, "#b8860b"],
+              ["❓ Sem arquivo atribuído", total - porto - crc, "#999"],
+            ].map(([l,v,c]) => v > 0 && (
+              <div key={l} style={{marginBottom:".5rem"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:".78rem",marginBottom:3}}>
+                  <span>{l}</span><span style={{fontWeight:700,color:c}}>{v}</span>
+                </div>
+                <div style={{background:"#f0ece4",borderRadius:99,height:6}}>
+                  <div style={{width:`${Math.round(v/total*100)}%`,height:6,borderRadius:99,background:c,transition:"width .5s"}}/>
+                </div>
               </div>
             ))}
-            {!ns.length && (
-              <div className="empty-state">
-                <span className="emoji">🔔</span>
-                <div className="title">Sem notificações</div>
-                <div className="desc">Quando houver atualizações no seu processo, aparecerão aqui.</div>
-              </div>
-            )}
           </div>
-        )}
+
+          <div>
+            <div style={{fontSize:".75rem",color:"var(--mu)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:".5rem"}}>Por estado</div>
+            {[
+              ["✅ Em andamento",  emAndamento, "#16a34a"],
+              ["⏳ Aguardando",    aguardando,  "#d97706"],
+            ].map(([l,v,c]) => (
+              <div key={l} style={{marginBottom:".5rem"}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:".78rem",marginBottom:3}}>
+                  <span>{l}</span><span style={{fontWeight:700,color:c}}>{v}</span>
+                </div>
+                <div style={{background:"#f0ece4",borderRadius:99,height:6}}>
+                  <div style={{width:`${Math.round(v/total*100)}%`,height:6,borderRadius:99,background:c,transition:"width .5s"}}/>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{marginTop:"1rem",paddingTop:"1rem",borderTop:"1px solid var(--bo)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:".5rem"}}>
+            {[
+              ["Art.º 6º n.º 7",         974+233],
+              ["Art.º 1º C/D",            43+26],
+              ["Art.º 6º n.º 1",          16],
+              ["Outros / Sem artigo",     total-974-233-43-26-16],
+            ].map(([l,v]) => (
+              <div key={l} style={{background:"var(--bg)",borderRadius:8,padding:".5rem .7rem",border:"1px solid var(--bo)"}}>
+                <div style={{fontSize:".68rem",color:"var(--mu)",marginBottom:2}}>{l}</div>
+                <div style={{fontSize:"1.1rem",fontWeight:700,fontFamily:"'Cormorant Garamond',serif",color:"var(--n)"}}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. CLIENTES COM PENDÊNCIAS ─────────────────────────────────────── */}
+        <div className="card cp">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
+            <div className="ct" style={{margin:0}}>⚠️ Pendências Activas</div>
+            <span style={{background:"#fef3c7",color:"#92400e",border:"1px solid #fcd34d",borderRadius:99,fontSize:".7rem",fontWeight:700,padding:".15rem .6rem"}}>{pendentes} clientes</span>
+          </div>
+          <div style={{maxHeight:320,overflowY:"auto"}}>
+            {comPendencias.length === 0
+              ? <div style={{color:"var(--mu)",fontSize:".85rem",textAlign:"center",padding:"2rem"}}>✅ Sem pendências activas</div>
+              : comPendencias.map(c => (
+                <div key={c.id} style={{padding:".65rem .75rem",borderRadius:10,border:"1px solid #fcd34d",background:"#fffbeb",marginBottom:".5rem"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:".5rem"}}>
+                    <div style={{fontWeight:600,fontSize:".84rem",color:"var(--n)"}}>{c.name}</div>
+                    <span style={{fontSize:".68rem",color:"var(--mu)",flexShrink:0}}>{c.chave_acesso||"—"}</span>
+                  </div>
+                  <div style={{fontSize:".76rem",color:"#92400e",marginTop:3,lineHeight:1.4}}>{c.pendencias}</div>
+                  {c.observacao && (
+                    <div style={{fontSize:".72rem",color:"#b45309",marginTop:2,fontStyle:"italic"}}>{c.observacao?.slice(0,80)}{c.observacao?.length>80?"…":""}</div>
+                  )}
+                </div>
+              ))
+            }
+          </div>
+          {pendentes > 8 && (
+            <div style={{textAlign:"center",marginTop:".5rem",fontSize:".78rem",color:"var(--mu)"}}>
+              + {pendentes - 8} outros clientes com pendências — use a busca para localizar
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-/* ── MEETINGS ─────────────────────────────────────────────────────────── */
-function Meetings({ proc, client }) {
-  const [ms,    setMs]    = useState([]);
-  const [ld,    setLd]    = useState(true);
-  const [form,  setForm]  = useState({ title:"Consulta sobre o meu processo", date:"", time:"10:00", type:"videochamada", notes:"" });
-  const [busy,  setBusy]  = useState(false);
-  const [sent,  setSent]  = useState(false);
+// ── WHATSAPP NOTIFY ───────────────────────────────────────────────────────────
+const WA_TEMPLATES = [
+  {
+    id: "acesso",
+    label: "🔑 Enviar Acesso ao Portal",
+    icon: "🔑",
+    msg: (c) =>
+`Olá ${c.name.split(" ")[0]}! 👋
 
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-  const minDate = tomorrow.toISOString().split("T")[0];
+O escritório *Bono & Lacerda Advogados* criou o seu portal exclusivo para acompanhar o seu processo de Nacionalidade Portuguesa.
 
-  useEffect(() => {
-    if (!proc) return;
-    const load=()=>db.get("meetings", `?process_id=eq.${proc.id}&order=date.asc`).then(d=>{if(d&&!d.error)setMs(d);}).finally(() => setLd(false));
-    load();
-    const iv=setInterval(load,10000);
-    return()=>clearInterval(iv);
-  }, [proc]);
+🔗 *Acesse agora:* bono-lacerda-portal.vercel.app
+🔑 *Chave de acesso:* ${c.chave_acesso || "—"}
 
-  const submit = async () => {
-    if (!form.date || !proc) return;
-    setBusy(true);
-    const saved = await db.post("meetings", { process_id:proc.id, title:form.title||"Reunião solicitada pelo cliente", date:form.date, time:form.time, type:form.type, notes:form.notes, status:"pendente" });
-    if (saved[0]) {
-      setMs(m => [...m, saved[0]]);
-      await db.post("notifications", { client_id:client.id, text:`Pedido de reunião enviado para ${form.date.split("-").reverse().join("/")} às ${form.time}. Aguarde confirmação.`, icon:"📅", read:false });
-      setSent(true);
-    }
-    setBusy(false);
+No portal pode acompanhar o estado do seu processo em tempo real, enviar documentos, agendar reuniões e enviar mensagens directamente para a equipa.
+
+Qualquer dúvida estamos disponíveis! 😊
+*Bono & Lacerda Advogados*
+📞 +351 21 793 1934`
+  },
+  {
+    id: "atualizacao",
+    label: "📋 Actualização do Processo",
+    icon: "📋",
+    msg: (c, proc) =>
+`Olá ${c.name.split(" ")[0]}! 👋
+
+Temos uma actualização sobre o seu processo de Nacionalidade Portuguesa.
+
+📌 *Estado actual:* ${proc?.status === "em_andamento" ? "Em andamento ✅" : proc?.status === "aguardando" ? "Aguardando documentos ⚠️" : "Concluído 🎉"}
+🏛️ *Local:* ${proc?.arquivo || "IRN"}
+📅 *Última atualização:* ${proc?.last_update ? new Date(proc.last_update).toLocaleDateString("pt-BR") : "—"}
+
+Para mais detalhes aceda ao portal:
+🔗 bono-lacerda-portal.vercel.app
+🔑 Chave: ${c.chave_acesso || "—"}
+
+*Bono & Lacerda Advogados*
+📞 +351 21 793 1934`
+  },
+  {
+    id: "pendencia",
+    label: "⚠️ Pendência Identificada",
+    icon: "⚠️",
+    msg: (c) =>
+`Olá ${c.name.split(" ")[0]}! 👋
+
+Identificámos uma pendência no seu processo que requer a sua atenção:
+
+⚠️ *Pendência:* ${c.pendencias || "Documentação em falta"}
+${c.observacao ? `📝 *Detalhe:* ${c.observacao}` : ""}
+
+Por favor envie os documentos necessários o mais breve possível para evitar atrasos no seu processo.
+
+Pode enviá-los directamente pelo portal:
+🔗 bono-lacerda-portal.vercel.app
+🔑 Chave: ${c.chave_acesso || "—"}
+
+*Bono & Lacerda Advogados*
+📞 +351 21 793 1934`
+  },
+  {
+    id: "reuniao",
+    label: "📅 Confirmar Reunião",
+    icon: "📅",
+    msg: (c) =>
+`Olá ${c.name.split(" ")[0]}! 👋
+
+A sua reunião com o escritório Bono & Lacerda foi confirmada. 🎉
+
+Consulte os detalhes no portal:
+🔗 bono-lacerda-portal.vercel.app
+🔑 Chave: ${c.chave_acesso || "—"}
+
+*Bono & Lacerda Advogados*
+📞 +351 21 793 1934`
+  },
+  {
+    id: "custom",
+    label: "✏️ Mensagem Personalizada",
+    icon: "✏️",
+    msg: () => ""
+  },
+];
+
+function WhatsAppNotify({ client, proc, showToast }) {
+  const [open,    setOpen]    = useState(false);
+  const [sel,     setSel]     = useState(null);
+  const [msg,     setMsg]     = useState("");
+  const [phone,   setPhone]   = useState(client.whatsapp || client.phone || "");
+
+  const selectTemplate = (t) => {
+    setSel(t.id);
+    setMsg(t.msg(client, proc));
   };
 
-  const cancel = async id => {
-    await db.patch("meetings", id, { status:"cancelado" });
-    setMs(m => m.map(x => x.id === id ? { ...x, status:"cancelado" } : x));
+  const sendWhatsApp = () => {
+    const num = phone.replace(/\D/g, "");
+    if (!num) { showToast("⚠️ Número de telefone em falta!"); return; }
+    const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
+    setOpen(false);
+    showToast("✅ WhatsApp aberto!");
   };
-
-  const statusBadge = s => {
-    if (s === "confirmado") return <span className="bd bg">Confirmado</span>;
-    if (s === "cancelado")  return <span className="bd br">Cancelado</span>;
-    if (s === "recusado")   return <span className="bd br">Recusado</span>;
-    return <span className="bd ba">Aguardando</span>;
-  };
-
-  const TYPES = [
-    { val:"videochamada", label:"Videochamada", icon:"📹", sub:"Google Meet / Zoom" },
-    { val:"presencial",   label:"Presencial",   icon:"📍", sub:"Lisboa, Portugal" },
-    { val:"telefone",     label:"Telefone",     icon:"📞", sub:"Ligação direta" },
-    { val:"whatsapp",     label:"WhatsApp",     icon:"💬", sub:"+351 21 793 1934" },
-  ];
 
   return (
-    <div>
-      <div className="ph"><h1>Reuniões</h1><p>Agende uma reunião com o seu advogado.</p></div>
-      <div className="card" style={{ marginBottom:"1.25rem" }}>
-        <div className="ct">Solicitar Nova Reunião</div>
-        {sent ? (
-          <div style={{ textAlign:"center", padding:"3rem 1.5rem" }}>
-            <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(74,222,128,.15)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"2rem", margin:"0 auto 1.25rem" }}>✅</div>
-            <div style={{ fontFamily:"Playfair Display,serif", fontSize:"1.2rem", color:"#fff", marginBottom:".5rem" }}>Pedido enviado!</div>
-            <p style={{ color:"var(--mu)", fontSize:".88rem", lineHeight:1.7, marginBottom:"1.5rem", maxWidth:340, margin:"0 auto 1.5rem" }}>
-              O escritório irá confirmar em breve.<br />Receberá uma notificação assim que confirmado.
-            </p>
-            <button className="btnp" style={{ width:"auto", padding:".75rem 2rem", display:"inline-flex" }} onClick={() => setSent(false)}>
-              Solicitar outra reunião
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="fg">
-              <label>Assunto</label>
-              <input value={form.title} onChange={e => setForm(f => ({...f, title:e.target.value}))} placeholder="Ex: Consulta sobre o meu processo" />
-            </div>
-            <div className="fg2">
-              <div className="fg">
-                <label>Data</label>
-                <input type="date" min={minDate} value={form.date} onChange={e => setForm(f => ({...f, date:e.target.value}))} />
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          display:"flex", alignItems:"center", gap:".4rem",
+          background:"#25D366", color:"#fff", border:"none",
+          borderRadius:8, padding:".5rem .9rem", cursor:"pointer",
+          fontSize:".82rem", fontWeight:600, fontFamily:"inherit",
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+
+      {open && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:2000,display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem"}}>
+          <div style={{background:"#fff",borderRadius:20,width:"100%",maxWidth:520,maxHeight:"90vh",overflow:"auto",boxShadow:"0 20px 60px rgba(0,0,0,.3)"}}>
+            {/* Header */}
+            <div style={{background:"#25D366",padding:"1.25rem 1.5rem",borderRadius:"20px 20px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{color:"#fff",fontWeight:700,fontSize:"1rem"}}>💬 Notificação WhatsApp</div>
+                <div style={{color:"rgba(255,255,255,.8)",fontSize:".78rem",marginTop:2}}>{client.name}</div>
               </div>
-              <div className="fg">
-                <label>Hora</label>
-                <input type="time" value={form.time} onChange={e => setForm(f => ({...f, time:e.target.value}))} />
-              </div>
+              <button onClick={() => setOpen(false)} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:"1.4rem",lineHeight:1}}>×</button>
             </div>
-            <div className="fg">
-              <label>Tipo de Reunião</label>
-              <div className="type-grid">
-                {TYPES.map(t => (
-                  <div key={t.val} className={`type-opt${form.type===t.val?" sel":""}`} onClick={() => setForm(f => ({...f, type:t.val}))}>
-                    <h4>{t.icon} {t.label}</h4>
-                    <p>{t.sub}</p>
-                  </div>
-                ))}
+
+            <div style={{padding:"1.25rem 1.5rem"}}>
+              {/* Phone */}
+              <div style={{marginBottom:"1rem"}}>
+                <label style={{display:"block",fontSize:".75rem",fontWeight:600,color:"#666",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>Número WhatsApp</label>
+                <input
+                  value={phone}
+                  onChange={e => setPhone(e.target.value)}
+                  placeholder="+55 11 99999-9999 ou +351 9XX XXX XXX"
+                  style={{width:"100%",padding:".7rem 1rem",border:"1.5px solid #e2e8f0",borderRadius:10,fontSize:".9rem",outline:"none",fontFamily:"inherit"}}
+                />
               </div>
-            </div>
-            <div className="fg">
-              <label>Mensagem (opcional)</label>
-              <textarea value={form.notes} onChange={e => setForm(f => ({...f, notes:e.target.value}))} placeholder="Descreva o assunto ou dúvidas que quer esclarecer…" />
-            </div>
-            <button className="btnp" onClick={submit} disabled={busy || !form.date}>
-              {busy ? <><Icon name="spin" size={16} /> A enviar…</> : "Enviar Pedido de Reunião"}
-            </button>
-          </>
-        )}
-      </div>
-      <div className="card">
-        <div className="ct">As Minhas Reuniões</div>
-        {ld ? <Loader /> : ms.length === 0 ? (
-          <div className="empty-state">
-            <span className="emoji">📅</span>
-            <div className="title">Nenhuma reunião</div>
-            <div className="desc">Solicite a sua primeira reunião usando o formulário acima.</div>
-          </div>
-        ) : ms.map(m => {
-          const d = new Date((m.date || "") + "T12:00:00");
-          return (
-            <div className="mcard" key={m.id}>
-              <div className="mdb">
-                <div className="day">{d.getDate()}</div>
-                <div className="mon">{MO[d.getMonth()]}</div>
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontWeight:600, fontSize:".9rem" }}>{m.title}</div>
-                <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
-                  {m.time} · {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
+
+              {/* Templates */}
+              <div style={{marginBottom:"1rem"}}>
+                <label style={{display:"block",fontSize:".75rem",fontWeight:600,color:"#666",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Tipo de Mensagem</label>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:".5rem"}}>
+                  {WA_TEMPLATES.map(t => (
+                    <button key={t.id} onClick={() => selectTemplate(t)} style={{
+                      padding:".6rem .8rem",borderRadius:10,border:`2px solid ${sel===t.id?"#25D366":"#e2e8f0"}`,
+                      background:sel===t.id?"#f0fdf4":"#fff",cursor:"pointer",
+                      fontSize:".78rem",fontWeight:sel===t.id?700:400,
+                      color:sel===t.id?"#166534":"#444",textAlign:"left",fontFamily:"inherit",
+                      transition:"all .15s"
+                    }}>
+                      {t.label}
+                    </button>
+                  ))}
                 </div>
-                {m.notes && <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4, fontStyle:"italic" }}>{m.notes}</div>}
               </div>
-              {statusBadge(m.status)}
-              {m.status === "pendente" && (
-                <button onClick={() => cancel(m.id)} style={{ background:"none", border:"1px solid var(--bo)", borderRadius:8, color:"var(--mu)", fontSize:".72rem", cursor:"pointer", padding:".35rem .6rem", fontFamily:"'DM Sans',sans-serif", transition:"all .2s" }} onMouseOver={e => e.target.style.borderColor="var(--er)"} onMouseOut={e => e.target.style.borderColor="var(--bo)"}>Cancelar</button>
+
+              {/* Message preview/editor */}
+              {sel && (
+                <div style={{marginBottom:"1rem"}}>
+                  <label style={{display:"block",fontSize:".75rem",fontWeight:600,color:"#666",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>
+                    Mensagem {sel==="custom"?"(personalize abaixo)":"(editável)"}
+                  </label>
+                  <textarea
+                    value={msg}
+                    onChange={e => setMsg(e.target.value)}
+                    rows={10}
+                    style={{
+                      width:"100%",padding:".85rem 1rem",border:"1.5px solid #e2e8f0",
+                      borderRadius:10,fontSize:".82rem",lineHeight:1.6,
+                      fontFamily:"inherit",outline:"none",resize:"vertical",
+                      background:"#fafafa",color:"#1a1a2e"
+                    }}
+                  />
+                  <div style={{fontSize:".72rem",color:"#999",marginTop:4}}>{msg.length} caracteres</div>
+                </div>
               )}
+
+              {/* Actions */}
+              <div style={{display:"flex",gap:".75rem"}}>
+                <button onClick={() => setOpen(false)} style={{flex:1,padding:".75rem",borderRadius:10,border:"1.5px solid #e2e8f0",background:"#fff",cursor:"pointer",fontFamily:"inherit",fontSize:".88rem",fontWeight:500}}>
+                  Cancelar
+                </button>
+                <button
+                  onClick={sendWhatsApp}
+                  disabled={!sel||!msg.trim()||!phone.trim()}
+                  style={{
+                    flex:2,padding:".75rem",borderRadius:10,border:"none",
+                    background:(!sel||!msg.trim()||!phone.trim())?"#ccc":"#25D366",
+                    color:"#fff",cursor:(!sel||!msg.trim()||!phone.trim())?"not-allowed":"pointer",
+                    fontFamily:"inherit",fontSize:".88rem",fontWeight:700,
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:".5rem"
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+                  Abrir no WhatsApp
+                </button>
+              </div>
             </div>
-          );
-        })}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ── CONTACT CARD (editable) ──────────────────────────────────────────────────
+function ContactCard({client, setClients, showToast}){
+  const fields = [
+    {key:"email",    label:"📧 Email",         type:"email"},
+    {key:"phone",    label:"📞 Telefone",      type:"tel"},
+    {key:"whatsapp", label:"💬 WhatsApp",      type:"tel"},
+    {key:"address",  label:"🏠 Morada",        type:"text"},
+    {key:"city",     label:"🏙️ Cidade",        type:"text"},
+    {key:"state",    label:"📍 Região",        type:"text"},
+    {key:"zip",      label:"📮 Código Postal", type:"text"},
+    {key:"country",  label:"🌍 País",          type:"text"},
+  ];
+  const [form, setForm] = useState(()=>{
+    const o = {};
+    fields.forEach(f => o[f.key] = client[f.key] || "");
+    return o;
+  });
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const r = await api.patch("clients", client.id, form);
+    if(r && r[0]){
+      setClients(cs => cs.map(c => c.id === client.id ? {...c, ...form} : c));
+      showToast("✅ Dados de contacto actualizados!");
+      setEditing(false);
+    } else {
+      showToast("Erro ao guardar. Tente novamente.");
+    }
+    setSaving(false);
+  };
+
+  const inputStyle = {
+    width:"100%", padding:".45rem .65rem", border:"1.5px solid var(--bo)", borderRadius:8,
+    fontFamily:"'Outfit',sans-serif", fontSize:".85rem", color:"var(--tx)", background:"var(--bg)", outline:"none",
+  };
+
+  return (
+    <div className="card cp" style={{marginBottom:"1.25rem"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
+        <div className="ct" style={{margin:0,fontSize:"1rem"}}>📇 Dados de Contacto</div>
+        {!editing
+          ? <button className="btn btn-gh" style={{fontSize:".75rem",padding:".35rem .8rem"}} onClick={()=>setEditing(true)}>✏️ Editar</button>
+          : <div style={{display:"flex",gap:".5rem"}}>
+              <button className="btn btn-gh" style={{fontSize:".75rem",padding:".35rem .8rem"}} onClick={()=>{setEditing(false);const o={};fields.forEach(f=>o[f.key]=client[f.key]||"");setForm(o);}}>Cancelar</button>
+              <button className="btn btn-dk" style={{fontSize:".75rem",padding:".35rem .8rem"}} onClick={save} disabled={saving}>{saving?"A guardar…":"💾 Guardar"}</button>
+            </div>
+        }
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:".75rem"}}>
+        {fields.map(f=>(
+          <div key={f.key}>
+            <div style={{fontSize:".68rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:4}}>{f.label}</div>
+            {editing
+              ? <input type={f.type} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))} style={inputStyle} placeholder="—"/>
+              : <div style={{fontWeight:500,fontSize:".85rem",color:form[f.key]?"var(--tx)":"var(--mu)",minHeight:"1.5rem"}}>{form[f.key] || "—"}</div>
+            }
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-/* ── CHAT ─────────────────────────────────────────────────────────────── */
-function Chat({ client, proc }) {
-  const [msgs,       setMsgs]       = useState([]);
-  const [input,      setInput]      = useState("");
-  const [ld,         setLd]         = useState(true);
-  const [justSent,   setJustSent]   = useState(false);
-  const bot = useRef();
+// ── CLIENT DETAIL ─────────────────────────────────────────────────────────────
+function Detail({cid,clients,setClients,showToast,onBack}){
+  const client=clients.find(c=>c.id===cid);
+  const [tab,setTab]=useState("processo");
+  const [steps,setSteps]=useState([]);
+  const [docs,setDocs]=useState([]);
+  const [msgs,setMsgs]=useState([]);
+  const [meets,setMeets]=useState([]);
+  const [chatIn,setChatIn]=useState("");
+  const [showMtg,setShowMtg]=useState(false);
+  const [mf,setMf]=useState({title:"",date:"",time:"10:00",type:"presencial",notes:""});
+  const [saving,setSaving]=useState(false);
+  const [ldData,setLdData]=useState(true);
+  const fileRef=useRef(); const botRef=useRef();
+  useEffect(()=>{botRef.current?.scrollIntoView({behavior:"smooth"})},[msgs]);
 
-  useEffect(() => {
-    if (!proc) return;
-    db.get("messages", `?process_id=eq.${proc.id}&order=created_at.asc`).then(setMsgs).finally(() => setLd(false));
-  }, [proc]);
+  // Load full data when client is opened
+  useEffect(()=>{
+    if(!client) return;
+    const load=async(initial)=>{
+      if(initial) setLdData(true);
+      const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
+      const proc=procs[0]||null;
+      if(proc){
+        const [ss,dd,mm,mt]=await Promise.all([
+          api.get("process_steps",`?process_id=eq.${proc.id}&order=step_order.asc`),
+          api.get("documents",`?process_id=eq.${proc.id}&order=created_at.desc`),
+          api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
+          api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
+        ]);
+        if(ss&&!ss.error) setSteps(ss);
+        if(dd&&!dd.error) setDocs(dd);
+        if(mm&&!mm.error) setMsgs(mm);
+        if(mt&&!mt.error) setMeets(mt);
+        setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
+      }
+      if(initial) setLdData(false);
+    };
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
+  },[cid]);
+
+  if(!client) return null;
+  const proc=client.proc;
+  const done=steps.filter(s=>s.done).length;
+  const pct=steps.length?Math.round(done/steps.length*100):0;
+
+  if(ldData) return <div style={{marginTop:"4rem"}}><div className="ld"><Icon name="spin" size={28}/><span>Carregando dados do cliente…</span></div></div>;
+
+  const toggleStep=async s=>{
+    const r=await api.patch("process_steps",s.id,{done:!s.done});
+    if(r[0]) setSteps(ss=>ss.map(x=>x.id===s.id?{...x,done:!s.done}:x));
+    showToast("Etapa atualizada!");
+  };
+  const sendMsg=async()=>{
+    if(!chatIn.trim()||!proc) return;
+    const r=await api.post("messages",{process_id:proc.id,from_role:"lawyer",text:chatIn});
+    if(r[0]) setMsgs(m=>[...m,r[0]]);
+    setChatIn(""); showToast("Mensagem enviada!");
+  };
+  const addMeeting=async()=>{
+    if(!mf.title||!mf.date||!proc) return;
+    setSaving(true);
+    const r=await api.post("meetings",{process_id:proc.id,...mf,status:"confirmado"});
+    if(r[0]){
+      setMeets(m=>[...m,r[0]]);
+      await api.post("notifications",{client_id:client.id,text:`Reunião agendada para ${mf.date.split("-").reverse().join("/")} às ${mf.time}. Tipo: ${mf.type}.`,icon:"📅",read:false});
+      showToast("Reunião agendada!");
+    }
+    setSaving(false); setShowMtg(false); setMf({title:"",date:"",time:"10:00",type:"presencial",notes:""});
+  };
+  const confirmMeet=async m=>{
+    await api.patch("meetings",m.id,{status:"confirmado"});
+    const updated={...m,status:"confirmado"};
+    // Update local meetings state
+    setMeets(ms=>ms.map(x=>x.id===m.id?updated:x));
+    // Update global clients state so badge updates too
+    setClients(cs=>cs.map(c=>c.id===client.id?{...c,meetings:(c.meetings||[]).map(x=>x.id===m.id?updated:x)}:c));
+    await api.post("notifications",{client_id:client.id,text:`Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}.`,icon:"✅",read:false});
+    // Ask Claude to create the Google Calendar event
+    const msg = `Cria um evento no Google Calendar (bonoelacerda@gmail.com): Título: "📅 ${m.title} — ${client.name}", Data: ${m.date}T${m.time}:00, fuso horário Europe/Lisbon, duração 1 hora, descrição: "Cliente: ${client.name}\\nTipo: ${m.type}${m.notes?"\\nNotas: "+m.notes:""}", lembrete 30min popup e 60min email.`;
+    if(window.sendPrompt) window.sendPrompt(msg);
+    showToast("✅ Reunião confirmada!");
+  };
+  const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
+  const uploadDoc=async f=>{
+    if(!f) return;
+    if(!proc){showToast("Erro: processo não encontrado. Recarregue a página.");return;}
+    if(f.size>20*1024*1024){showToast("Ficheiro demasiado grande. Máximo 20 MB.");return;}
+    const path=`${proc.id}/${Date.now()}_${f.name}`;
+    try{
+      const ok=await api.upload(path,f);
+      if(!ok){showToast("Erro ao enviar ficheiro. Verifique o formato e tente novamente.");return;}
+      const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
+      if(r&&r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
+      else{showToast("Ficheiro enviado mas erro ao registar. Tente novamente.");}
+    }catch(e){console.error("Upload exception:",e);showToast("Erro de conexão ao enviar ficheiro.");}
+  };
+  const delDoc=async d=>{
+    if(!confirm(`Eliminar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
+    try{
+      if(d.storage_path){
+        const safePath=d.storage_path.split("/").map(p=>encodeURIComponent(p)).join("/");
+        await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`,{method:"DELETE",headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}});
+      }
+      await api.del("documents",d.id);
+      setDocs(ds=>ds.filter(x=>x.id!==d.id));
+      showToast(`"${d.name}" eliminado.`);
+    }catch(e){console.error("Delete error:",e);showToast("Erro ao eliminar documento.");}
+  };
+  const notify=async()=>{
+    await api.post("notifications",{client_id:client.id,text:"Nova atualização no seu processo. Acesse o portal para ver.",icon:"🔔",read:false});
+    showToast("Notificação enviada!");
+  };
+
+  const pendentes=meets.filter(m=>m.status==="pendente");
+
+  return(
+    <div>
+      <div className="tb">
+        <div style={{display:"flex",alignItems:"center",gap:"1rem"}}>
+          <button className="btn btn-gh" onClick={onBack}>← Voltar</button>
+          <Av name={client.name} size={44}/>
+          <div><h1 className="pt" style={{fontSize:"1.6rem"}}>{client.name}</h1>
+          <p className="ps">{client.chave_acesso||client.email} · {client.whatsapp||client.phone||"—"}</p></div>
+        </div>
+        <div style={{display:"flex",gap:".6rem",alignItems:"center"}}>
+          <StatusBadge s={proc?.status}/>
+          <WhatsAppNotify client={client} proc={proc} showToast={showToast}/>
+        </div>
+      </div>
+
+      <div className="card cp" style={{marginBottom:"1.25rem",display:"flex",gap:"2rem",flexWrap:"wrap",alignItems:"center"}}>
+        {[
+          ["Processo", proc?.number || client.chave_acesso || "—"],
+          ["Artigo",   client.artigo || proc?.type || "—"],
+          ["Protocolo",fmtd(proc?.opened_at) || "—"],
+          ["Submissão IRN", proc?.submissao_irn || "—"],
+          ["Local",    proc?.arquivo || "—"],
+          ["Desde",    fmtd(client.since)],
+        ].map(([k,v])=>(
+          <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".85rem",maxWidth:220}}>{v}</div></div>
+        ))}
+        {client.pendencias&&(
+          <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:8,padding:".6rem .9rem"}}>
+            <div style={{fontWeight:600,fontSize:".78rem",color:"#92400e"}}>⚠️ {client.pendencias}</div>
+            {client.observacao&&<div style={{fontSize:".75rem",color:"#b45309",marginTop:2}}>{client.observacao}</div>}
+          </div>
+        )}
+        <div style={{marginLeft:"auto",minWidth:160}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontSize:".72rem",color:"var(--mu)"}}>Progresso</span><span style={{fontSize:".72rem",fontWeight:700}}>{pct}%</span></div>
+          <div className="pw" style={{height:8}}><div className="pf" style={{width:`${pct}%`,height:8}}/></div>
+        </div>
+      </div>
+
+      {/* Dados de Contacto — editável pelo advogado */}
+      <ContactCard client={client} setClients={setClients} showToast={showToast}/>
+
+      <div className="tabs">
+        {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["chat","Chat"]].map(([id,label])=>(
+          <button key={id} className={`tab${tab===id?" on":""}`} onClick={()=>setTab(id)}>{label}</button>
+        ))}
+      </div>
+
+      {tab==="processo"&&(
+        <div className="card cp">
+          <div className="ct">Etapas do Processo</div>
+          <p style={{fontSize:".82rem",color:"var(--mu)",marginBottom:"1rem"}}>Clique no círculo para marcar/desmarcar.</p>
+          {steps.map(s=>(
+            <div className="sr" key={s.id}>
+              <div className={`sc2${s.done?" dn":""}`} onClick={()=>toggleStep(s)}>{s.done&&<Icon name="check" size={12}/>}</div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".9rem",color:s.done?"var(--tx)":"var(--mu)"}}>{s.title}</div><div style={{fontSize:".75rem",color:"var(--mu)",marginTop:1}}>{s.date}</div></div>
+              <span className={`bd${s.done?" bg":" bgr"}`}>{s.done?"Concluído":"Pendente"}</span>
+            </div>
+          ))}
+          <button className="btn btn-dk" style={{marginTop:"1.25rem"}} onClick={notify}><Icon name="bell" size={15}/> Notificar cliente</button>
+        </div>
+      )}
+
+      {tab==="documentos"&&(
+        <div className="card cp">
+          <div className="ct">Documentos</div>
+          <div className="uz" onClick={()=>fileRef.current.click()}>
+            <Icon name="upload" size={28}/>
+            <div style={{fontWeight:600,marginTop:8,fontSize:".9rem"}}>Enviar documento ao cliente</div>
+            <div style={{fontSize:".78rem",marginTop:4}}>PDF, DOC, JPG — até 20 MB</div>
+            <input ref={fileRef} type="file" style={{display:"none"}} onChange={e=>uploadDoc(e.target.files[0])}/>
+          </div>
+          {docs.map(d=>(
+            <div className="dr" key={d.id}>
+              <div className="dic"><Icon name="file" size={16}/></div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
+              <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
+              {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
+              <button className="ib" style={{marginLeft:4,color:"#ef4444"}} onClick={()=>delDoc(d)} title="Eliminar">🗑️</button>
+            </div>
+          ))}
+          {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"1.5rem",fontSize:".85rem"}}>Nenhum documento ainda.</p>}
+        </div>
+      )}
+
+      {tab==="reunioes"&&(
+        <div className="card cp">
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.25rem"}}>
+            <div className="ct" style={{margin:0}}>Reuniões</div>
+            <button className="btn btn-dk" onClick={()=>setShowMtg(true)}><Icon name="plus" size={15}/> Nova Reunião</button>
+          </div>
+          {pendentes.length>0&&(
+            <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:10,padding:".9rem 1.1rem",marginBottom:"1.25rem"}}>
+              <div style={{fontWeight:600,fontSize:".85rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) do cliente aguardando confirmação</div>
+              <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Clique em "✓ Confirmar" para criar o evento no Google Calendar automaticamente</div>
+            </div>
+          )}
+          {!meets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"2rem",fontSize:".85rem"}}>Nenhuma reunião agendada.</p>}
+          {meets.map(m=>{
+            const d=new Date((m.date||"")+"T12:00:00");
+            const isPending=m.status==="pendente";
+            return(
+              <div className="mcard" key={m.id} style={{borderColor:isPending?"#fcd34d":"var(--bo)",background:isPending?"#fffbf0":"var(--bg)"}}>
+                <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
+                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>⏰ {m.time} · {m.type==="videochamada"?"📹 Video":m.type==="whatsapp"?"💬 WhatsApp":m.type==="presencial"?"📍 Presencial":"📞 Tel"}</div>
+                  {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
+                </div>
+                <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
+                  {isPending?(
+                    <>
+                      <button className="btn btn-ok" style={{fontSize:".78rem",padding:".4rem .9rem"}} onClick={()=>confirmMeet(m)}>✓ Confirmar + 📅</button>
+                      <button className="ib d" onClick={async()=>{await api.patch("meetings",m.id,{status:"recusado"});setMeets(ms=>ms.map(x=>x.id===m.id?{...x,status:"recusado"}:x));}}><Icon name="close" size={13}/></button>
+                    </>
+                  ):(
+                    <>
+                      <span className={`bd${m.status==="confirmado"?" bg":m.status==="recusado"?" br":" bgr"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="recusado"?"Recusado":m.status}</span>
+                      <button className="ib d" onClick={()=>delMeeting(m.id)}><Icon name="trash" size={13}/></button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab==="chat"&&(
+        <div className="card cp">
+          <div className="ct">Chat com {client.name}</div>
+          <div className="cw">
+            <div className="cms">
+              {msgs.map(m=>(
+                <div key={m.id} className={`mr${m.from_role==="lawyer"?" mi":""}`}>
+                  <div><div className={`mb${m.from_role==="lawyer"?" mi":" th"}`}>{m.text}</div>
+                  <div className="mt2" style={{textAlign:m.from_role==="lawyer"?"right":"left"}}>{fmtt(m.created_at)}</div></div>
+                </div>
+              ))}
+              {!msgs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"2rem",fontSize:".85rem"}}>Nenhuma mensagem ainda.</p>}
+              <div ref={botRef}/>
+            </div>
+            <div className="cir">
+              <input className="cin" placeholder="Escreva uma mensagem para o cliente…" value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()}/>
+              <button className="bsend" onClick={sendMsg}><Icon name="send" size={14}/></button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMtg&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMtg(false)}>
+          <div className="mo">
+            <div className="moh"><h2>Agendar Reunião</h2><button className="ib" onClick={()=>setShowMtg(false)}><Icon name="close" size={15}/></button></div>
+            <div className="mob">
+              <div className="ff"><label>Título *</label><input value={mf.title} onChange={e=>setMf(f=>({...f,title:e.target.value}))} placeholder="Ex: Alinhamento processual"/></div>
+              <div className="fr">
+                <div className="ff"><label>Data *</label><input type="date" value={mf.date} onChange={e=>setMf(f=>({...f,date:e.target.value}))}/></div>
+                <div className="ff"><label>Hora</label><input type="time" value={mf.time} onChange={e=>setMf(f=>({...f,time:e.target.value}))}/></div>
+              </div>
+              <div className="ff"><label>Tipo</label>
+                <select value={mf.type} onChange={e=>setMf(f=>({...f,type:e.target.value}))}>
+                  <option value="presencial">📍 Presencial</option>
+                  <option value="videochamada">📹 Videochamada</option>
+                  <option value="telefone">📞 Telefone</option>
+                  <option value="whatsapp">💬 WhatsApp</option>
+                </select>
+              </div>
+              <div className="ff"><label>Notas</label><textarea value={mf.notes} onChange={e=>setMf(f=>({...f,notes:e.target.value}))}/></div>
+            </div>
+            <div className="mof">
+              <button className="btn btn-gh" onClick={()=>setShowMtg(false)}>Cancelar</button>
+              <button className="btn btn-dk" onClick={addMeeting} disabled={saving}>{saving?<><Icon name="spin" size={15}/>Agendando…</>:<><Icon name="check" size={15}/>Agendar + 📅</>}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── CLIENTS SCREEN ────────────────────────────────────────────────────────────
+function Clients({clients,setClients,showToast,openClient}){
+  const [q,setQ]=useState("");
+  const [showAdd,setShowAdd]=useState(false);
+  const [form,setForm]=useState({name:"",email:"",phone:"",cpf:"",type:"",pass:"123456"});
+  const [busy,setBusy]=useState(false);
+  const filtered=clients.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||(c.chave_acesso||"").includes(q)||(c.proc?.type||"").toLowerCase().includes(q.toLowerCase()));
+
+  const save=async()=>{
+    if(!form.name||!form.email) return;
+    setBusy(true);
+    const cl=await api.post("clients",{name:form.name,email:form.email,password:form.pass||"123456",phone:form.phone,cpf:form.cpf});
+    if(cl[0]){
+      const pr=await api.post("processes",{client_id:cl[0].id,number:`BL-${Date.now().toString().slice(-6)}`,type:form.type||"Processo Jurídico",status:"aguardando",current_step:1,lawyer:"Dr. Ramom Lacerda",lawyer_avatar:"RL"});
+      if(pr[0]){
+        const ss=["Análise Documental","Submissão do Requerimento","Entrevista / Análise","Aprovação","Emissão do Documento Final"];
+        await Promise.all(ss.map((title,i)=>api.post("process_steps",{process_id:pr[0].id,step_order:i+1,title,detail:"Fase não iniciada.",done:false,date:"—"})));
+        const steps=await api.get("process_steps",`?process_id=eq.${pr[0].id}&order=step_order.asc`);
+        setClients(cs=>[...cs,{...cl[0],proc:pr[0],steps,docs:[],msgs:[],meetings:[]}]);
+        showToast(`Cliente "${form.name}" cadastrado!`);
+      }
+    }
+    setBusy(false); setShowAdd(false); setForm({name:"",email:"",phone:"",cpf:"",type:"",pass:"123456"});
+  };
+
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Clientes</h1><p className="ps">{clients.length} clientes cadastrados</p></div>
+        <button className="btn btn-dk" onClick={()=>setShowAdd(true)}><Icon name="plus" size={16}/> Novo Cliente</button>
+      </div>
+      <div className="card cp">
+        <div className="sw"><span className="si"><Icon name="search" size={16}/></span><input placeholder="Buscar por nome, chave ou tipo…" value={q} onChange={e=>setQ(e.target.value)}/></div>
+        <table className="tbl">
+          <thead><tr><th>Cliente</th><th>Chave / Email</th><th>Tipo</th><th>Status</th><th></th></tr></thead>
+          <tbody>{filtered.map(c=>(
+            <tr key={c.id}>
+              <td><div style={{display:"flex",alignItems:"center",gap:".75rem"}}><Av name={c.name} size={34}/><div><div style={{fontWeight:600,fontSize:".88rem"}}>{c.name}</div></div></div></td>
+              <td style={{fontSize:".82rem",color:"var(--mu)",letterSpacing:".05em"}}>{c.chave_acesso||c.email||"—"}</td>
+              <td style={{fontSize:".85rem"}}>{c.proc?.type||"—"}</td>
+              <td><StatusBadge s={c.proc?.status}/></td>
+              <td><div style={{display:"flex",gap:".4rem"}}>
+                <button className="btn btn-gh" style={{padding:".4rem .8rem",fontSize:".78rem"}} onClick={()=>openClient(c.id)}><Icon name="arrow" size={13}/> Abrir</button>
+                <button className="ib d" onClick={async()=>{await api.del("clients",c.id);setClients(cs=>cs.filter(x=>x.id!==c.id));showToast("Removido.");}}><Icon name="trash" size={13}/></button>
+              </div></td>
+            </tr>
+          ))}
+          {!filtered.length&&<tr><td colSpan={5} style={{textAlign:"center",padding:"2rem",color:"var(--mu)",fontSize:".88rem"}}>Nenhum cliente encontrado.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      {showAdd&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowAdd(false)}>
+          <div className="mo">
+            <div className="moh"><h2>Novo Cliente</h2><button className="ib" onClick={()=>setShowAdd(false)}><Icon name="close" size={15}/></button></div>
+            <div className="mob">
+              <div className="fr"><div className="ff"><label>Nome *</label><input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div><div className="ff"><label>CPF/NIF</label><input value={form.cpf} onChange={e=>setForm(f=>({...f,cpf:e.target.value}))}/></div></div>
+              <div className="fr"><div className="ff"><label>E-mail *</label><input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div><div className="ff"><label>Telefone</label><input value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div></div>
+              <div className="fr"><div className="ff"><label>Tipo de Processo</label><input placeholder="Ex: Nacionalidade Portuguesa" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}/></div><div className="ff"><label>Senha inicial</label><input value={form.pass} onChange={e=>setForm(f=>({...f,pass:e.target.value}))}/></div></div>
+            </div>
+            <div className="mof"><button className="btn btn-gh" onClick={()=>setShowAdd(false)}>Cancelar</button><button className="btn btn-dk" onClick={save} disabled={busy}>{busy?<><Icon name="spin" size={15}/>Salvando…</>:<><Icon name="check" size={15}/>Cadastrar</>}</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ALL MEETINGS ──────────────────────────────────────────────────────────────
+function AllMeetings({clients}){
+  const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  const pendentes=all.filter(m=>m.status==="pendente");
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{all.length} reuniões · {pendentes.length} pendentes</p></div></div>
+      {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
+      <div className="card cp">
+        {!all.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
+        {all.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
+          <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)"}}>
+            <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
+            </div>
+            <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
+          </div>
+        );})}
+      </div>
+    </div>
+  );
+}
+
+// ── ALL DOCUMENTS ────────────────────────────────────────────────────────────
+function AllDocuments({clients,showToast,openClient}){
+  const [allDocs,setAllDocs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [filter,setFilter]=useState("todos");
+
+  useEffect(()=>{
+    const load=async()=>{
+      setLoading(true);
+      const docs=await api.get("documents","?order=created_at.desc&limit=500");
+      // Enrich with client name and id
+      const enriched=(docs||[]).map(d=>{
+        const cl=clients.find(c=>c.proc&&c.proc.id===d.process_id);
+        return{...d,clientName:cl?cl.name:"—",clientId:cl?cl.id:null};
+      });
+      setAllDocs(enriched);
+      setLoading(false);
+    };
+    load();
+  },[clients]);
+
+  const filtered=filter==="todos"?allDocs:filter==="cliente"?allDocs.filter(d=>d.uploaded_by==="cliente"):allDocs.filter(d=>d.uploaded_by==="advogado");
+  const aguardando=allDocs.filter(d=>d.uploaded_by==="cliente"&&d.status==="aguardando").length;
+
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos · {aguardando} aguardando revisão</p></div></div>
+      {aguardando>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {aguardando} documento(s) enviados por clientes aguardando revisão</div></div>}
+      <div style={{display:"flex",gap:".5rem",marginBottom:"1.25rem"}}>
+        {["todos","cliente","advogado"].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)} className={`btn${filter===f?" btn-dk":" btn-gh"}`} style={{padding:".5rem 1rem",fontSize:".8rem"}}>
+            {f==="todos"?"📋 Todos":f==="cliente"?"👤 Do Cliente":"⚖️ Do Advogado"}
+          </button>
+        ))}
+      </div>
+      <div className="card cp">
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando documentos…</span></div>}
+        {!loading&&!filtered.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento encontrado.</p>}
+        {!loading&&filtered.map(d=>(
+          <div key={d.id} className="mcard" style={{borderColor:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fcd34d":"var(--bo)",background:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fffbf0":"var(--bg)"}}>
+            <div className="mdb" style={{background:d.uploaded_by==="cliente"?"#dbeafe":"#f0fdf4",borderColor:d.uploaded_by==="cliente"?"#93c5fd":"#86efac"}}>
+              <div className="day" style={{fontSize:"1.2rem"}}>📄</div>
+              <div className="mon">{d.uploaded_by==="cliente"?"CLI":"ADV"}</div>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontWeight:600,fontSize:".9rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} · 📦 {d.size} · 📅 {d.date}</div>
+            </div>
+            <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"👤 Cliente":"⚖️ Advogado"}</span>
+            {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+export default function App(){
+  const [auth,setAuth]=useState(false);
+  const [tab,setTab]=useState("dash");
+  const [clients,setClients]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [openC,setOpenC]=useState(null);
+  const [toast,setToast]=useState(null);
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),3500);};
+
+  const loadClients=async()=>{
+    setLoading(true);
+    try{
+      // Supabase limit is now 10000 — single query gets all clients
+      const allClients=await api.get("clients","?order=created_at.desc&limit=10000");
+      if(!allClients||allClients.error){showToast("Erro ao carregar clientes.");setLoading(false);return;}
+      // Set clients immediately so count shows
+      setClients(allClients.map(c=>({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]})));
+      // Then enrich first 200 with process data in background
+      const enriched=await Promise.all(allClients.map(async(c,i)=>{
+        if(i>=200) return{...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]};
+        const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
+        const proc=procs[0]||null;
+        return{...c,proc,steps:[],docs:[],msgs:[],meetings:[]};
+      }));
+      setClients(enriched);
+    }catch(e){showToast("Erro ao carregar dados: "+e.message);}
+    setLoading(false);
+  };
+
+  const [newDocs,setNewDocs]=useState(0);
+  const lastDocCheck=useRef(null);
+
+  const onLogin=()=>{setAuth(true);loadClients();};
+
+  // Poll for new client documents every 30s
+  useEffect(()=>{
+    if(!auth) return;
+    const check=async()=>{
+      const since=lastDocCheck.current||new Date().toISOString();
+      const recent=await api.get("documents",`?uploaded_by=eq.cliente&created_at=gt.${since}&order=created_at.desc`);
+      if(recent&&recent.length>0){
+        setNewDocs(n=>n+recent.length);
+        const last=recent[0];
+        const cl=clients.find(c=>c.proc&&c.proc.id===last.process_id);
+        showToast(`📄 Novo documento de ${cl?cl.name:"cliente"}: "${last.name}"`);
+      }
+      lastDocCheck.current=new Date().toISOString();
+    };
+    lastDocCheck.current=new Date().toISOString();
+    const iv=setInterval(check,30000);
+    return()=>clearInterval(iv);
+  },[auth,clients]);
+
+  const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
+  const nav=[
+    {id:"dash",label:"Painel Geral",ic:"dash"},
+    {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
+    {id:"documents",label:"Documentos",ic:"file",badge:newDocs||undefined},
+    {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
+  ];
+
+  if(!auth) return<><style>{css}</style><Login onLogin={onLogin}/></>;
+
+  return(
+    <>
+      <style>{css}</style>
+      <div className="al">
+        <aside className="sb">
+          <div className="sbb"><h2>Bono & Lacerda</h2><span>Painel Administrativo</span></div>
+          <div className="sbw"><div className="av" style={{width:36,height:36,fontSize:".78rem"}}>RL</div>
+            <div>
+              <div className="wn">Dr. Ramom Lacerda</div>
+              <div className="wr">OAB/PB 19.165 · 🇵🇹 Lisboa 65899L · 🇪🇸 Madrid 142952</div>
+            </div>
+          </div>
+          <nav className="sbnv">
+            {nav.map(n=>(
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);}}>
+                <Icon name={n.ic} size={16}/>{n.label}
+                {n.badge>0&&<span className="nbdg">{n.badge}</span>}
+              </div>
+            ))}
+          </nav>
+          <div className="sbft"><button className="out" onClick={()=>{setAuth(false);setClients([]);}}><Icon name="logout" size={15}/>Sair</button></div>
+        </aside>
+        <main className="mc">
+          {loading?<div className="ld"><Icon name="spin" size={28}/><span>Carregando {clients.length} clientes…</span></div>:
+          openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
+          tab==="dash"?<Dash clients={clients}/>:
+          tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
+          tab==="documents"?<AllDocuments clients={clients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
+          tab==="meetings"?<AllMeetings clients={clients}/>:null}
+        </main>
+      </div>
+      {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
+      <ClaudeChat totalClients={clients.length}/>
+    </>
+  );
+}
+
+// ── CLAUDE CHAT ───────────────────────────────────────────────────────────────
+function ClaudeChat({ totalClients }) {
+  const [open,  setOpen]  = useState(false);
+  const [msgs,  setMsgs]  = useState([
+    { role:"assistant", text:"Olá! Sou o Claude, o assistente de IA do escritório Bono & Lacerda. Posso ajudá-lo com actualizações do sistema, dúvidas sobre clientes, geração de documentos ou qualquer outra questão. Como posso ajudar?" }
+  ]);
+  const [input, setInput] = useState("");
+  const [ld,    setLd]    = useState(false);
+  const bot = useRef();
 
   useEffect(() => { bot.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
 
   const send = async () => {
-    if (!input.trim() || !proc) return;
-    const saved = await db.post("messages", { process_id:proc.id, from_role:"client", text:input });
-    if (saved[0]) { setMsgs(m => [...m, saved[0]]); setJustSent(true); }
+    const txt = input.trim();
+    if (!txt || ld) return;
     setInput("");
-  };
-
-  const clientMsgsCount = msgs.filter(m => m.from_role === "client").length;
-
-  return (
-    <div>
-      <div className="ph"><h1>Chat</h1><p>Converse diretamente com o seu advogado.</p></div>
-      <div className="card">
-        <div className="cw">
-          <div className="che">
-            <div className="av" style={{ width:40, height:40, fontSize:".8rem" }}>{proc?.lawyer_avatar || "RL"}</div>
-            <div className="chi">
-              <h3>{proc?.lawyer || "Dr. Ramom Lacerda"}</h3>
-              <p>● Bono & Lacerda Advogados</p>
-            </div>
-          </div>
-          {ld ? <Loader /> : (
-            <div className="cms">
-              <div className="chat-reply-notice">
-                A nossa equipa responde normalmente em até <strong>24 horas úteis</strong>
-              </div>
-              {msgs.map(m => (
-                <div key={m.id} className={`mr${m.from_role==="client"?" mi":""}`}>
-                  <div>
-                    <div className={`mb${m.from_role==="client"?" mi":" th"}`}>{m.text}</div>
-                    <div className="mtime" style={{ textAlign:m.from_role==="client"?"right":"left" }}>{fmtt(m.created_at)}</div>
-                  </div>
-                </div>
-              ))}
-              {!msgs.length && (
-                <div className="empty-state" style={{ padding:"2.5rem 1rem" }}>
-                  <span className="emoji">💬</span>
-                  <div className="title">Inicie a conversa</div>
-                  <div className="desc">Envie a sua mensagem e respondemos em breve.</div>
-                </div>
-              )}
-              {justSent && clientMsgsCount >= 1 && (
-                <div style={{ textAlign:"center", padding:".5rem", fontSize:".78rem", color:"var(--ok)", fontWeight:600 }}>
-                  Mensagem enviada! Responderemos em até 24h úteis.
-                </div>
-              )}
-              <div ref={bot} />
-            </div>
-          )}
-          <div className="cir">
-            <textarea className="cin" rows={1} placeholder="Digite a sua mensagem…" value={input}
-              onChange={e => { setInput(e.target.value); setJustSent(false); }}
-              onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
-            <button className="bsend" onClick={send}><Icon name="send" size={16} /></button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── PROFILE ──────────────────────────────────────────────────────────── */
-function Perfil({ client, toast, onUpdate }) {
-  const [form,   setForm]   = useState({
-    email:    client.email    || "",
-    phone:    client.phone    || "",
-    whatsapp: client.whatsapp || client.phone || "",
-    address:  client.address  || "",
-    city:     client.city     || "",
-    state:    client.state    || "",
-    zip:      client.zip      || "",
-    country:  client.country  || "Brasil",
-  });
-  const [saving, setSaving] = useState(false);
-  const [saved,  setSaved]  = useState(false);
-
-  const set = (f, v) => { setForm(p => ({ ...p, [f]: v })); setSaved(false); };
-
-  const save = async () => {
-    if (!form.email.trim()) { toast("Por favor insira um email válido."); return; }
-    setSaving(true);
-    const payload = {
-      email: form.email.trim(), phone: form.phone.trim(), whatsapp: form.whatsapp.trim(),
-      address: form.address.trim(), city: form.city.trim(), state: form.state.trim(),
-      zip: form.zip.trim(), country: form.country.trim(),
-    };
-    const r = await db.patch("clients", client.id, payload);
-    if (r[0]) { onUpdate({ ...client, ...payload }); setSaved(true); toast("Dados actualizados com sucesso!"); }
-    else toast("Erro ao guardar. Tente novamente.");
-    setSaving(false);
-  };
-
-  const stateLabel = ["Brasil"].includes(form.country) ? "Estado"
-    : ["Portugal","Espanha","França","Itália","Alemanha"].includes(form.country) ? "Região / Distrito"
-    : ["EUA","Canadá","Austrália","México"].includes(form.country) ? "Estado / Província"
-    : "Estado / Região";
-
-  const zipLabel = ["Brasil"].includes(form.country) ? "CEP"
-    : ["Portugal"].includes(form.country) ? "Código Postal"
-    : ["EUA","Canadá"].includes(form.country) ? "ZIP Code"
-    : ["Reino Unido"].includes(form.country) ? "Postcode"
-    : "Código Postal";
-
-  const COUNTRIES = [
-    "Brasil","Portugal","Angola","Cabo Verde","Moçambique","São Tomé e Príncipe",
-    "Guiné-Bissau","Timor-Leste",
-    "---",
-    "Alemanha","Argentina","Austrália","Áustria","Bélgica","Bolívia","Canadá",
-    "Chile","China","Colômbia","Dinamarca","Equador","Espanha","EUA","Finlândia",
-    "França","Grécia","Holanda","Hungria","Índia","Irlanda","Israel","Itália",
-    "Japão","México","Noruega","Nova Zelândia","Panamá","Paraguai","Peru",
-    "Polónia","Reino Unido","República Checa","Roménia","Rússia","Suécia",
-    "Suíça","Turquia","Ucrânia","Uruguai","Venezuela","Outro",
-  ];
-
-  return (
-    <div>
-      <div className="ph"><h1>Meu Perfil</h1><p>Mantenha os seus dados de contacto actualizados.</p></div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr", gap:"1.25rem", maxWidth:580 }}>
-
-        {/* User card */}
-        <div className="card" style={{ padding:"1.5rem", display:"flex", alignItems:"center", gap:"1.25rem", background:"linear-gradient(135deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,.04) 100%)" }}>
-          <div className="av" style={{ width:68, height:68, fontSize:"1.5rem", flexShrink:0 }}>{ini(client.name)}</div>
-          <div>
-            <div style={{ fontWeight:700, fontSize:"1.15rem", color:"#fff" }}>{client.name}</div>
-            <div style={{ fontSize:".82rem", color:"var(--mu)", marginTop:4 }}>{client.artigo || "Nacionalidade Portuguesa"}</div>
-            <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:3, display:"flex", alignItems:"center", gap:".4rem" }}>
-              <Icon name="key" size={12} /> {client.chave_acesso}
-            </div>
-          </div>
-        </div>
-
-        {/* Contact form */}
-        <div className="card" style={{ padding:"1.75rem" }}>
-          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.1rem", color:"#fff", marginBottom:"1.5rem", fontWeight:600, paddingBottom:".75rem", borderBottom:"1px solid var(--bo)" }}>
-            Dados de Contacto
-          </div>
-
-          <div className="fg" style={{ marginBottom:"1.1rem" }}>
-            <label>Email</label>
-            <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="o.seu@email.com" />
-            <div className="fg-hint">Usado para comunicações do escritório</div>
-          </div>
-
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem", marginBottom:"1.1rem" }}>
-            <div className="fg" style={{ marginBottom:0 }}>
-              <label>Telefone</label>
-              <input type="tel" value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="+55 11 99999-9999" />
-            </div>
-            <div className="fg" style={{ marginBottom:0 }}>
-              <label>WhatsApp</label>
-              <input type="tel" value={form.whatsapp} onChange={e => set("whatsapp", e.target.value)} placeholder="+55 11 99999-9999" />
-              <div className="fg-hint">Pode ser diferente do telefone</div>
-            </div>
-          </div>
-
-          <div style={{ borderTop:"1px solid var(--bo)", paddingTop:"1.25rem", marginTop:".5rem", marginBottom:"1.1rem" }}>
-            <div style={{ fontSize:".72rem", fontWeight:700, color:"var(--mu)", textTransform:"uppercase", letterSpacing:".08em", marginBottom:"1rem" }}>
-              Endereço
-            </div>
-
-            <div className="fg" style={{ marginBottom:"1.1rem" }}>
-              <label>País</label>
-              <select value={form.country} onChange={e => set("country", e.target.value)}>
-                {COUNTRIES.map(c => c === "---"
-                  ? <option key="---" disabled>──────────────</option>
-                  : <option key={c} value={c}>{c}</option>
-                )}
-              </select>
-            </div>
-
-            <div className="fg" style={{ marginBottom:"1.1rem" }}>
-              <label>Rua / Avenida</label>
-              <input type="text" value={form.address} onChange={e => set("address", e.target.value)} placeholder="Nome da rua, número, complemento" />
-            </div>
-
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem", marginBottom:"1.1rem" }}>
-              <div className="fg" style={{ marginBottom:0 }}>
-                <label>Cidade</label>
-                <input type="text" value={form.city} onChange={e => set("city", e.target.value)} placeholder="Cidade" />
-              </div>
-              <div className="fg" style={{ marginBottom:0 }}>
-                <label>{stateLabel}</label>
-                <input type="text" value={form.state} onChange={e => set("state", e.target.value)} placeholder={stateLabel} />
-              </div>
-            </div>
-
-            <div className="fg" style={{ marginBottom:0 }}>
-              <label>{zipLabel}</label>
-              <input type="text" value={form.zip} onChange={e => set("zip", e.target.value)} placeholder="Código postal" style={{ maxWidth:220 }} />
-            </div>
-          </div>
-
-          <button onClick={save} disabled={saving} style={{
-            width:"100%", padding:".9rem", background: saved ? "rgba(74,222,128,.2)" : "linear-gradient(135deg, var(--g), var(--gl))",
-            color:"#fff", border:"none", borderRadius:14, fontFamily:"'DM Sans',sans-serif",
-            fontSize:".95rem", fontWeight:600, cursor: saving ? "not-allowed" : "pointer",
-            transition:"all .25s", display:"flex", alignItems:"center", justifyContent:"center", gap:".6rem",
-            opacity: saving ? .6 : 1,
-          }}>
-            {saving ? <><Icon name="spin" size={16} /> A guardar…</>
-            : saved  ? <><Icon name="check" size={16} /> Dados guardados!</>
-            :           <>Guardar alterações</>}
-          </button>
-        </div>
-
-        <div style={{ background:"linear-gradient(135deg, rgba(201,168,76,.05), rgba(201,168,76,.02))", border:"1px solid rgba(201,168,76,.15)", borderRadius:"var(--r)", padding:"1rem 1.25rem", fontSize:".8rem", color:"var(--mu)", lineHeight:1.7 }}>
-          <strong style={{ color:"#fff" }}>Nota:</strong> As suas informações são confidenciais e utilizadas exclusivamente pelo escritório Bono & Lacerda para comunicações relacionadas com o seu processo.
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── LEGAL / POLÍTICAS ────────────────────────────────────────────────── */
-const LEGAL = {
-  privacidade: {
-    title: "Política de Privacidade",
-    body: `Bono & Lacerda Advogados ("nós") compromete-se a proteger a privacidade dos seus dados pessoais em conformidade com o Regulamento Geral de Proteção de Dados (RGPD — Regulamento UE 2016/679) e a Lei Geral de Proteção de Dados brasileira (LGPD — Lei 13.709/2018).
-
-Dados recolhidos: nome completo, contacto telefónico, e-mail, número de processo IRN, chave de acesso ao portal, documentos de identificação e certidões, e dados de navegação (cookies essenciais).
-
-Finalidade do tratamento: acompanhamento do processo de nacionalidade portuguesa, comunicação entre cliente e advogado, e envio de notificações sobre o andamento processual.
-
-Base legal: execução de contrato de prestação de serviços jurídicos e consentimento do titular para comunicações.
-
-Conservação: os dados são conservados durante a vigência do contrato e pelo período legalmente exigido (até 5 anos após a conclusão do processo, conforme legislação aplicável).
-
-Direitos do titular: pode exercer os seus direitos de acesso, rectificação, apagamento, portabilidade e oposição contactando-nos através do e-mail bonoelacerda@gmail.com.
-
-Partilha de dados: os dados poderão ser partilhados com o Instituto dos Registos e do Notariado (IRN) e entidades oficiais portuguesas estritamente no âmbito do processo de nacionalidade.
-
-Segurança: utilizamos encriptação, controlo de acesso e monitorização contínua para proteger os seus dados. O acesso ao portal é feito exclusivamente através de chave de acesso individual.
-
-Responsável pelo tratamento: Bono & Lacerda Advogados.`
-  },
-  termos: {
-    title: "Termos de Uso",
-    body: `Ao aceder e utilizar o Portal do Cliente de Bono & Lacerda Advogados, o utilizador aceita os presentes Termos de Uso.
-
-Objecto: este portal permite ao cliente acompanhar o estado do seu processo de nacionalidade portuguesa, consultar documentos, receber notificações e comunicar com o escritório.
-
-Acesso: o acesso é pessoal e intransmissível, sendo feito através de uma chave de acesso única fornecida pelo escritório. É responsabilidade do cliente manter a confidencialidade da sua chave.
-
-Utilização: o portal destina-se exclusivamente à consulta de informações processuais. É proibida qualquer utilização indevida, incluindo tentativas de acesso não autorizado, extracção automatizada de dados ou partilha de credenciais.
-
-Informações: as informações apresentadas no portal são de carácter meramente informativo e não substituem comunicações oficiais do IRN — Instituto dos Registos e do Notariado.
-
-Propriedade intelectual: todo o conteúdo, design e código do portal são propriedade de Bono & Lacerda Advogados, sendo proibida a reprodução sem autorização.
-
-Disponibilidade: o escritório envidará os melhores esforços para manter o portal disponível, mas não garante funcionamento ininterrupto. Manutenções poderão ser realizadas sem aviso prévio.
-
-Alterações: estes termos podem ser actualizados a qualquer momento. A continuidade de utilização do portal implica aceitação dos termos actualizados.
-
-Legislação aplicável: aplica-se a legislação portuguesa, com foro na comarca de Lisboa.`
-  },
-  cookies: {
-    title: "Política de Cookies",
-    body: `Este portal utiliza cookies estritamente necessários ao seu funcionamento.
-
-O que são cookies: cookies são pequenos ficheiros de texto armazenados no seu dispositivo quando visita um website.
-
-Cookies utilizados:
-— Cookies de sessão: necessários para manter a sua sessão activa enquanto navega no portal. Expiram ao fechar o navegador.
-— Cookies de autenticação: armazenam a sua chave de acesso de forma segura durante a sessão.
-— Cookies de preferência: guardam configurações como o separador activo.
-
-Cookies de terceiros: este portal não utiliza cookies de terceiros, de publicidade ou de rastreamento.
-
-Gestão de cookies: por se tratarem de cookies essenciais ao funcionamento do portal, a sua desactivação poderá impedir o correcto funcionamento do serviço.
-
-Base legal: o uso de cookies estritamente necessários é permitido sem consentimento prévio ao abrigo do artigo 5.º, n.º 3, da Directiva ePrivacy (2002/58/CE).`
-  },
-  disclaimer: {
-    title: "Aviso Legal",
-    body: `Bono & Lacerda Advogados é um escritório de advocacia especializado em direito da nacionalidade portuguesa, migração e direito empresarial.
-
-Sede: Lisboa, Portugal.
-Contacto: bonoelacerda@gmail.com
-
-Informação processual: as datas de análise e previsões apresentadas neste portal baseiam-se em tabelas oficiais publicadas pelo IRN — Instituto dos Registos e do Notariado (Arquivo Central do Porto e Conservatória dos Registos Centrais de Lisboa). Estas datas são indicativas e podem sofrer alterações sem aviso prévio por parte do IRN.
-
-Responsabilidade: o escritório não se responsabiliza por eventuais atrasos do IRN, alterações legislativas supervenientes ou decisões administrativas que escapam ao nosso controlo.
-
-Sigilo profissional: toda a informação partilhada através deste portal está protegida pelo sigilo profissional previsto no Estatuto da Ordem dos Advogados.
-
-As informações contidas neste portal não constituem aconselhamento jurídico formal e não dispensam a consulta directa com o advogado responsável pelo processo.`
-  },
-  irn: {
-    title: "Consulta Oficial do Processo",
-    body: `O acompanhamento oficial do seu processo de nacionalidade portuguesa deve ser feito directamente no portal do IRN — Instituto dos Registos e do Notariado.
-
-Para consultar o estado oficial do seu processo:
-1. Aceda ao site https://www.irn.justica.gov.pt
-2. Navegue até à secção "Nacionalidade" → "Consulta de Processos"
-3. Introduza o seu Código de Consulta (fornecido pelo escritório)
-
-A Chave de Acesso deste portal é diferente do Código de Consulta do IRN.
-
-Este portal de Bono & Lacerda Advogados é uma ferramenta complementar que facilita o acompanhamento do seu processo, mas a informação vinculativa e oficial é sempre a que consta no portal do IRN.
-
-Em caso de dúvida sobre o estado do seu processo, contacte o escritório ou consulte directamente o IRN.`
-  }
-};
-
-function LegalModal({ docKey, onClose }) {
-  const doc = LEGAL[docKey];
-  if (!doc) return null;
-  return (
-    <div style={{ position:"fixed", inset:0, zIndex:9999, display:"flex", alignItems:"center", justifyContent:"center", background:"rgba(0,0,0,.7)", backdropFilter:"blur(6px)", animation:"fadeUp .25s ease" }} onClick={onClose}>
-      <div style={{ background:"linear-gradient(135deg, #0f1e35, #162a4a)", border:"1px solid rgba(212,168,67,.2)", borderRadius:20, width:"90%", maxWidth:620, maxHeight:"80vh", display:"flex", flexDirection:"column", overflow:"hidden" }} onClick={e => e.stopPropagation()}>
-        <div style={{ padding:"1.3rem 1.5rem", borderBottom:"1px solid rgba(255,255,255,.08)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <h3 style={{ fontFamily:"'Playfair Display',serif", color:"#fff", fontSize:"1.15rem", margin:0 }}>{doc.title}</h3>
-          <button onClick={onClose} style={{ background:"rgba(255,255,255,.08)", border:"1px solid rgba(255,255,255,.1)", borderRadius:10, width:32, height:32, display:"flex", alignItems:"center", justifyContent:"center", color:"rgba(255,255,255,.5)", cursor:"pointer", fontSize:"1.1rem" }}>✕</button>
-        </div>
-        <div style={{ padding:"1.5rem", overflowY:"auto", fontSize:".85rem", color:"rgba(255,255,255,.7)", lineHeight:1.8, whiteSpace:"pre-wrap" }}>
-          {doc.body}
-        </div>
-        <div style={{ padding:"1rem 1.5rem", borderTop:"1px solid rgba(255,255,255,.08)", textAlign:"right" }}>
-          <button onClick={onClose} style={{ background:"linear-gradient(135deg, var(--g), var(--gl))", border:"none", borderRadius:10, padding:".55rem 1.5rem", color:"var(--n)", fontWeight:600, cursor:"pointer", fontSize:".82rem" }}>Fechar</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LegalFooter({ onOpen }) {
-  const links = [
-    { key: "privacidade", label: "Política de Privacidade" },
-    { key: "termos", label: "Termos de Uso" },
-    { key: "cookies", label: "Cookies" },
-    { key: "disclaimer", label: "Aviso Legal" },
-    { key: "irn", label: "Consulta Oficial IRN" },
-  ];
-  return (
-    <div style={{ padding:"1rem 1.5rem", borderTop:"1px solid rgba(255,255,255,.06)", textAlign:"center", display:"flex", flexWrap:"wrap", justifyContent:"center", gap:".3rem .8rem", fontSize:".7rem", color:"rgba(255,255,255,.3)" }}>
-      <span>© {new Date().getFullYear()} Bono & Lacerda Advogados</span>
-      <span style={{ color:"rgba(255,255,255,.12)" }}>|</span>
-      {links.map((l, i) => (
-        <span key={l.key}>
-          <a href="#" onClick={e => { e.preventDefault(); onOpen(l.key); }} style={{ color:"rgba(212,168,67,.5)", textDecoration:"none", transition:"color .2s" }} onMouseOver={e => e.target.style.color="rgba(212,168,67,.9)"} onMouseOut={e => e.target.style.color="rgba(212,168,67,.5)"}>{l.label}</a>
-          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>·</span>}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-/* ── APP ──────────────────────────────────────────────────────────────── */
-export default function App() {
-  const [client,  setClient]  = useState(null);
-  const [proc,    setProc]    = useState(null);
-  const [steps,   setSteps]   = useState([]);
-  const [tab,     setTab]     = useState("home");
-  const [toast,   setToast]   = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [legalDoc, setLegalDoc] = useState(null);
-
-  const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 3500); };
-
-  const onLogin = async c => {
-    setClient(c); setLoading(true);
-    const ps = await db.get("processes", `?client_id=eq.${c.id}&limit=1`);
-    if (ps[0]) {
-      setProc(ps[0]);
-      const ss = await db.get("process_steps", `?process_id=eq.${ps[0].id}&order=step_order.asc`);
-      setSteps(ss);
+    const newMsgs = [...msgs, { role:"user", text:txt }];
+    setMsgs(newMsgs);
+    setLd(true);
+    try {
+      const context = `És o assistente de IA do escritório de advocacia Bono & Lacerda Advogados, especializado em imigração e nacionalidade portuguesa. O sistema tem actualmente ${totalClients} clientes cadastrados. Responde sempre em português europeu, de forma profissional e concisa.`;
+      const history = newMsgs.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text }));
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: context,
+          messages: history,
+        })
+      });
+      const d = await r.json();
+      const reply = d.content?.[0]?.text || "Desculpe, não consegui processar a sua mensagem.";
+      setMsgs(m => [...m, { role:"assistant", text:reply }]);
+    } catch(e) {
+      setMsgs(m => [...m, { role:"assistant", text:"Erro de ligação. Por favor tente novamente." }]);
     }
-    setLoading(false);
+    setLd(false);
   };
-
-  const nav = [
-    { id:"home",     label:"Visão Geral",   ic:"home" },
-    { id:"docs",     label:"Documentos",    ic:"file" },
-    { id:"meetings", label:"Reuniões",      ic:"cal"  },
-    { id:"notifs",   label:"Notificações",  ic:"bell" },
-    { id:"chat",     label:"Chat",          ic:"chat" },
-    { id:"perfil",   label:"Meu Perfil",    ic:"users"},
-  ];
-
-  if (!client) return <><style>{css}</style><Login onLogin={onLogin} legalDoc={legalDoc} setLegalDoc={setLegalDoc} />{legalDoc && <LegalModal docKey={legalDoc} onClose={() => setLegalDoc(null)} />}</>;
 
   return (
     <>
-      <style>{css}</style>
-      <div className="al">
+      <style>{`
+        .cl-btn { position:fixed; bottom:2rem; right:2rem; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#1d3557,#c9a84c); border:none; cursor:pointer; box-shadow:0 4px 20px rgba(15,30,53,.35); display:flex; align-items:center; justify-content:center; z-index:1000; transition:transform .2s; }
+        .cl-btn:hover { transform:scale(1.08); }
+        .cl-win { position:fixed; bottom:5.5rem; right:2rem; width:360px; max-height:520px; background:#fff; border-radius:20px; box-shadow:0 8px 40px rgba(15,30,53,.2); display:flex; flex-direction:column; z-index:1000; overflow:hidden; border:1px solid #e2ddd5; animation:up .2s ease; }
+        .cl-hdr { background:linear-gradient(135deg,#0f1e35,#1d3557); padding:1rem 1.25rem; display:flex; align-items:center; gap:.75rem; }
+        .cl-av  { width:36px; height:36px; border-radius:50%; background:rgba(201,168,76,.2); border:1px solid rgba(201,168,76,.4); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; color:#c9a84c; flex-shrink:0; }
+        .cl-hdr-info h4 { color:#fff; font-size:.88rem; font-weight:600; }
+        .cl-hdr-info p  { color:rgba(255,255,255,.5); font-size:.72rem; }
+        .cl-msgs { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:.75rem; min-height:200px; max-height:340px; }
+        .cl-msg  { display:flex; gap:.5rem; }
+        .cl-msg.usr { flex-direction:row-reverse; }
+        .cl-bbl  { max-width:80%; padding:.65rem .9rem; border-radius:14px; font-size:.84rem; line-height:1.5; }
+        .cl-bbl.ai  { background:#f5f0e8; color:#1a1a2e; border-radius:4px 14px 14px 14px; }
+        .cl-bbl.usr { background:#1d3557; color:#fff; border-radius:14px 4px 14px 14px; }
+        .cl-inp { padding:.75rem 1rem; border-top:1px solid #e2ddd5; display:flex; gap:.5rem; }
+        .cl-inp textarea { flex:1; border:1px solid #e2ddd5; border-radius:10px; padding:.5rem .75rem; font-family:'DM Sans',sans-serif; font-size:.84rem; resize:none; outline:none; color:#1a1a2e; background:#fafafa; }
+        .cl-inp textarea:focus { border-color:#c9a84c; }
+        .cl-send { width:36px; height:36px; border-radius:10px; background:#1d3557; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; transition:background .2s; }
+        .cl-send:hover { background:#0f1e35; }
+        .cl-dot  { display:inline-flex; gap:3px; padding:.5rem; }
+        .cl-dot span { width:6px; height:6px; border-radius:50%; background:#c9a84c; animation:bounce .8s infinite; }
+        .cl-dot span:nth-child(2) { animation-delay:.15s; }
+        .cl-dot span:nth-child(3) { animation-delay:.3s; }
+        @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+        @media(max-width:768px){ .cl-win{width:calc(100vw - 2rem);right:1rem;bottom:5rem;} .cl-btn{bottom:5rem;right:1rem;} }
+      `}</style>
 
-        <header className="mob-hdr">
-          <div style={{display:'flex',alignItems:'center',gap:'.6rem'}}>
-            <img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="BL" style={{width:32,height:32,objectFit:'contain'}} />
-            <div>
-              <h2>Bono & Lacerda</h2>
-              <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
-            </div>
-          </div>
-          <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
-            <Icon name="logout" size={20} />
-          </button>
-        </header>
+      {/* Toggle button */}
+      <button className="cl-btn" onClick={() => setOpen(o => !o)} title="Chat com Claude AI">
+        {open
+          ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.06L2 22l4.94-1.37A9.96 9.96 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"/><circle cx="8" cy="12" r="1" fill="#fff"/><circle cx="12" cy="12" r="1" fill="#fff"/><circle cx="16" cy="12" r="1" fill="#fff"/></svg>
+        }
+      </button>
 
-        <aside className="sb">
-          <div className="sbl">
-            <div style={{display:'flex',alignItems:'center',gap:'.7rem'}}>
-              <img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="BL" style={{width:36,height:36,objectFit:'contain'}} />
-              <div>
-                <h2>Bono & Lacerda</h2>
-                <span>Portal do Cliente</span>
-              </div>
+      {/* Chat window */}
+      {open && (
+        <div className="cl-win">
+          <div className="cl-hdr">
+            <div className="cl-av">AI</div>
+            <div className="cl-hdr-info">
+              <h4>Claude AI</h4>
+              <p>Assistente Bono & Lacerda · {totalClients} clientes</p>
             </div>
           </div>
-          <div className="sbu">
-            <div className="av" style={{ width:40, height:40, fontSize:".82rem" }}>{ini(client.name)}</div>
-            <div>
-              <div className="sbn">{client.name}</div>
-              <div className="sbs">{client.chave_acesso}</div>
-            </div>
-          </div>
-          <nav className="sbnav">
-            {nav.map(n => (
-              <div key={n.id} className={`ni${tab === n.id ? " on" : ""}`} onClick={() => setTab(n.id)}>
-                <Icon name={n.ic} size={17} />{n.label}
+          <div className="cl-msgs">
+            {msgs.map((m, i) => (
+              <div key={i} className={`cl-msg${m.role==="user"?" usr":""}`}>
+                <div className={`cl-bbl${m.role==="user"?" usr":" ai"}`}>{m.text}</div>
               </div>
             ))}
-          </nav>
-          <div className="sbf">
-            <button className="out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
-              <Icon name="logout" size={16} /> Sair
+            {ld && (
+              <div className="cl-msg">
+                <div className="cl-bbl ai">
+                  <div className="cl-dot"><span/><span/><span/></div>
+                </div>
+              </div>
+            )}
+            <div ref={bot}/>
+          </div>
+          <div className="cl-inp">
+            <textarea
+              rows={2}
+              placeholder="Escreva a sua mensagem…"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } }}
+            />
+            <button className="cl-send" onClick={send} disabled={ld}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
             </button>
           </div>
-        </aside>
-
-        <main className="mc">
-          {loading ? <Loader text="A carregar o seu processo…" /> : (
-            <>
-              {tab === "home"     && <Dashboard client={client} proc={proc} steps={steps} />}
-              {tab === "docs"     && <Docs proc={proc} client={client} toast={showToast} />}
-              {tab === "meetings" && <Meetings proc={proc} client={client} />}
-              {tab === "notifs"   && <Notifs client={client} />}
-              {tab === "chat"     && <Chat client={client} proc={proc} />}
-              {tab === "perfil"   && <Perfil client={client} toast={showToast} onUpdate={c => setClient(c)} />}
-            </>
-          )}
-          <LegalFooter onOpen={setLegalDoc} />
-        </main>
-
-        <nav className="mob-nav">
-          <div className="mob-nav-inner">
-            {nav.map(n => (
-              <button key={n.id} className={`mob-ni${tab === n.id ? " on" : ""}`} onClick={() => setTab(n.id)}>
-                <Icon name={n.ic} size={22} />
-                {n.label === "Visão Geral" ? "Início" :
-                 n.label === "Documentos" ? "Docs" :
-                 n.label === "Reuniões" ? "Reuniões" :
-                 n.label === "Notificações" ? "Avisos" :
-                 n.label === "Meu Perfil" ? "Perfil" : "Chat"}
-              </button>
-            ))}
-          </div>
-        </nav>
-
-      </div>
-      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
-      {legalDoc && <LegalModal docKey={legalDoc} onClose={() => setLegalDoc(null)} />}
+        </div>
+      )}
     </>
   );
 }
