@@ -1088,6 +1088,71 @@ function Clients({clients,setClients,showToast,openClient}){
   );
 }
 
+// ── ALL DOCUMENTS ────────────────────────────────────────────────────────────
+function AllDocuments({clients,openClient}){
+  const all=clients.flatMap(c=>(c.docs||[]).map(d=>({...d,clientName:c.name,clientId:c.id}))).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
+  const fromClients=all.filter(d=>d.uploaded_by==="cliente");
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{all.length} documentos · {fromClients.length} enviados por clientes</p></div></div>
+      {fromClients.length>0&&<div style={{background:"#dbeafe",border:"1px solid #93c5fd",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>📄 {fromClients.length} documento(s) enviado(s) por clientes</div></div>}
+      <div className="card cp">
+        {!all.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento ainda.</p>}
+        {all.map(d=>(
+          <div className="dr" key={d.id} style={{cursor:"pointer"}} onClick={()=>openClient(d.clientId)}>
+            <div className="dic"><Icon name="file" size={16}/></div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div>
+              <div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>👤 <strong>{d.clientName}</strong> · {d.size} · {fmtd(d.created_at)}</div>
+            </div>
+            <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
+            {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async(e)=>{e.stopPropagation();const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");}} title="Download"><Icon name="upload" size={13}/></button>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── ALL MESSAGES ─────────────────────────────────────────────────────────────
+function AllMessages({clients,openClient}){
+  const all=clients.flatMap(c=>(c.msgs||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
+  const fromClients=all.filter(m=>m.from_role==="client");
+  // Group by client
+  const byClient={};
+  all.forEach(m=>{if(!byClient[m.clientId])byClient[m.clientId]={name:m.clientName,id:m.clientId,msgs:[],unread:0};byClient[m.clientId].msgs.push(m);if(m.from_role==="client"&&!m.read)byClient[m.clientId].unread++;});
+  const clientList=Object.values(byClient).sort((a,b)=>{const la=a.msgs[0]?.created_at||"";const lb=b.msgs[0]?.created_at||"";return lb.localeCompare(la);});
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Mensagens</h1><p className="ps">{all.length} mensagens · {fromClients.length} de clientes</p></div></div>
+      {fromClients.filter(m=>!m.read).length>0&&<div style={{background:"#dbeafe",border:"1px solid #93c5fd",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>💬 {fromClients.filter(m=>!m.read).length} mensagem(ns) não lida(s) de clientes</div></div>}
+      <div className="card cp">
+        {!clientList.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma mensagem ainda.</p>}
+        {clientList.map(cl=>{
+          const last=cl.msgs[0];
+          return(
+            <div key={cl.id} className="mcard" style={{cursor:"pointer",borderColor:cl.unread>0?"#93c5fd":"var(--bo)",background:cl.unread>0?"#eff6ff":"var(--bg)"}} onClick={()=>openClient(cl.id)}>
+              <Av name={cl.name} size={42}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{fontWeight:600,fontSize:".9rem"}}>{cl.name}</div>
+                  {cl.unread>0&&<span className="bd bb">{cl.unread} nova(s)</span>}
+                </div>
+                <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                  {last.from_role==="lawyer"?"Você: ":""}
+                  {last.text?.substring(0,80)}{(last.text?.length||0)>80?"…":""}
+                </div>
+                <div style={{fontSize:".7rem",color:"var(--mu)",marginTop:2}}>{fmtd(last.created_at)} · {fmtt(last.created_at)}</div>
+              </div>
+              <Icon name="arrow" size={16}/>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── ALL MEETINGS ──────────────────────────────────────────────────────────────
 function AllMeetings({clients}){
   const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
@@ -1147,9 +1212,13 @@ export default function App(){
 
   const onLogin=()=>{setAuth(true);loadClients();};
   const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
+  const newDocs=clients.reduce((a,c)=>a+(c.docs||[]).filter(d=>d.uploaded_by==="cliente").length,0);
+  const unreadMsgs=clients.reduce((a,c)=>a+(c.msgs||[]).filter(m=>m.from_role==="client"&&!m.read).length,0);
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
+    {id:"documents",label:"Documentos",ic:"file",badge:newDocs||undefined},
+    {id:"messages",label:"Mensagens",ic:"send",badge:unreadMsgs||undefined},
     {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
   ];
 
@@ -1193,6 +1262,8 @@ export default function App(){
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
+          tab==="documents"?<AllDocuments clients={clients} openClient={id=>setOpenC(id)}/>:
+          tab==="messages"?<AllMessages clients={clients} openClient={id=>setOpenC(id)}/>:
           tab==="meetings"?<AllMeetings clients={clients}/>:null}
         </main>
       </div>
