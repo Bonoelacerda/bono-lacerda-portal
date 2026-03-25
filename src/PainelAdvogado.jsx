@@ -1088,44 +1088,44 @@ function Clients({clients,setClients,showToast,openClient}){
   );
 }
 
-// ── ALL DOCUMENTS ────────────────────────────────────────────────────────────
-function AllDocuments({clients,openClient}){
-  const all=clients.flatMap(c=>(c.docs||[]).map(d=>({...d,clientName:c.name,clientId:c.id}))).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
-  const fromClients=all.filter(d=>d.uploaded_by==="cliente");
+// ── ALL DOCUMENTS (uses global polling data) ─────────────────────────────────
+function AllDocuments({docs,clientMap,openClient}){
+  const fromClients=docs.filter(d=>d.uploaded_by==="cliente");
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{all.length} documentos · {fromClients.length} enviados por clientes</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{docs.length} documentos · {fromClients.length} enviados por clientes</p></div></div>
       {fromClients.length>0&&<div style={{background:"#dbeafe",border:"1px solid #93c5fd",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>📄 {fromClients.length} documento(s) enviado(s) por clientes</div></div>}
       <div className="card cp">
-        {!all.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento ainda.</p>}
-        {all.map(d=>(
-          <div className="dr" key={d.id} style={{cursor:"pointer"}} onClick={()=>openClient(d.clientId)}>
-            <div className="dic"><Icon name="file" size={16}/></div>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div>
-              <div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>👤 <strong>{d.clientName}</strong> · {d.size} · {fmtd(d.created_at)}</div>
+        {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento ainda.</p>}
+        {docs.map(d=>{
+          const cName=clientMap[d.client_id]||"Cliente";
+          return(
+            <div className="dr" key={d.id} style={{cursor:"pointer"}} onClick={()=>openClient(d.client_id)}>
+              <div className="dic"><Icon name="file" size={16}/></div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div>
+                <div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>👤 <strong>{cName}</strong> · {d.size} · {fmtd(d.created_at)}</div>
+              </div>
+              <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
+              {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async(e)=>{e.stopPropagation();const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");}} title="Download"><Icon name="upload" size={13}/></button>}
             </div>
-            <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
-            {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async(e)=>{e.stopPropagation();const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");}} title="Download"><Icon name="upload" size={13}/></button>}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// ── ALL MESSAGES ─────────────────────────────────────────────────────────────
-function AllMessages({clients,openClient}){
-  const all=clients.flatMap(c=>(c.msgs||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
-  const fromClients=all.filter(m=>m.from_role==="client");
-  // Group by client
+// ── ALL MESSAGES (uses global polling data) ──────────────────────────────────
+function AllMessages({msgs,clientMap,openClient}){
+  const fromClients=msgs.filter(m=>m.from_role==="client");
   const byClient={};
-  all.forEach(m=>{if(!byClient[m.clientId])byClient[m.clientId]={name:m.clientName,id:m.clientId,msgs:[],unread:0};byClient[m.clientId].msgs.push(m);if(m.from_role==="client"&&!m.read)byClient[m.clientId].unread++;});
+  msgs.forEach(m=>{const cid=m.client_id;if(!byClient[cid])byClient[cid]={name:clientMap[cid]||"Cliente",id:cid,msgs:[],unread:0};byClient[cid].msgs.push(m);if(m.from_role==="client")byClient[cid].unread++;});
   const clientList=Object.values(byClient).sort((a,b)=>{const la=a.msgs[0]?.created_at||"";const lb=b.msgs[0]?.created_at||"";return lb.localeCompare(la);});
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Mensagens</h1><p className="ps">{all.length} mensagens · {fromClients.length} de clientes</p></div></div>
-      {fromClients.filter(m=>!m.read).length>0&&<div style={{background:"#dbeafe",border:"1px solid #93c5fd",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>💬 {fromClients.filter(m=>!m.read).length} mensagem(ns) não lida(s) de clientes</div></div>}
+      <div className="tb"><div><h1 className="pt">Mensagens</h1><p className="ps">{msgs.length} mensagens · {fromClients.length} de clientes</p></div></div>
+      {fromClients.length>0&&<div style={{background:"#dbeafe",border:"1px solid #93c5fd",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>💬 {fromClients.length} mensagem(ns) de clientes</div></div>}
       <div className="card cp">
         {!clientList.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma mensagem ainda.</p>}
         {clientList.map(cl=>{
@@ -1136,7 +1136,7 @@ function AllMessages({clients,openClient}){
               <div style={{flex:1,minWidth:0}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <div style={{fontWeight:600,fontSize:".9rem"}}>{cl.name}</div>
-                  {cl.unread>0&&<span className="bd bb">{cl.unread} nova(s)</span>}
+                  {cl.unread>0&&<span className="bd bb">{cl.unread} msg(s)</span>}
                 </div>
                 <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
                   {last.from_role==="lawyer"?"Você: ":""}
@@ -1153,22 +1153,21 @@ function AllMessages({clients,openClient}){
   );
 }
 
-// ── ALL MEETINGS ──────────────────────────────────────────────────────────────
-function AllMeetings({clients}){
-  const all=clients.flatMap(c=>(c.meetings||[]).map(m=>({...m,clientName:c.name,clientId:c.id}))).sort((a,b)=>(a.date||"").localeCompare(b.date||""));
-  const pendentes=all.filter(m=>m.status==="pendente");
+// ── ALL MEETINGS (uses global polling data) ──────────────────────────────────
+function AllMeetings({meetings,clientMap,openClient}){
+  const pendentes=meetings.filter(m=>m.status==="pendente");
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{all.length} reuniões · {pendentes.length} pendentes</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{meetings.length} reuniões · {pendentes.length} pendentes</p></div></div>
       {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
       <div className="card cp">
-        {!all.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
-        {all.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
-          <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)"}}>
+        {!meetings.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
+        {meetings.map(m=>{const d=new Date((m.date||"")+"T12:00:00");const cName=clientMap[m.client_id]||"Cliente";return(
+          <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)",cursor:"pointer"}} onClick={()=>openClient(m.client_id)}>
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{m.clientName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{cName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
               {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
             </div>
             <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
@@ -1179,7 +1178,7 @@ function AllMeetings({clients}){
   );
 }
 
-// ── APP ───────────────────────────────────────────────────────────────────────
+// ── APP (with 5s polling for notifications) ──────────────────────────────────
 export default function App(){
   const [auth,setAuth]=useState(false);
   const [tab,setTab]=useState("dash");
@@ -1188,38 +1187,96 @@ export default function App(){
   const [openC,setOpenC]=useState(null);
   const [toast,setToast]=useState(null);
   const [sideOpen,setSideOpen]=useState(false);
-  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),3500);};
+  // ── GLOBAL POLLING STATE — fetched directly from Supabase every 5s ──
+  const [gDocs,setGDocs]=useState([]);       // all documents
+  const [gMsgs,setGMsgs]=useState([]);       // all messages
+  const [gMeets,setGMeets]=useState([]);     // all meetings
+  // ── "Seen" tracking — IDs the lawyer has already seen ──
+  const [seenDocs,setSeenDocs]=useState(new Set());
+  const [seenMsgs,setSeenMsgs]=useState(new Set());
+  const [seenMeets,setSeenMeets]=useState(new Set());
+  // ── client_id → client_name map for display ──
+  const [clientMap,setClientMap]=useState({});
+  // ── process_id → client_id map for joins ──
+  const [procMap,setProcMap]=useState({});
 
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),3500);};
+  const pollRef=useRef(null);
+
+  // ── Load clients (once at login) ──
   const loadClients=async()=>{
     setLoading(true);
     try{
-      // Supabase limit is now 10000 — single query gets all clients
       const allClients=await api.get("clients","?order=created_at.desc&limit=10000");
       if(!allClients||allClients.error){showToast("Erro ao carregar clientes.");setLoading(false);return;}
-      // Set clients immediately so count shows
+      // Build client_id → name map
+      const cMap={};
+      allClients.forEach(c=>{cMap[c.id]=c.name;});
+      setClientMap(cMap);
       setClients(allClients.map(c=>({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]})));
-      // Then enrich first 200 with process data in background
-      const enriched=await Promise.all(allClients.map(async(c,i)=>{
-        if(i>=200) return{...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]};
-        const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
-        const proc=procs[0]||null;
-        return{...c,proc,steps:[],docs:[],msgs:[],meetings:[]};
-      }));
-      setClients(enriched);
+      // Enrich first 200 with process data
+      const procs=await api.get("processes","?limit=10000&select=id,client_id,number,type,status,current_step,opened_at,last_update,lawyer,arquivo,submissao_irn,artigo");
+      const pMap={};
+      if(Array.isArray(procs)) procs.forEach(p=>{pMap[p.id]=p.client_id;});
+      setProcMap(pMap);
+      const procByClient={};
+      if(Array.isArray(procs)) procs.forEach(p=>{if(!procByClient[p.client_id])procByClient[p.client_id]=p;});
+      setClients(allClients.map(c=>({...c,proc:procByClient[c.id]||null,steps:[],docs:[],msgs:[],meetings:[]})));
+      // Run first poll immediately
+      await pollNotifications(pMap,cMap);
     }catch(e){showToast("Erro ao carregar dados: "+e.message);}
     setLoading(false);
   };
 
+  // ── POLLING: fetch docs, msgs, meetings directly from Supabase ──
+  const pollNotifications=async(pMapArg,cMapArg)=>{
+    const pm=pMapArg||procMap;
+    const cm=cMapArg||clientMap;
+    try{
+      const [docs,msgs,meets]=await Promise.all([
+        api.get("documents","?order=created_at.desc&limit=500"),
+        api.get("messages","?order=created_at.desc&limit=500"),
+        api.get("meetings","?order=created_at.desc&limit=500"),
+      ]);
+      // Attach client_id via process_id → client_id map
+      const enrich=(arr)=>(Array.isArray(arr)?arr:[]).map(item=>({...item,client_id:pm[item.process_id]||null}));
+      setGDocs(enrich(docs));
+      setGMsgs(enrich(msgs));
+      setGMeets(enrich(meets));
+    }catch(e){console.error("Poll error:",e);}
+  };
+
+  // ── Start/stop polling on auth change ──
+  useEffect(()=>{
+    if(auth){
+      pollRef.current=setInterval(()=>pollNotifications(),5000);
+      return()=>clearInterval(pollRef.current);
+    }else{
+      if(pollRef.current)clearInterval(pollRef.current);
+    }
+  },[auth,procMap,clientMap]);
+
   const onLogin=()=>{setAuth(true);loadClients();};
-  const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
-  const newDocs=clients.reduce((a,c)=>a+(c.docs||[]).filter(d=>d.uploaded_by==="cliente").length,0);
-  const unreadMsgs=clients.reduce((a,c)=>a+(c.msgs||[]).filter(m=>m.from_role==="client"&&!m.read).length,0);
+
+  // ── Compute badges from GLOBAL polling data ──
+  const newClientDocs=gDocs.filter(d=>d.uploaded_by==="cliente"&&!seenDocs.has(d.id));
+  const newClientMsgs=gMsgs.filter(m=>m.from_role==="client"&&!seenMsgs.has(m.id));
+  const pendingMeets=gMeets.filter(m=>m.status==="pendente"&&!seenMeets.has(m.id));
+
+  // ── Clear badges when clicking sidebar ──
+  const handleNav=(id)=>{
+    if(id==="documents") setSeenDocs(new Set(gDocs.filter(d=>d.uploaded_by==="cliente").map(d=>d.id)));
+    if(id==="messages") setSeenMsgs(new Set(gMsgs.filter(m=>m.from_role==="client").map(m=>m.id)));
+    if(id==="meetings") setSeenMeets(new Set(gMeets.filter(m=>m.status==="pendente").map(m=>m.id)));
+    setTab(id);setOpenC(null);setSideOpen(false);
+  };
+
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
-    {id:"documents",label:"Documentos",ic:"file",badge:newDocs||undefined},
-    {id:"messages",label:"Mensagens",ic:"send",badge:unreadMsgs||undefined},
-    {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
+    {id:"documents",label:"Documentos",ic:"file",badge:newClientDocs.length||undefined},
+    {id:"messages",label:"Mensagens",ic:"send",badge:newClientMsgs.length||undefined},
+    {id:"meetings",label:"Reuniões",ic:"cal",badge:pendingMeets.length||undefined},
   ];
 
   if(!auth) return<><style>{css}</style><Login onLogin={onLogin}/></>;
@@ -1249,22 +1306,22 @@ export default function App(){
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
-              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);setSideOpen(false);}}>
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>handleNav(n.id)}>
                 <Icon name={n.ic} size={16}/>{n.label}
                 {n.badge>0&&<span className="nbdg">{n.badge}</span>}
               </div>
             ))}
           </nav>
-          <div className="sbft"><button className="out" onClick={()=>{setAuth(false);setClients([]);}}><Icon name="logout" size={15}/>Sair</button></div>
+          <div className="sbft"><button className="out" onClick={()=>{setAuth(false);setClients([]);setGDocs([]);setGMsgs([]);setGMeets([]);}}><Icon name="logout" size={15}/>Sair</button></div>
         </aside>
         <main className="mc">
           {loading?<div className="ld"><Icon name="spin" size={28}/><span>Carregando {clients.length} clientes…</span></div>:
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="documents"?<AllDocuments clients={clients} openClient={id=>setOpenC(id)}/>:
-          tab==="messages"?<AllMessages clients={clients} openClient={id=>setOpenC(id)}/>:
-          tab==="meetings"?<AllMeetings clients={clients}/>:null}
+          tab==="documents"?<AllDocuments docs={gDocs} clientMap={clientMap} openClient={id=>setOpenC(id)}/>:
+          tab==="messages"?<AllMessages msgs={gMsgs} clientMap={clientMap} openClient={id=>setOpenC(id)}/>:
+          tab==="meetings"?<AllMeetings meetings={gMeets} clientMap={clientMap} openClient={id=>setOpenC(id)}/>:null}
         </main>
       </div>
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
