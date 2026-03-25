@@ -1205,10 +1205,11 @@ export default function App(){
   const [gDocs,setGDocs]=useState([]);       // all documents
   const [gMsgs,setGMsgs]=useState([]);       // all messages
   const [gMeets,setGMeets]=useState([]);     // all meetings
-  // ── "Seen" tracking — IDs the lawyer has already seen ──
-  const [seenDocs,setSeenDocs]=useState(new Set());
-  const [seenMsgs,setSeenMsgs]=useState(new Set());
-  const [seenMeets,setSeenMeets]=useState(new Set());
+  // ── "Last seen" timestamps — persisted in localStorage ──
+  const getLS=(k,def)=>{try{return localStorage.getItem(k)||def}catch{return def}};
+  const [lastSeenDocs,setLastSeenDocs]=useState(()=>getLS("bl_seen_docs",""));
+  const [lastSeenMsgs,setLastSeenMsgs]=useState(()=>getLS("bl_seen_msgs",""));
+  const [lastSeenMeets,setLastSeenMeets]=useState(()=>getLS("bl_seen_meets",""));
   // ── client_id → client_name map for display ──
   const [clientMap,setClientMap]=useState({});
   // ── process_id → client_id map for joins ──
@@ -1272,10 +1273,10 @@ export default function App(){
 
   const onLogin=()=>{setAuth(true);loadClients();};
 
-  // ── Compute badges from GLOBAL polling data ──
-  const newClientDocs=gDocs.filter(d=>d.uploaded_by==="cliente"&&!seenDocs.has(d.id));
-  const newClientMsgs=gMsgs.filter(m=>m.from_role==="client"&&!seenMsgs.has(m.id));
-  const pendingMeets=gMeets.filter(m=>m.status==="pendente"&&!seenMeets.has(m.id));
+  // ── Compute badges from GLOBAL polling data (only items NEWER than last seen) ──
+  const newClientDocs=gDocs.filter(d=>d.uploaded_by==="cliente"&&(!lastSeenDocs||d.created_at>lastSeenDocs));
+  const newClientMsgs=gMsgs.filter(m=>m.from_role==="client"&&(!lastSeenMsgs||m.created_at>lastSeenMsgs));
+  const pendingMeets=gMeets.filter(m=>m.status==="pendente"&&(!lastSeenMeets||m.created_at>lastSeenMeets));
 
   // ── Delete document from global view ──
   const deleteDocGlobal=async(d)=>{
@@ -1288,11 +1289,14 @@ export default function App(){
     showToast(`"${d.name}" apagado!`);
   };
 
-  // ── Clear badges when clicking sidebar ──
+  // ── Clear badges when clicking sidebar — save timestamp to localStorage ──
   const handleNav=(id)=>{
-    if(id==="documents") setSeenDocs(new Set(gDocs.filter(d=>d.uploaded_by==="cliente").map(d=>d.id)));
-    if(id==="messages") setSeenMsgs(new Set(gMsgs.filter(m=>m.from_role==="client").map(m=>m.id)));
-    if(id==="meetings") setSeenMeets(new Set(gMeets.filter(m=>m.status==="pendente").map(m=>m.id)));
+    const now=new Date().toISOString();
+    try{
+      if(id==="documents"){localStorage.setItem("bl_seen_docs",now);setLastSeenDocs(now);}
+      if(id==="messages"){localStorage.setItem("bl_seen_msgs",now);setLastSeenMsgs(now);}
+      if(id==="meetings"){localStorage.setItem("bl_seen_meets",now);setLastSeenMeets(now);}
+    }catch{}
     setTab(id);setOpenC(null);setSideOpen(false);
   };
 
@@ -1475,3 +1479,4 @@ function ClaudeChat({ totalClients }) {
     </>
   );
 }
+                
