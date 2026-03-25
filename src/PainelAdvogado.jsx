@@ -11,7 +11,8 @@ const api = {
   del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
   upload: async (path, file) => {
     const mime = file.type || "application/octet-stream";
-    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
+    const safePath = path.split("/").map(p => encodeURIComponent(p)).join("/");
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`, {
       method: "POST",
       headers: {
         apikey: SUPA_KEY,
@@ -21,7 +22,7 @@ const api = {
       },
       body: file
     });
-    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err, "MIME:", mime); }
+    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err, "MIME:", mime, "Path:", safePath); }
     return r.ok;
   },
   signedUrl: async (path) => {
@@ -802,12 +803,17 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   };
   const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
   const uploadDoc=async f=>{
-    if(!f||!proc) return;
+    if(!f) return;
+    if(!proc){showToast("Erro: processo não encontrado. Recarregue a página.");return;}
+    if(f.size>20*1024*1024){showToast("Ficheiro demasiado grande. Máximo 20 MB.");return;}
     const path=`${proc.id}/${Date.now()}_${f.name}`;
-    const ok=await api.upload(path,f);
-    if(!ok){showToast("Erro ao enviar ficheiro.");return;}
-    const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
-    if(r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
+    try{
+      const ok=await api.upload(path,f);
+      if(!ok){showToast("Erro ao enviar ficheiro. Verifique o formato e tente novamente.");return;}
+      const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
+      if(r&&r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
+      else{showToast("Ficheiro enviado mas erro ao registar. Tente novamente.");}
+    }catch(e){console.error("Upload exception:",e);showToast("Erro de conexão ao enviar ficheiro.");}
   };
   const notify=async()=>{
     await api.post("notifications",{client_id:client.id,text:"Nova atualização no seu processo. Acesse o portal para ver.",icon:"🔔",read:false});
