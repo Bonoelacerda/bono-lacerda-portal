@@ -1089,20 +1089,23 @@ function Clients({clients,setClients,showToast,openClient}){
 function AllMeetings({clients,openClient}){
   const [allMeets,setAllMeets]=useState([]);
   const [loading,setLoading]=useState(true);
-  const procMapRef=useRef({});
+  const procMap=useRef({});
 
   useEffect(()=>{
     const load=async(initial)=>{
       if(initial) setLoading(true);
-      const [meets,procs]=await Promise.all([
-        api.get("meetings","?order=date.asc&limit=500"),
-        Object.keys(procMapRef.current).length===0?api.get("processes","?select=id,client_id&limit=10000"):null
-      ]);
-      if(procs&&!procs.error) procs.forEach(p=>{procMapRef.current[p.id]=p.client_id;});
-      const enriched=(meets||[]).map(m=>{
-        const clientId=procMapRef.current[m.process_id]||null;
-        const cl=clientId?clients.find(c=>c.id===clientId):null;
-        return{...m,clientName:cl?cl.name:"—",clientId};
+      const meets=await api.get("meetings","?order=date.asc&limit=500");
+      if(!meets||meets.error){if(initial)setLoading(false);return;}
+      // Find process_ids we don't have mapped yet
+      const unknown=[...new Set(meets.map(m=>m.process_id).filter(id=>id&&!procMap.current[id]))];
+      if(unknown.length>0){
+        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
+        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
+      }
+      const enriched=meets.map(m=>{
+        const cid=procMap.current[m.process_id]||null;
+        const cl=cid?clients.find(c=>c.id===cid):null;
+        return{...m,clientName:cl?cl.name:"—",clientId:cid};
       });
       setAllMeets(enriched);
       if(initial) setLoading(false);
@@ -1141,20 +1144,22 @@ function AllDocuments({clients,showToast,openClient}){
   const [allDocs,setAllDocs]=useState([]);
   const [loading,setLoading]=useState(true);
   const [filter,setFilter]=useState("todos");
-  const procMapRef=useRef({});
+  const procMap=useRef({});
 
   useEffect(()=>{
     const load=async(initial)=>{
       if(initial) setLoading(true);
-      const [docs,procs]=await Promise.all([
-        api.get("documents","?order=created_at.desc&limit=500"),
-        Object.keys(procMapRef.current).length===0?api.get("processes","?select=id,client_id&limit=10000"):null
-      ]);
-      if(procs&&!procs.error) procs.forEach(p=>{procMapRef.current[p.id]=p.client_id;});
-      const enriched=(docs||[]).map(d=>{
-        const clientId=procMapRef.current[d.process_id]||null;
-        const cl=clientId?clients.find(c=>c.id===clientId):null;
-        return{...d,clientName:cl?cl.name:"—",clientId};
+      const docs=await api.get("documents","?order=created_at.desc&limit=500");
+      if(!docs||docs.error){if(initial)setLoading(false);return;}
+      const unknown=[...new Set(docs.map(d=>d.process_id).filter(id=>id&&!procMap.current[id]))];
+      if(unknown.length>0){
+        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
+        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
+      }
+      const enriched=docs.map(d=>{
+        const cid=procMap.current[d.process_id]||null;
+        const cl=cid?clients.find(c=>c.id===cid):null;
+        return{...d,clientName:cl?cl.name:"—",clientId:cid};
       });
       setAllDocs(enriched);
       if(initial) setLoading(false);
@@ -1255,17 +1260,23 @@ export default function App(){
     return()=>clearInterval(iv);
   },[auth,clients]);
 
-  // Poll for pending meetings count every 10s
+  // Poll for pending meetings count every 10s (only update badge when NOT on meetings tab)
+  const seenMeetRef=useRef(0);
   useEffect(()=>{
     if(!auth) return;
     const check=async()=>{
       const r=await api.get("meetings","?status=eq.pendente&select=id");
-      if(r&&!r.error) setPendentes(r.length);
+      if(r&&!r.error){
+        const total=r.length;
+        const newOnes=total-seenMeetRef.current;
+        if(tab!=="meetings") setPendentes(newOnes>0?newOnes:0);
+        else seenMeetRef.current=total;
+      }
     };
     check();
     const iv=setInterval(check,10000);
     return()=>clearInterval(iv);
-  },[auth]);
+  },[auth,tab]);
 
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
@@ -1290,7 +1301,7 @@ export default function App(){
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
-              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);if(n.id==="meetings")setPendentes(0);}}>
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);if(n.id==="meetings"){setPendentes(0);api.get("meetings","?status=eq.pendente&select=id").then(r=>{if(r&&!r.error)seenMeetRef.current=r.length;});}}}>
                 <Icon name={n.ic} size={16}/>{n.label}
                 {n.badge>0&&<span className="nbdg">{n.badge}</span>}
               </div>
