@@ -739,8 +739,8 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   // Load full data when client is opened
   useEffect(()=>{
     if(!client) return;
-    const load=async()=>{
-      setLdData(true);
+    const load=async(initial)=>{
+      if(initial) setLdData(true);
       const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
       const proc=procs[0]||null;
       if(proc){
@@ -750,13 +750,17 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
           api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
         ]);
-        setSteps(ss); setDocs(dd); setMsgs(mm); setMeets(mt);
-        // Update client proc in state
+        if(ss&&!ss.error) setSteps(ss);
+        if(dd&&!dd.error) setDocs(dd);
+        if(mm&&!mm.error) setMsgs(mm);
+        if(mt&&!mt.error) setMeets(mt);
         setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
       }
-      setLdData(false);
+      if(initial) setLdData(false);
     };
-    load();
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
   },[cid]);
 
   if(!client) return null;
@@ -814,6 +818,18 @@ function Detail({cid,clients,setClients,showToast,onBack}){
       if(r&&r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
       else{showToast("Ficheiro enviado mas erro ao registar. Tente novamente.");}
     }catch(e){console.error("Upload exception:",e);showToast("Erro de conexão ao enviar ficheiro.");}
+  };
+  const delDoc=async d=>{
+    if(!confirm(`Eliminar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
+    try{
+      if(d.storage_path){
+        const safePath=d.storage_path.split("/").map(p=>encodeURIComponent(p)).join("/");
+        await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`,{method:"DELETE",headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}});
+      }
+      await api.del("documents",d.id);
+      setDocs(ds=>ds.filter(x=>x.id!==d.id));
+      showToast(`"${d.name}" eliminado.`);
+    }catch(e){console.error("Delete error:",e);showToast("Erro ao eliminar documento.");}
   };
   const notify=async()=>{
     await api.post("notifications",{client_id:client.id,text:"Nova atualização no seu processo. Acesse o portal para ver.",icon:"🔔",read:false});
@@ -899,6 +915,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
               <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
+              <button className="ib" style={{marginLeft:4,color:"#ef4444"}} onClick={()=>delDoc(d)} title="Eliminar">🗑️</button>
             </div>
           ))}
           {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"1.5rem",fontSize:".85rem"}}>Nenhum documento ainda.</p>}
