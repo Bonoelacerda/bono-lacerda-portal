@@ -66,7 +66,7 @@ jobs:
               }
               signingConfigs {
                   release {
-                      storeFile file("bono-lacerda.keystore")
+                      storeFile file("../bono-lacerda.keystore")
                       storePassword "bonolacerda2024"
                       keyAlias "bono-lacerda"
                       keyPassword "bonolacerda2024"
@@ -209,3 +209,4 @@ jobs:
         run: |
           cd twa-build
           keytool -list -v -keystore bono-lacerda.keystore -alias bono-lacerda -storepass bonolacerda2024 | grep -A1 SHA256
+
