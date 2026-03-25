@@ -1089,13 +1089,15 @@ function Clients({clients,setClients,showToast,openClient}){
 function AllMeetings({clients,openClient}){
   const [allMeets,setAllMeets]=useState([]);
   const [loading,setLoading]=useState(true);
+  const clientsRef=useRef(clients);
+  clientsRef.current=clients;
 
   useEffect(()=>{
     const load=async(initial)=>{
       if(initial) setLoading(true);
       const meets=await api.get("meetings","?order=date.asc&limit=500");
       const enriched=(meets||[]).map(m=>{
-        const cl=clients.find(c=>c.proc&&c.proc.id===m.process_id);
+        const cl=clientsRef.current.find(c=>c.proc&&c.proc.id===m.process_id);
         return{...m,clientName:cl?cl.name:"—",clientId:cl?cl.id:null};
       });
       setAllMeets(enriched);
@@ -1104,7 +1106,7 @@ function AllMeetings({clients,openClient}){
     load(true);
     const iv=setInterval(()=>load(false),10000);
     return()=>clearInterval(iv);
-  },[clients]);
+  },[]);
 
   const pendentes=allMeets.filter(m=>m.status==="pendente");
   return(
@@ -1135,13 +1137,15 @@ function AllDocuments({clients,showToast,openClient}){
   const [allDocs,setAllDocs]=useState([]);
   const [loading,setLoading]=useState(true);
   const [filter,setFilter]=useState("todos");
+  const clientsRef=useRef(clients);
+  clientsRef.current=clients;
 
   useEffect(()=>{
     const load=async(initial)=>{
       if(initial) setLoading(true);
       const docs=await api.get("documents","?order=created_at.desc&limit=500");
       const enriched=(docs||[]).map(d=>{
-        const cl=clients.find(c=>c.proc&&c.proc.id===d.process_id);
+        const cl=clientsRef.current.find(c=>c.proc&&c.proc.id===d.process_id);
         return{...d,clientName:cl?cl.name:"—",clientId:cl?cl.id:null};
       });
       setAllDocs(enriched);
@@ -1150,7 +1154,7 @@ function AllDocuments({clients,showToast,openClient}){
     load(true);
     const iv=setInterval(()=>load(false),10000);
     return()=>clearInterval(iv);
-  },[clients]);
+  },[]);
 
   const filtered=filter==="todos"?allDocs:filter==="cliente"?allDocs.filter(d=>d.uploaded_by==="cliente"):allDocs.filter(d=>d.uploaded_by==="advogado");
   const aguardando=allDocs.filter(d=>d.uploaded_by==="cliente"&&d.status==="aguardando").length;
@@ -1219,11 +1223,12 @@ export default function App(){
   };
 
   const [newDocs,setNewDocs]=useState(0);
+  const [pendentes,setPendentes]=useState(0);
   const lastDocCheck=useRef(null);
 
   const onLogin=()=>{setAuth(true);loadClients();};
 
-  // Poll for new client documents every 30s
+  // Poll for new client documents every 10s
   useEffect(()=>{
     if(!auth) return;
     const check=async()=>{
@@ -1238,11 +1243,22 @@ export default function App(){
       lastDocCheck.current=new Date().toISOString();
     };
     lastDocCheck.current=new Date().toISOString();
-    const iv=setInterval(check,30000);
+    const iv=setInterval(check,10000);
     return()=>clearInterval(iv);
   },[auth,clients]);
 
-  const pendentes=clients.reduce((a,c)=>a+(c.meetings||[]).filter(m=>m.status==="pendente").length,0);
+  // Poll for pending meetings count every 10s
+  useEffect(()=>{
+    if(!auth) return;
+    const check=async()=>{
+      const r=await api.get("meetings","?status=eq.pendente&select=id");
+      if(r&&!r.error) setPendentes(r.length);
+    };
+    check();
+    const iv=setInterval(check,10000);
+    return()=>clearInterval(iv);
+  },[auth]);
+
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
