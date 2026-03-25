@@ -1,0 +1,17 @@
+User-agent: *
+Disallow: /api/
+Disallow: /painel
+Disallow: /.env
+Disallow: /.env.local
+Disallow: /.env.production
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+Sitemap: https://bono-lacerda-portal.vercel.app/sitemap.xml
