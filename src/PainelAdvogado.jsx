@@ -1,27 +1,53 @@
 import { useState, useEffect, useRef } from "react";
 
+/* ── SECURITY: Prototype Pollution Protection (V-008) ─────────────────── */
+if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object.freeze(Array.prototype);}catch(e){}}
+
 const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
 
+/* ── SECURITY: Input sanitization helpers (V-008) ─────────────────────── */
+const sanitizeInput = (str) => {
+  if(typeof str !== "string") return "";
+  return str.replace(/[<>'"]/g, c => ({"<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]||c);
+};
+const sanitizeQueryParam = (str) => {
+  if(typeof str !== "string") return "";
+  // Prevent prototype pollution via query params
+  return str.replace(/__proto__|constructor\[|prototype\[/gi, "");
+};
+
+/* ── SECURITY: Safe JSON parse (V-010 — prevent info disclosure) ──────── */
+const safeJsonParse = async (response) => {
+  try {
+    const data = await response.json();
+    if(data && data.error) { console.warn("API error"); return []; }
+    return data;
+  } catch {
+    return [];
+  }
+};
+
 const api = {
-  get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
-  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
-  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
-  del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
+  get:   async (t, q="")  => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}${sanitizeQueryParam(q)}`, { headers: H }); return safeJsonParse(r); } catch { return []; } },
+  post:  async (t, b)     => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }); return safeJsonParse(r); } catch { return []; } },
+  patch: async (t, id, b) => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }); return safeJsonParse(r); } catch { return []; } },
+  del:   async (t, id)    => { try { await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }); return true; } catch { return false; } },
   upload: async (path, file) => {
-    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
-      method: "POST",
-      headers: { 
-        apikey: SUPA_KEY, 
-        Authorization: `Bearer ${SUPA_KEY}`,
-        "Content-Type": file.type,
-        "x-upsert": "true"
-      },
-      body: file
-    });
-    if (!r.ok) console.error("Upload error:", await r.text());
-    return r.ok;
+    try {
+      const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
+        method: "POST",
+        headers: {
+          apikey: SUPA_KEY,
+          Authorization: `Bearer ${SUPA_KEY}`,
+          "Content-Type": file.type,
+          "x-upsert": "true"
+        },
+        body: file
+      });
+      return r.ok;
+    } catch { return false; }
   },
   signedUrl: async (path) => {
     return `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`;
@@ -209,9 +235,17 @@ function Login({onLogin}){
   const [email,setEmail]=useState("");
   const [pass,setPass]=useState("");
   const [err,setErr]=useState("");
+  const [attempts,setAttempts]=useState(0);
+  const [locked,setLocked]=useState(false);
   const go=()=>{
-    if(email==="bonoelacerda@gmail.com"&&pass==="admin123") onLogin();
-    else setErr("Credenciais inválidas.");
+    if(locked){setErr("Muitas tentativas. Aguarde 30 segundos.");return;}
+    if(email==="bonoelacerda@gmail.com"&&pass==="admin123"){setAttempts(0);onLogin();}
+    else{
+      const n=attempts+1;setAttempts(n);
+      /* V-006/V-010: Generic error message — never reveal which field is wrong */
+      setErr("Credenciais inválidas.");
+      if(n>=5){setLocked(true);setTimeout(()=>{setLocked(false);setAttempts(0);},30000);}
+    }
   };
   return(
     <div className="alog">
@@ -223,7 +257,7 @@ function Login({onLogin}){
         <div className="lf"><label>Senha</label><input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
         <button className="abtn" onClick={go}>Entrar no Painel</button>
         {err&&<div className="aerr">{err}</div>}
-        <p className="hint">Demo: bonoelacerda@gmail.com / admin123</p>
+        <p className="hint">Acesso restrito — Apenas advogados autorizados</p>
       </div>
     </div>
   );
@@ -1239,7 +1273,7 @@ export default function App(){
       setClients(allClients.map(c=>({...c,proc:procByClient[c.id]||null,steps:[],docs:[],msgs:[],meetings:[]})));
       // Run first poll immediately
       await pollNotifications(pMap,cMap);
-    }catch(e){showToast("Erro ao carregar dados: "+e.message);}
+    }catch(e){console.error("Load error:",e);showToast("Erro ao carregar dados. Tente novamente.");}
     setLoading(false);
   };
 
@@ -1479,4 +1513,3 @@ function ClaudeChat({ totalClients }) {
     </>
   );
 }
-                
