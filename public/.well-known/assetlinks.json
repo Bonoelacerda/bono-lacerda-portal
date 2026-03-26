@@ -1,10 +1,10 @@
 [{
-    "relation": ["delegate_permission/common.handle_all_urls"],
-    "target": {
-          "namespace": "android_app",
-          "package_name": "com.bonolacerda.portal",
-          "sha256_cert_fingerprints": [
-                  "DB:A1:48:49:33:3D:D2:2A:85:75:39:A9:CC:7D:CF:46:D4:A0:BF:66:63:E1:8E:E7:7D:84:5F:7F:BE:AF:D6:EA"
-          ]
-    }
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+              "namespace": "android_app",
+              "package_name": "com.bonolacerda.portal",
+              "sha256_cert_fingerprints": [
+                        "F5:6D:5B:7C:9E:04:30:3D:C7:5E:80:6C:E6:CF:EB:39:22:E6:08:47:15:4A:EC:DD:A3:F4:C6:4C:EE:73:6E:48"
+              ]
+      }
 }]
