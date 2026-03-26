@@ -1,18 +1,14 @@
 name: Build TWA Android AAB
 
-
 on:
   workflow_dispatch:
-
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-
     steps:
       - uses: actions/checkout@v4
-
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -20,10 +16,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-
 
       - name: Create TWA Project
         run: |
@@ -67,3 +61,152 @@ jobs:
                       hostName: "bono-lacerda-portal.vercel.app",
                       defaultUrl: "https://bono-lacerda-portal.vercel.app/",
                       launcherName: "B&L Portal",
+                      assetStatements: '[{ \\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": { \\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://bono-lacerda-portal.vercel.app\\\" } }]'
+                  ]
+              }
+              signingConfigs {
+                  release {
+                      storeFile file("../bono-lacerda.keystore")
+                      storePassword "bonolacerda2024"
+                      keyAlias "bono-lacerda"
+                      keyPassword "bonolacerda2024"
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled false
+                  }
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_1_8
+                  targetCompatibility JavaVersion.VERSION_1_8
+              }
+              bundle {
+                  language { enableSplit = false }
+              }
+          }
+          dependencies {
+              implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+          }
+          APPEOF
+          cat > twa-build/app/src/main/AndroidManifest.xml <<'MANIFESTEOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="Bono e Lacerda Portal"
+                  android:supportsRtl="true"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar">
+                  <meta-data
+                      android:name="asset_statements"
+                      android:value='${assetStatements}' />
+                  <activity
+                      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+                      android:exported="true">
+                      <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL"
+                          android:value="${defaultUrl}" />
+                      <meta-data android:name="android.support.customtabs.trusted.STATUS_BAR_COLOR"
+                          android:resource="@color/colorPrimary" />
+                      <meta-data android:name="android.support.customtabs.trusted.NAVIGATION_BAR_COLOR"
+                          android:resource="@color/navigationColor" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE"
+                          android:resource="@drawable/splash" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
+                          android:resource="@color/backgroundColor" />
+                      <meta-data android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION"
+                          android:value="300" />
+                      <meta-data android:name="android.support.customtabs.trusted.FILE_PROVIDER_AUTHORITY"
+                          android:value="${applicationId}.fileprovider" />
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                      <intent-filter android:autoVerify="true">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="https" android:host="${hostName}" />
+                      </intent-filter>
+                  </activity>
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="${applicationId}.fileprovider"
+                      android:grantUriPermissions="true"
+                      android:exported="false">
+                      <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/filepaths" />
+                  </provider>
+                  <service
+                      android:name="com.google.androidbrowserhelper.trusted.DelegationService"
+                      android:enabled="true"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                      </intent-filter>
+                  </service>
+              </application>
+          </manifest>
+          MANIFESTEOF
+          cat > twa-build/app/src/main/res/values/colors.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="colorPrimary">#16213e</color>
+              <color name="colorPrimaryDark">#0f1729</color>
+              <color name="navigationColor">#16213e</color>
+              <color name="backgroundColor">#ffffff</color>
+          </resources>
+          EOF
+          cat > twa-build/app/src/main/res/values/strings.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">Bono e Lacerda Portal</string>
+          </resources>
+          EOF
+          cat > twa-build/app/src/main/res/xml/filepaths.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths><files-path name="twa_image" path="/twa_image"/></paths>
+          EOF
+
+      - name: Generate icons
+        run: |
+          cd twa-build
+          sudo apt-get install -y imagemagick > /dev/null 2>&1
+          convert -size 512x512 xc:'#16213e' -fill '#c9a84c' -font DejaVu-Sans-Bold -pointsize 180 -gravity center -annotate +0+0 'B&L' icon-512.png
+          convert icon-512.png -resize 48x48 app/src/main/res/mipmap-mdpi/ic_launcher.png
+          convert icon-512.png -resize 72x72 app/src/main/res/mipmap-hdpi/ic_launcher.png
+          convert icon-512.png -resize 96x96 app/src/main/res/mipmap-xhdpi/ic_launcher.png
+          convert icon-512.png -resize 144x144 app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+          convert icon-512.png -resize 192x192 app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+          convert icon-512.png -resize 192x192 app/src/main/res/drawable/splash.png
+
+      - name: Generate signing keystore
+        run: |
+          cd twa-build
+          keytool -genkeypair -v -keystore bono-lacerda.keystore -alias bono-lacerda -keyalg RSA -keysize 2048 -validity 10000 -storepass bonolacerda2024 -keypass bonolacerda2024 -dname "CN=Bono e Lacerda, OU=Juridico, O=Bono e Lacerda Advogados, L=Brasil, ST=SP, C=BR"
+          echo "=== SHA-256 Fingerprint ==="
+          keytool -list -v -keystore bono-lacerda.keystore -alias bono-lacerda -storepass bonolacerda2024 | grep SHA256
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.4'
+
+      - name: Build AAB
+        run: |
+          cd twa-build
+          gradle :app:bundleRelease --no-daemon
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bono-lacerda-portal-aab
+          path: twa-build/app/build/outputs/bundle/release/app-release.aab
+
+      - name: Print keystore fingerprint
+        run: |
+          cd twa-build
+          keytool -list -v -keystore bono-lacerda.keystore -alias bono-lacerda -storepass bonolacerda2024 | grep -A1 SHA256
+
