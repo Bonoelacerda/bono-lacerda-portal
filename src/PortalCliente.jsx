@@ -437,25 +437,32 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
 const IRN_STEPS = [
   { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN.",
     optimista: "O seu pedido chegou ao IRN e está devidamente registado no sistema. Este é o primeiro passo de uma jornada que termina com a sua nacionalidade portuguesa. Tudo começa aqui — e o seu processo já está dentro do sistema!",
-    detalhes:  "Nesta fase, o IRN confirma que recebeu o seu pedido e que toda a documentação foi entregue. A equipa de registo está a verificar os dados iniciais. É completamente normal estar nesta fase — todos os processos passam por ela obrigatoriamente." },
+    detalhes:  "Nesta fase, o IRN confirma que recebeu o seu pedido e que toda a documentação foi entregue. A equipa de registo está a verificar os dados iniciais. É completamente normal estar nesta fase — todos os processos passam por ela obrigatoriamente.",
+    prazo_irn: "Segundo o IRN, o prazo total estimado para adultos é de 24 a 29 meses desde a submissão até ao registo final. Cerca de 9 a 11 meses decorrem entre a entrega do pedido e o início da análise. Pedidos de menores (filhos de pai/mãe portuguesa) são tratados com prioridade, com análise e decisão entre 2 a 4 meses." },
   { num:2, label:"Registado",   icon:"📋", desc:"Pedido registado no sistema IRN.",
     optimista: "Excelente notícia! O seu processo foi registado oficialmente e tem agora um número único no sistema do IRN. Está na fila de análise e a avançar!",
-    detalhes:  "O registo significa que o IRN validou a sua candidatura e atribuiu-lhe um número de processo oficial. A partir deste momento, o seu processo está em linha aguardando a sua vez de ser analisado. O IRN segue rigorosamente a ordem de entrada — cada processo protocolado antes do seu será analisado primeiro, garantindo total imparcialidade." },
+    detalhes:  "O registo significa que o IRN validou a sua candidatura e atribuiu-lhe um número de processo oficial. A partir deste momento, o seu processo está em linha aguardando a sua vez de ser analisado. O IRN segue rigorosamente a ordem de entrada — cada processo protocolado antes do seu será analisado primeiro, garantindo total imparcialidade.",
+    prazo_irn: "Segundo o IRN, cerca de 9 a 11 meses decorrem entre a entrega do pedido e o início da análise. O seu processo está nesta fase de preparação. O prazo total estimado para adultos é de 24 a 29 meses até ao registo final." },
   { num:3, label:"Consultas",   icon:"🔍", desc:"IRN a consultar entidades externas.",
     optimista: "O seu processo está activamente a ser trabalhado! O IRN está a consultar outras entidades oficiais para verificar e confirmar os dados da sua candidatura. Isso significa que há movimento real no seu processo.",
-    detalhes:  "Nesta fase, o IRN contacta entidades como o Arquivo Nacional Torre do Tombo, registos civis, ou outras instituições para verificar os vínculos históricos com Portugal. Estas consultas são essenciais para fundamentar juridicamente a decisão. Quanto mais documentação completa tiver submetido, mais rápidas e favoráveis tendem a ser estas consultas." },
+    detalhes:  "Nesta fase, o IRN contacta entidades como o Arquivo Nacional Torre do Tombo, registos civis, ou outras instituições para verificar os vínculos históricos com Portugal. Estas consultas são essenciais para fundamentar juridicamente a decisão. Quanto mais documentação completa tiver submetido, mais rápidas e favoráveis tendem a ser estas consultas.",
+    prazo_irn: "Segundo o IRN, a fase de análise e diligências (que inclui consultas, verificação e análise jurídica) tem uma duração normal de 9 a 12 meses. Após esta fase, a decisão e o registo final ocorrem em 6 a 8 meses." },
   { num:4, label:"Documentos",  icon:"📄", desc:"Análise da documentação submetida.",
     optimista: "O seu processo está a ser analisado a fundo! A equipa do IRN está a examinar toda a documentação que submeteu. Cada documento analisado é mais um passo em direcção ao despacho favorável.",
-    detalhes:  "Nesta etapa, um técnico especializado do IRN revê minuciosamente todos os documentos do seu processo — certidões de nascimento, procurações, passaportes, certificados comunitários e demais comprovativos. A qualidade e completude da documentação que o escritório Bono & Lacerda preparou para si é fundamental para que esta fase decorra sem contratempos." },
+    detalhes:  "Nesta etapa, um técnico especializado do IRN revê minuciosamente todos os documentos do seu processo — certidões de nascimento, procurações, passaportes, certificados comunitários e demais comprovativos. A qualidade e completude da documentação que o escritório Bono & Lacerda preparou para si é fundamental para que esta fase decorra sem contratempos.",
+    prazo_irn: "Segundo o IRN, a fase de análise e diligências tem uma duração normal de 9 a 12 meses. O seu processo já ultrapassou a fase de preparação e está a ser activamente trabalhado. A decisão e o registo final ocorrem em 6 a 8 meses após a conclusão da análise." },
   { num:5, label:"Análise",     icon:"⚖️",  desc:"Análise jurídica do pedido em curso.",
     optimista: "Estamos muito perto! O IRN está a realizar a análise jurídica final do seu processo. Um jurista especializado está a estudar o seu caso para emitir a decisão. Esta é uma das etapas mais avançadas do processo!",
-    detalhes:  "A análise jurídica é a fase em que um consultor jurídico ou conservador avalia todos os elementos do processo à luz da legislação portuguesa sobre nacionalidade. O escritório Bono & Lacerda acompanha activamente esta fase e está disponível para responder a qualquer pedido de informação adicional do IRN com a máxima celeridade." },
+    detalhes:  "A análise jurídica é a fase em que um consultor jurídico ou conservador avalia todos os elementos do processo à luz da legislação portuguesa sobre nacionalidade. O escritório Bono & Lacerda acompanha activamente esta fase e está disponível para responder a qualquer pedido de informação adicional do IRN com a máxima celeridade.",
+    prazo_irn: "Segundo o IRN, a decisão e o registo final ocorrem em 6 a 8 meses após finalizar a análise. O seu processo está numa fase avançada — a análise jurídica é a última etapa antes do despacho." },
   { num:6, label:"Despacho",    icon:"✍️",  desc:"Decisão final em elaboração.",
     optimista: "A linha de chegada está à vista! O Conservador está a elaborar o despacho final do seu processo. Em breve receberá a confirmação oficial da sua nacionalidade portuguesa. Estamos quase lá!",
-    detalhes:  "O despacho é a decisão formal e definitiva do Conservador dos Registos Centrais ou do Arquivo Central do Porto. Nesta fase, o documento oficial de concessão (ou o despacho fundamentado em caso de necessidade de documentação adicional) está a ser redigido. O escritório Bono & Lacerda será notificado assim que o despacho for emitido." },
+    detalhes:  "O despacho é a decisão formal e definitiva do Conservador dos Registos Centrais ou do Arquivo Central do Porto. Nesta fase, o documento oficial de concessão (ou o despacho fundamentado em caso de necessidade de documentação adicional) está a ser redigido. O escritório Bono & Lacerda será notificado assim que o despacho for emitido.",
+    prazo_irn: "Segundo o IRN, a decisão e o registo final ocorrem em 6 a 8 meses após finalizar a análise. O seu processo está na fase de decisão — é a penúltima etapa antes da conclusão." },
   { num:7, label:"Terminado",   icon:"🎉", desc:"Processo concluído.",
     optimista: "Parabéns! O seu processo de nacionalidade portuguesa está concluído! Bem-vindo à família portuguesa! Este momento representa o culminar de toda a sua jornada.",
-    detalhes:  "O processo chegou ao fim com sucesso! Pode agora solicitar a certidão de nascimento portuguesa e, posteriormente, o passaporte português. O escritório Bono & Lacerda irá orientá-lo nos próximos passos para usufruir plenamente dos seus direitos como cidadão português e europeu." },
+    detalhes:  "O processo chegou ao fim com sucesso! Pode agora solicitar a certidão de nascimento portuguesa e, posteriormente, o passaporte português. O escritório Bono & Lacerda irá orientá-lo nos próximos passos para usufruir plenamente dos seus direitos como cidadão português e europeu.",
+    prazo_irn: "" },
 ];
 
 /* ── IRN TIMELINE ─────────────────────────────────────────────────────── */
@@ -555,6 +562,19 @@ function IRNTimeline({ proc, submissao }) {
             </div>
             <div style={{ fontSize:".8rem", color:"var(--mu)", lineHeight:1.8 }}>{s.detalhes}</div>
           </div>
+
+          {s.prazo_irn && (
+          <div style={{
+            background:"linear-gradient(135deg, rgba(59,130,246,.06), rgba(59,130,246,.03))",
+            border:"1px solid rgba(59,130,246,.18)", borderRadius:14, padding:"1.1rem 1.3rem",
+            marginTop:".75rem"
+          }}>
+            <div style={{ display:"flex", gap:".6rem", alignItems:"flex-start", marginBottom:".6rem" }}>
+              <div style={{ fontWeight:700, fontSize:".82rem", color:"rgba(96,165,250,.9)" }}>Prazos oficiais do IRN</div>
+            </div>
+            <div style={{ fontSize:".8rem", color:"rgba(147,197,253,.7)", lineHeight:1.8 }}>{s.prazo_irn}</div>
+          </div>
+          )}
         </div>
       ))}
     </div>
