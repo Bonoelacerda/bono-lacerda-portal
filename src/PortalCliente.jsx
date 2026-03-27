@@ -422,7 +422,7 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
               <span style={{ fontSize:"1.3rem" }}>🏛️</span>
               <div>
                 <div style={{ fontSize:".82rem", fontWeight:600, color:"#fff", lineHeight:1.4 }}>Consulta Oficial do Processo</div>
-                <div style={{ fontSize:".72rem", color:"rgba(255,255,255,.45)", lineHeight:1.5 }}>A consulta vinculativa é feita no site do IRN com o seu Código de Consulta. <span style={{ color:"rgba(212,168,67,.7)", textDecoration:"underline" }}>Saber mais</span></div>
+                <div style={{ fontSize:".72rem", color:"rgba(255,255,255,.45)", lineHeight:1.5 }}>A consulta vinculativa é feita em <a href="https://meu.registo.justica.gov.pt/Pedidos/Consultar-estado-do-processo-de-nacionalidade" target="_blank" rel="noopener noreferrer" style={{ color:"rgba(212,168,67,.7)", textDecoration:"underline" }}>meu.registo.justica.gov.pt</a> com a sua Chave de Acesso.</div>
               </div>
             </div>
           </div>
@@ -661,7 +661,7 @@ function Dashboard({ client, proc, steps }) {
         <div style={{ width:42, height:42, borderRadius:12, background:"rgba(212,168,67,.1)", border:"1px solid rgba(212,168,67,.2)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"1.3rem", flexShrink:0 }}>🏛️</div>
         <div style={{ flex:1 }}>
           <div style={{ fontSize:".82rem", fontWeight:600, color:"#fff", marginBottom:2 }}>Consulta Oficial do Processo</div>
-          <div style={{ fontSize:".74rem", color:"rgba(255,255,255,.5)", lineHeight:1.55 }}>A consulta vinculativa do seu processo é feita em <a href="https://www.irn.justica.gov.pt" target="_blank" rel="noopener noreferrer" style={{ color:"var(--g)", textDecoration:"none", fontWeight:600 }}>irn.justica.gov.pt</a> com o seu Código de Consulta. Este portal é complementar.</div>
+          <div style={{ fontSize:".74rem", color:"rgba(255,255,255,.5)", lineHeight:1.55 }}>A consulta vinculativa do seu processo é feita em <a href="https://meu.registo.justica.gov.pt/Pedidos/Consultar-estado-do-processo-de-nacionalidade" target="_blank" rel="noopener noreferrer" style={{ color:"var(--g)", textDecoration:"none", fontWeight:600 }}>meu.registo.justica.gov.pt</a> com a sua Chave de Acesso. Este portal é complementar.</div>
         </div>
       </div>
 
@@ -1448,11 +1448,8 @@ As informações contidas neste portal não constituem aconselhamento jurídico 
     body: `O acompanhamento oficial do seu processo de nacionalidade portuguesa deve ser feito directamente no portal do IRN — Instituto dos Registos e do Notariado.
 
 Para consultar o estado oficial do seu processo:
-1. Aceda ao site https://www.irn.justica.gov.pt
-2. Navegue até à secção "Nacionalidade" → "Consulta de Processos"
-3. Introduza o seu Código de Consulta (fornecido pelo escritório)
-
-A Chave de Acesso deste portal é diferente do Código de Consulta do IRN.
+1. Aceda a https://meu.registo.justica.gov.pt/Pedidos/Consultar-estado-do-processo-de-nacionalidade
+2. Introduza o número do processo e a sua Chave de Acesso (fornecida pelo escritório)
 
 Este portal de Bono & Lacerda Advogados é uma ferramenta complementar que facilita o acompanhamento do seu processo, mas a informação vinculativa e oficial é sempre a que consta no portal do IRN.
 
