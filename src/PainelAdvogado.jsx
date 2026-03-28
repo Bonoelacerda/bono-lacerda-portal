@@ -1,60 +1,35 @@
 import { useState, useEffect, useRef } from "react";
 
-/* ── SECURITY: Prototype Pollution Protection (V-008) ─────────────────── */
-if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object.freeze(Array.prototype);}catch(e){}}
-
 const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
 
-/* ── SECURITY: Input sanitization helpers (V-008) ─────────────────────── */
-const sanitizeInput = (str) => {
-  if(typeof str !== "string") return "";
-  return str.replace(/[<>'"]/g, c => ({"<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]||c);
-};
-const sanitizeQueryParam = (str) => {
-  if(typeof str !== "string") return "";
-  // Prevent prototype pollution via query params
-  return str.replace(/__proto__|constructor\[|prototype\[/gi, "");
-};
-
-/* ── SECURITY: Safe JSON parse (V-010 — prevent info disclosure) ──────── */
-const safeJsonParse = async (response) => {
-  try {
-    const data = await response.json();
-    if(data && data.error) { console.warn("API error"); return []; }
-    return data;
-  } catch {
-    return [];
-  }
-};
-
 const api = {
-  get:   async (t, q="")  => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}${sanitizeQueryParam(q)}`, { headers: H }); return safeJsonParse(r); } catch { return []; } },
-  post:  async (t, b)     => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }); return safeJsonParse(r); } catch { return []; } },
-  patch: async (t, id, b) => { try { const r = await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }); return safeJsonParse(r); } catch { return []; } },
-  del:   async (t, id)    => { try { await fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }); return true; } catch { return false; } },
+  get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
+  post:  (t, b)     => fetch(`${SUPA_URL}/rest/v1/${t}`, { method:"POST", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
+  patch: (t, id, b) => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"PATCH", headers:{...H,Prefer:"return=representation"}, body:JSON.stringify(b) }).then(r => r.json()),
+  del:   (t, id)    => fetch(`${SUPA_URL}/rest/v1/${t}?id=eq.${id}`, { method:"DELETE", headers: H }),
   upload: async (path, file) => {
-    try {
-      const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${path}`, {
-        method: "POST",
-        headers: {
-          apikey: SUPA_KEY,
-          Authorization: `Bearer ${SUPA_KEY}`,
-          "Content-Type": file.type,
-          "x-upsert": "true"
-        },
-        body: file
-      });
-      return r.ok;
-    } catch { return false; }
+    const mime = file.type || "application/octet-stream";
+    const safePath = path.split("/").map(p => encodeURIComponent(p)).join("/");
+    const r = await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`, {
+      method: "POST",
+      headers: {
+        apikey: SUPA_KEY,
+        Authorization: `Bearer ${SUPA_KEY}`,
+        "Content-Type": mime,
+        "x-upsert": "true"
+      },
+      body: file
+    });
+    if (!r.ok) { const err = await r.text(); console.error("Upload error:", err, "MIME:", mime, "Path:", safePath); }
+    return r.ok;
   },
   signedUrl: async (path) => {
     return `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`;
   }
 };
 
-const safeName = n => n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]/g,"_");
 const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const ini  = n => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
@@ -77,6 +52,7 @@ function Icon({ name, size=18 }) {
     file:   <svg {...p}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>,
     upload: <svg {...p}><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>,
     bell:   <svg {...p}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+    chat:   <svg {...p}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
     spin:   <svg {...p} style={{animation:"spin 1s linear infinite"}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
   };
   return map[name] || null;
@@ -196,33 +172,6 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
 .ld{display:flex;align-items:center;justify-content:center;min-height:200px;flex-direction:column;gap:1rem;color:var(--mu);font-size:.9rem}
 .toast{position:fixed;bottom:2rem;right:2rem;background:var(--n);color:#fff;padding:.9rem 1.3rem;border-radius:12px;font-size:.85rem;z-index:9999;box-shadow:var(--shm);border-left:3px solid var(--g);animation:rin .3s ease}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bo);border-radius:99px}
-.ham{display:none;position:fixed;top:1rem;left:1rem;z-index:150;width:44px;height:44px;border-radius:12px;background:var(--n);border:none;cursor:pointer;align-items:center;justify-content:center;box-shadow:var(--shm)}
-.ham svg{stroke:#fff;stroke-width:2;stroke-linecap:round}
-.mob-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99}
-@media(max-width:768px){
-  .ham{display:flex}
-  .sb{transform:translateX(-100%);transition:transform .25s ease;z-index:110}
-  .sb.open{transform:translateX(0)}
-  .mob-ov{display:block}
-  .mc{margin-left:0!important;padding:1.25rem!important;padding-top:4.5rem!important}
-  .sg{grid-template-columns:repeat(2,1fr)!important}
-  .alc{width:calc(100vw - 2rem)!important;padding:2rem!important}
-  .alog::before{font-size:28vw!important}
-  .mo{max-width:100%!important;border-radius:16px!important;margin:.5rem}
-  .tbl{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .fr{grid-template-columns:1fr!important}
-  .tabs{flex-wrap:wrap}
-  .tab{padding:.4rem .8rem;font-size:.78rem}
-  .pt{font-size:1.5rem!important}
-  .tb{flex-direction:column;gap:.75rem}
-  .toast{bottom:1rem;right:1rem;left:1rem;text-align:center}
-}
-@media(max-width:480px){
-  .sg{grid-template-columns:1fr!important}
-  .mc{padding:.75rem!important;padding-top:4rem!important}
-  .stv{font-size:1.7rem!important}
-  .cp{padding:1rem!important}
-}
 `;
 
 function Toast({msg,onClose}){useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t)},[]);return<div className="toast">✓ {msg}</div>;}
@@ -235,17 +184,9 @@ function Login({onLogin}){
   const [email,setEmail]=useState("");
   const [pass,setPass]=useState("");
   const [err,setErr]=useState("");
-  const [attempts,setAttempts]=useState(0);
-  const [locked,setLocked]=useState(false);
   const go=()=>{
-    if(locked){setErr("Muitas tentativas. Aguarde 30 segundos.");return;}
-    if(email==="bonoelacerda@gmail.com"&&pass==="admin123"){setAttempts(0);onLogin();}
-    else{
-      const n=attempts+1;setAttempts(n);
-      /* V-006/V-010: Generic error message — never reveal which field is wrong */
-      setErr("Credenciais inválidas.");
-      if(n>=5){setLocked(true);setTimeout(()=>{setLocked(false);setAttempts(0);},30000);}
-    }
+    if(email==="bonoelacerda@gmail.com"&&pass==="admin123") onLogin();
+    else setErr("Credenciais inválidas.");
   };
   return(
     <div className="alog">
@@ -257,7 +198,7 @@ function Login({onLogin}){
         <div className="lf"><label>Senha</label><input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
         <button className="abtn" onClick={go}>Entrar no Painel</button>
         {err&&<div className="aerr">{err}</div>}
-        <p className="hint">Acesso restrito — Apenas advogados autorizados</p>
+        <p className="hint">Demo: bonoelacerda@gmail.com / admin123</p>
       </div>
     </div>
   );
@@ -352,7 +293,7 @@ function Dash({ clients }) {
         </div>
       )}
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:"1.25rem",marginBottom:"1.25rem"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
 
         {/* 2. BUSCA RÁPIDA ────────────────────────────────────────────────── */}
         <div className="card cp">
@@ -414,7 +355,7 @@ function Dash({ clients }) {
         </div>
       </div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:"1.25rem",marginBottom:"1.25rem"}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
 
         {/* 4. DISTRIBUIÇÃO DOS PROCESSOS ─────────────────────────────────── */}
         <div className="card cp">
@@ -455,7 +396,7 @@ function Dash({ clients }) {
             ))}
           </div>
 
-          <div style={{marginTop:"1rem",paddingTop:"1rem",borderTop:"1px solid var(--bo)",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:".5rem"}}>
+          <div style={{marginTop:"1rem",paddingTop:"1rem",borderTop:"1px solid var(--bo)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:".5rem"}}>
             {[
               ["Art.º 6º n.º 7",         974+233],
               ["Art.º 1º C/D",            43+26],
@@ -651,7 +592,7 @@ function WhatsAppNotify({ client, proc, showToast }) {
               {/* Templates */}
               <div style={{marginBottom:"1rem"}}>
                 <label style={{display:"block",fontSize:".75rem",fontWeight:600,color:"#666",textTransform:"uppercase",letterSpacing:".06em",marginBottom:8}}>Tipo de Mensagem</label>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:".5rem"}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:".5rem"}}>
                   {WA_TEMPLATES.map(t => (
                     <button key={t.id} onClick={() => selectTemplate(t)} style={{
                       padding:".6rem .8rem",borderRadius:10,border:`2px solid ${sel===t.id?"#25D366":"#e2e8f0"}`,
@@ -765,7 +706,7 @@ function ContactCard({client, setClients, showToast}){
             </div>
         }
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:".75rem"}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:".75rem"}}>
         {fields.map(f=>(
           <div key={f.key}>
             <div style={{fontSize:".68rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:4}}>{f.label}</div>
@@ -799,8 +740,8 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   // Load full data when client is opened
   useEffect(()=>{
     if(!client) return;
-    const load=async()=>{
-      setLdData(true);
+    const load=async(initial)=>{
+      if(initial) setLdData(true);
       const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
       const proc=procs[0]||null;
       if(proc){
@@ -810,13 +751,17 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           api.get("messages",`?process_id=eq.${proc.id}&order=created_at.asc`),
           api.get("meetings",`?process_id=eq.${proc.id}&order=date.asc`),
         ]);
-        setSteps(ss); setDocs(dd); setMsgs(mm); setMeets(mt);
-        // Update client proc in state
+        if(ss&&!ss.error) setSteps(ss);
+        if(dd&&!dd.error) setDocs(dd);
+        if(mm&&!mm.error) setMsgs(mm);
+        if(mt&&!mt.error) setMeets(mt);
         setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
       }
-      setLdData(false);
+      if(initial) setLdData(false);
     };
-    load();
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
   },[cid]);
 
   if(!client) return null;
@@ -863,23 +808,29 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   };
   const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
   const uploadDoc=async f=>{
-    if(!f||!proc) return;
-    const path=`${proc.id}/${Date.now()}_${safeName(f.name)}`;
-    const ok=await api.upload(path,f);
-    if(!ok){showToast("Erro ao enviar ficheiro.");return;}
-    const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
-    if(r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
+    if(!f) return;
+    if(!proc){showToast("Erro: processo não encontrado. Recarregue a página.");return;}
+    if(f.size>20*1024*1024){showToast("Ficheiro demasiado grande. Máximo 20 MB.");return;}
+    const path=`${proc.id}/${Date.now()}_${f.name}`;
+    try{
+      const ok=await api.upload(path,f);
+      if(!ok){showToast("Erro ao enviar ficheiro. Verifique o formato e tente novamente.");return;}
+      const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
+      if(r&&r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
+      else{showToast("Ficheiro enviado mas erro ao registar. Tente novamente.");}
+    }catch(e){console.error("Upload exception:",e);showToast("Erro de conexão ao enviar ficheiro.");}
   };
-  const deleteDoc=async d=>{
-    if(!confirm(`Apagar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
-    // Delete from storage if path exists
-    if(d.storage_path){
-      await fetch(`${SUPA_URL}/storage/v1/object/documentos/${d.storage_path}`,{method:"DELETE",headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}}).catch(()=>{});
-    }
-    // Delete from database
-    await api.del("documents",d.id);
-    setDocs(ds=>ds.filter(x=>x.id!==d.id));
-    showToast(`"${d.name}" apagado!`);
+  const delDoc=async d=>{
+    if(!confirm(`Eliminar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
+    try{
+      if(d.storage_path){
+        const safePath=d.storage_path.split("/").map(p=>encodeURIComponent(p)).join("/");
+        await fetch(`${SUPA_URL}/storage/v1/object/documentos/${safePath}`,{method:"DELETE",headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}});
+      }
+      await api.del("documents",d.id);
+      setDocs(ds=>ds.filter(x=>x.id!==d.id));
+      showToast(`"${d.name}" eliminado.`);
+    }catch(e){console.error("Delete error:",e);showToast("Erro ao eliminar documento.");}
   };
   const notify=async()=>{
     await api.post("notifications",{client_id:client.id,text:"Nova atualização no seu processo. Acesse o portal para ver.",icon:"🔔",read:false});
@@ -965,7 +916,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
               <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
-              <button className="ib d" style={{marginLeft:4}} onClick={()=>deleteDoc(d)} title="Apagar documento"><Icon name="trash" size={13}/></button>
+              <button className="ib" style={{marginLeft:4,color:"#ef4444"}} onClick={()=>delDoc(d)} title="Eliminar">🗑️</button>
             </div>
           ))}
           {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"1.5rem",fontSize:".85rem"}}>Nenhum documento ainda.</p>}
@@ -1135,87 +1086,50 @@ function Clients({clients,setClients,showToast,openClient}){
   );
 }
 
-// ── ALL DOCUMENTS (uses global polling data) ─────────────────────────────────
-function AllDocuments({docs,clientMap,openClient,onDelete}){
-  const fromClients=docs.filter(d=>d.uploaded_by==="cliente");
-  return(
-    <div>
-      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{docs.length} documentos · {fromClients.length} enviados por clientes</p></div></div>
-      {fromClients.length>0&&<div style={{background:"#dbeafe",border:"1px solid #93c5fd",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>📄 {fromClients.length} documento(s) enviado(s) por clientes</div></div>}
-      <div className="card cp">
-        {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento ainda.</p>}
-        {docs.map(d=>{
-          const cName=clientMap[d.client_id]||"Cliente";
-          return(
-            <div className="dr" key={d.id} style={{cursor:"pointer"}} onClick={()=>openClient(d.client_id)}>
-              <div className="dic"><Icon name="file" size={16}/></div>
-              <div style={{flex:1}}>
-                <div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div>
-                <div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>👤 <strong>{cName}</strong> · {d.size} · {fmtd(d.created_at)}</div>
-              </div>
-              <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
-              {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async(e)=>{e.stopPropagation();const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");}} title="Download"><Icon name="upload" size={13}/></button>}
-              <button className="ib d" style={{marginLeft:4}} onClick={(e)=>{e.stopPropagation();onDelete(d);}} title="Apagar documento"><Icon name="trash" size={13}/></button>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// ── ALL MEETINGS ──────────────────────────────────────────────────────────────
+function AllMeetings({clients,openClient}){
+  const [allMeets,setAllMeets]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const procMap=useRef({});
 
-// ── ALL MESSAGES (uses global polling data) ──────────────────────────────────
-function AllMessages({msgs,clientMap,openClient}){
-  const fromClients=msgs.filter(m=>m.from_role==="client");
-  const byClient={};
-  msgs.forEach(m=>{const cid=m.client_id;if(!byClient[cid])byClient[cid]={name:clientMap[cid]||"Cliente",id:cid,msgs:[],unread:0};byClient[cid].msgs.push(m);if(m.from_role==="client")byClient[cid].unread++;});
-  const clientList=Object.values(byClient).sort((a,b)=>{const la=a.msgs[0]?.created_at||"";const lb=b.msgs[0]?.created_at||"";return lb.localeCompare(la);});
-  return(
-    <div>
-      <div className="tb"><div><h1 className="pt">Mensagens</h1><p className="ps">{msgs.length} mensagens · {fromClients.length} de clientes</p></div></div>
-      {fromClients.length>0&&<div style={{background:"#dbeafe",border:"1px solid #93c5fd",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#1d4ed8"}}>💬 {fromClients.length} mensagem(ns) de clientes</div></div>}
-      <div className="card cp">
-        {!clientList.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma mensagem ainda.</p>}
-        {clientList.map(cl=>{
-          const last=cl.msgs[0];
-          return(
-            <div key={cl.id} className="mcard" style={{cursor:"pointer",borderColor:cl.unread>0?"#93c5fd":"var(--bo)",background:cl.unread>0?"#eff6ff":"var(--bg)"}} onClick={()=>openClient(cl.id)}>
-              <Av name={cl.name} size={42}/>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div style={{fontWeight:600,fontSize:".9rem"}}>{cl.name}</div>
-                  {cl.unread>0&&<span className="bd bb">{cl.unread} msg(s)</span>}
-                </div>
-                <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                  {last.from_role==="lawyer"?"Você: ":""}
-                  {last.text?.substring(0,80)}{(last.text?.length||0)>80?"…":""}
-                </div>
-                <div style={{fontSize:".7rem",color:"var(--mu)",marginTop:2}}>{fmtd(last.created_at)} · {fmtt(last.created_at)}</div>
-              </div>
-              <Icon name="arrow" size={16}/>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+  useEffect(()=>{
+    const load=async(initial)=>{
+      if(initial) setLoading(true);
+      const meets=await api.get("meetings","?order=date.asc&limit=500");
+      if(!meets||meets.error){if(initial)setLoading(false);return;}
+      // Find process_ids we don't have mapped yet
+      const unknown=[...new Set(meets.map(m=>m.process_id).filter(id=>id&&!procMap.current[id]))];
+      if(unknown.length>0){
+        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
+        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
+      }
+      const enriched=meets.map(m=>{
+        const cid=procMap.current[m.process_id]||null;
+        const cl=cid?clients.find(c=>c.id===cid):null;
+        return{...m,clientName:cl?cl.name:"—",clientId:cid};
+      });
+      setAllMeets(enriched);
+      if(initial) setLoading(false);
+    };
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
+  },[clients]);
 
-// ── ALL MEETINGS (uses global polling data) ──────────────────────────────────
-function AllMeetings({meetings,clientMap,openClient}){
-  const pendentes=meetings.filter(m=>m.status==="pendente");
+  const pendentes=allMeets.filter(m=>m.status==="pendente");
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{meetings.length} reuniões · {pendentes.length} pendentes</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{allMeets.length} reuniões · {pendentes.length} pendentes</p></div></div>
       {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
       <div className="card cp">
-        {!meetings.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
-        {meetings.map(m=>{const d=new Date((m.date||"")+"T12:00:00");const cName=clientMap[m.client_id]||"Cliente";return(
-          <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)",cursor:"pointer"}} onClick={()=>openClient(m.client_id)}>
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando reuniões…</span></div>}
+        {!loading&&!allMeets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
+        {!loading&&allMeets.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
+          <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)"}}>
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 <strong>{cName}</strong> · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
               {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
             </div>
             <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
@@ -1226,7 +1140,134 @@ function AllMeetings({meetings,clientMap,openClient}){
   );
 }
 
-// ── APP (with 5s polling for notifications) ──────────────────────────────────
+// ── ALL DOCUMENTS ────────────────────────────────────────────────────────────
+function AllDocuments({clients,showToast,openClient}){
+  const [allDocs,setAllDocs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [filter,setFilter]=useState("todos");
+  const procMap=useRef({});
+
+  useEffect(()=>{
+    const load=async(initial)=>{
+      if(initial) setLoading(true);
+      const docs=await api.get("documents","?order=created_at.desc&limit=500");
+      if(!docs||docs.error){if(initial)setLoading(false);return;}
+      const unknown=[...new Set(docs.map(d=>d.process_id).filter(id=>id&&!procMap.current[id]))];
+      if(unknown.length>0){
+        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
+        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
+      }
+      const enriched=docs.map(d=>{
+        const cid=procMap.current[d.process_id]||null;
+        const cl=cid?clients.find(c=>c.id===cid):null;
+        return{...d,clientName:cl?cl.name:"—",clientId:cid};
+      });
+      setAllDocs(enriched);
+      if(initial) setLoading(false);
+    };
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
+  },[clients]);
+
+  const filtered=filter==="todos"?allDocs:filter==="cliente"?allDocs.filter(d=>d.uploaded_by==="cliente"):allDocs.filter(d=>d.uploaded_by==="advogado");
+  const aguardando=allDocs.filter(d=>d.uploaded_by==="cliente"&&d.status==="aguardando").length;
+
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos · {aguardando} aguardando revisão</p></div></div>
+      {aguardando>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {aguardando} documento(s) enviados por clientes aguardando revisão</div></div>}
+      <div style={{display:"flex",gap:".5rem",marginBottom:"1.25rem"}}>
+        {["todos","cliente","advogado"].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)} className={`btn${filter===f?" btn-dk":" btn-gh"}`} style={{padding:".5rem 1rem",fontSize:".8rem"}}>
+            {f==="todos"?"📋 Todos":f==="cliente"?"👤 Do Cliente":"⚖️ Do Advogado"}
+          </button>
+        ))}
+      </div>
+      <div className="card cp">
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando documentos…</span></div>}
+        {!loading&&!filtered.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento encontrado.</p>}
+        {!loading&&filtered.map(d=>(
+          <div key={d.id} className="mcard" style={{borderColor:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fcd34d":"var(--bo)",background:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fffbf0":"var(--bg)"}}>
+            <div className="mdb" style={{background:d.uploaded_by==="cliente"?"#dbeafe":"#f0fdf4",borderColor:d.uploaded_by==="cliente"?"#93c5fd":"#86efac"}}>
+              <div className="day" style={{fontSize:"1.2rem"}}>📄</div>
+              <div className="mon">{d.uploaded_by==="cliente"?"CLI":"ADV"}</div>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontWeight:600,fontSize:".9rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} · 📦 {d.size} · 📅 {d.date}</div>
+            </div>
+            <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"👤 Cliente":"⚖️ Advogado"}</span>
+            {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── ALL CHATS ────────────────────────────────────────────────────────────────
+function AllChats({clients,openClient,showToast}){
+  const [allMsgs,setAllMsgs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const procMap=useRef({});
+
+  useEffect(()=>{
+    const load=async(initial)=>{
+      if(initial) setLoading(true);
+      const msgs=await api.get("messages","?from_role=eq.client&order=created_at.desc&limit=200");
+      if(!msgs||msgs.error){if(initial)setLoading(false);return;}
+      const unknown=[...new Set(msgs.map(m=>m.process_id).filter(id=>id&&!procMap.current[id]))];
+      if(unknown.length>0){
+        const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
+        if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
+      }
+      // Group by client — show latest message per client
+      const byClient={};
+      msgs.forEach(m=>{
+        const cid=procMap.current[m.process_id]||null;
+        if(cid&&!byClient[cid]) byClient[cid]=m;
+      });
+      const grouped=Object.entries(byClient).map(([cid,m])=>{
+        const cl=clients.find(c=>c.id===cid);
+        return{...m,clientName:cl?cl.name:"—",clientId:cid};
+      }).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
+      setAllMsgs(grouped);
+      if(initial) setLoading(false);
+    };
+    load(true);
+    const iv=setInterval(()=>load(false),10000);
+    return()=>clearInterval(iv);
+  },[clients]);
+
+  return(
+    <div>
+      <div className="tb"><div><h1 className="pt">Mensagens de Clientes</h1><p className="ps">{allMsgs.length} conversa(s) com mensagens recentes</p></div></div>
+      <div className="card cp">
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando mensagens…</span></div>}
+        {!loading&&!allMsgs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma mensagem de clientes ainda.</p>}
+        {!loading&&allMsgs.map(m=>(
+          <div className="mcard" key={m.id} style={{cursor:"pointer"}} onClick={()=>openClient&&openClient(m.clientId)}>
+            <div className="mdb" style={{background:"#dbeafe",borderColor:"#93c5fd"}}>
+              <div className="day" style={{fontSize:"1.2rem"}}>💬</div>
+              <div className="mon">MSG</div>
+            </div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <strong style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline",fontSize:".9rem"}}>{m.clientName}</strong>
+              </div>
+              <div style={{fontSize:".82rem",color:"var(--mu)",marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>"{m.text}"</div>
+              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>📅 {fmtd(m.created_at)} · ⏰ {fmtt(m.created_at)}</div>
+            </div>
+            <span className="bd ba">Abrir Chat →</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
 export default function App(){
   const [auth,setAuth]=useState(false);
   const [tab,setTab]=useState("dash");
@@ -1234,112 +1275,96 @@ export default function App(){
   const [loading,setLoading]=useState(false);
   const [openC,setOpenC]=useState(null);
   const [toast,setToast]=useState(null);
-  const [sideOpen,setSideOpen]=useState(false);
-  // ── GLOBAL POLLING STATE — fetched directly from Supabase every 5s ──
-  const [gDocs,setGDocs]=useState([]);       // all documents
-  const [gMsgs,setGMsgs]=useState([]);       // all messages
-  const [gMeets,setGMeets]=useState([]);     // all meetings
-  // ── "Last seen" timestamps — persisted in localStorage ──
-  const getLS=(k,def)=>{try{return localStorage.getItem(k)||def}catch{return def}};
-  const [lastSeenDocs,setLastSeenDocs]=useState(()=>getLS("bl_seen_docs",""));
-  const [lastSeenMsgs,setLastSeenMsgs]=useState(()=>getLS("bl_seen_msgs",""));
-  const [lastSeenMeets,setLastSeenMeets]=useState(()=>getLS("bl_seen_meets",""));
-  // ── client_id → client_name map for display ──
-  const [clientMap,setClientMap]=useState({});
-  // ── process_id → client_id map for joins ──
-  const [procMap,setProcMap]=useState({});
-
   const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),3500);};
-  const pollRef=useRef(null);
 
-  // ── Load clients (once at login) ──
   const loadClients=async()=>{
     setLoading(true);
     try{
+      // Supabase limit is now 10000 — single query gets all clients
       const allClients=await api.get("clients","?order=created_at.desc&limit=10000");
       if(!allClients||allClients.error){showToast("Erro ao carregar clientes.");setLoading(false);return;}
-      // Build client_id → name map
-      const cMap={};
-      allClients.forEach(c=>{cMap[c.id]=c.name;});
-      setClientMap(cMap);
+      // Set clients immediately so count shows
       setClients(allClients.map(c=>({...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]})));
-      // Enrich first 200 with process data
-      const procs=await api.get("processes","?limit=10000&select=id,client_id,number,type,status,current_step,opened_at,last_update,lawyer,arquivo,submissao_irn,artigo");
-      const pMap={};
-      if(Array.isArray(procs)) procs.forEach(p=>{pMap[p.id]=p.client_id;});
-      setProcMap(pMap);
-      const procByClient={};
-      if(Array.isArray(procs)) procs.forEach(p=>{if(!procByClient[p.client_id])procByClient[p.client_id]=p;});
-      setClients(allClients.map(c=>({...c,proc:procByClient[c.id]||null,steps:[],docs:[],msgs:[],meetings:[]})));
-      // Run first poll immediately
-      await pollNotifications(pMap,cMap);
-    }catch(e){console.error("Load error:",e);showToast("Erro ao carregar dados. Tente novamente.");}
+      // Then enrich first 200 with process data in background
+      const enriched=await Promise.all(allClients.map(async(c,i)=>{
+        if(i>=200) return{...c,proc:null,steps:[],docs:[],msgs:[],meetings:[]};
+        const procs=await api.get("processes",`?client_id=eq.${c.id}&limit=1`);
+        const proc=procs[0]||null;
+        return{...c,proc,steps:[],docs:[],msgs:[],meetings:[]};
+      }));
+      setClients(enriched);
+    }catch(e){showToast("Erro ao carregar dados: "+e.message);}
     setLoading(false);
   };
 
-  // ── POLLING: fetch docs, msgs, meetings directly from Supabase ──
-  const pollNotifications=async(pMapArg,cMapArg)=>{
-    const pm=pMapArg||procMap;
-    const cm=cMapArg||clientMap;
-    try{
-      const [docs,msgs,meets]=await Promise.all([
-        api.get("documents","?order=created_at.desc&limit=500"),
-        api.get("messages","?order=created_at.desc&limit=500"),
-        api.get("meetings","?order=created_at.desc&limit=500"),
-      ]);
-      // Attach client_id via process_id → client_id map
-      const enrich=(arr)=>(Array.isArray(arr)?arr:[]).map(item=>({...item,client_id:pm[item.process_id]||null}));
-      setGDocs(enrich(docs));
-      setGMsgs(enrich(msgs));
-      setGMeets(enrich(meets));
-    }catch(e){console.error("Poll error:",e);}
-  };
-
-  // ── Start/stop polling on auth change ──
-  useEffect(()=>{
-    if(auth){
-      pollRef.current=setInterval(()=>pollNotifications(),5000);
-      return()=>clearInterval(pollRef.current);
-    }else{
-      if(pollRef.current)clearInterval(pollRef.current);
-    }
-  },[auth,procMap,clientMap]);
+  const [newDocs,setNewDocs]=useState(0);
+  const [pendentes,setPendentes]=useState(0);
+  const [newMsgs,setNewMsgs]=useState(0);
+  const lastDocCheck=useRef(null);
+  const lastMsgCheck=useRef(null);
 
   const onLogin=()=>{setAuth(true);loadClients();};
 
-  // ── Compute badges from GLOBAL polling data (only items NEWER than last seen) ──
-  const newClientDocs=gDocs.filter(d=>d.uploaded_by==="cliente"&&(!lastSeenDocs||d.created_at>lastSeenDocs));
-  const newClientMsgs=gMsgs.filter(m=>m.from_role==="client"&&(!lastSeenMsgs||m.created_at>lastSeenMsgs));
-  const pendingMeets=gMeets.filter(m=>m.status==="pendente"&&(!lastSeenMeets||m.created_at>lastSeenMeets));
+  // Poll for new client documents every 10s
+  useEffect(()=>{
+    if(!auth) return;
+    const check=async()=>{
+      const since=lastDocCheck.current||new Date().toISOString();
+      const recent=await api.get("documents",`?uploaded_by=eq.cliente&created_at=gt.${since}&order=created_at.desc`);
+      if(recent&&recent.length>0){
+        setNewDocs(n=>n+recent.length);
+        const last=recent[0];
+        const cl=clients.find(c=>c.proc&&c.proc.id===last.process_id);
+        showToast(`📄 Novo documento de ${cl?cl.name:"cliente"}: "${last.name}"`);
+      }
+      lastDocCheck.current=new Date().toISOString();
+    };
+    lastDocCheck.current=new Date().toISOString();
+    const iv=setInterval(check,10000);
+    return()=>clearInterval(iv);
+  },[auth,clients]);
 
-  // ── Delete document from global view ──
-  const deleteDocGlobal=async(d)=>{
-    if(!confirm(`Apagar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
-    if(d.storage_path){
-      await fetch(`${SUPA_URL}/storage/v1/object/documentos/${d.storage_path}`,{method:"DELETE",headers:{apikey:SUPA_KEY,Authorization:`Bearer ${SUPA_KEY}`}}).catch(()=>{});
-    }
-    await api.del("documents",d.id);
-    setGDocs(ds=>ds.filter(x=>x.id!==d.id));
-    showToast(`"${d.name}" apagado!`);
-  };
+  // Poll for new client chat messages every 10s
+  useEffect(()=>{
+    if(!auth) return;
+    const check=async()=>{
+      const since=lastMsgCheck.current||new Date().toISOString();
+      const recent=await api.get("messages",`?from_role=eq.client&created_at=gt.${since}&order=created_at.desc`);
+      if(recent&&recent.length>0){
+        setNewMsgs(n=>n+recent.length);
+        showToast(`💬 ${recent.length} nova(s) mensagem(ns) de cliente(s)`);
+      }
+      lastMsgCheck.current=new Date().toISOString();
+    };
+    lastMsgCheck.current=new Date().toISOString();
+    const iv=setInterval(check,10000);
+    return()=>clearInterval(iv);
+  },[auth]);
 
-  // ── Clear badges when clicking sidebar — save timestamp to localStorage ──
-  const handleNav=(id)=>{
-    const now=new Date().toISOString();
-    try{
-      if(id==="documents"){localStorage.setItem("bl_seen_docs",now);setLastSeenDocs(now);}
-      if(id==="messages"){localStorage.setItem("bl_seen_msgs",now);setLastSeenMsgs(now);}
-      if(id==="meetings"){localStorage.setItem("bl_seen_meets",now);setLastSeenMeets(now);}
-    }catch{}
-    setTab(id);setOpenC(null);setSideOpen(false);
-  };
+  // Poll for pending meetings count every 10s (only update badge when NOT on meetings tab)
+  const seenMeetRef=useRef(0);
+  useEffect(()=>{
+    if(!auth) return;
+    const check=async()=>{
+      const r=await api.get("meetings","?status=eq.pendente&select=id");
+      if(r&&!r.error){
+        const total=r.length;
+        const newOnes=total-seenMeetRef.current;
+        if(tab!=="meetings") setPendentes(newOnes>0?newOnes:0);
+        else seenMeetRef.current=total;
+      }
+    };
+    check();
+    const iv=setInterval(check,10000);
+    return()=>clearInterval(iv);
+  },[auth,tab]);
 
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
-    {id:"documents",label:"Documentos",ic:"file",badge:newClientDocs.length||undefined},
-    {id:"messages",label:"Mensagens",ic:"send",badge:newClientMsgs.length||undefined},
-    {id:"meetings",label:"Reuniões",ic:"cal",badge:pendingMeets.length||undefined},
+    {id:"documents",label:"Documentos",ic:"file",badge:newDocs||undefined},
+    {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
+    {id:"chat",label:"Chat",ic:"chat",badge:newMsgs||undefined},
   ];
 
   if(!auth) return<><style>{css}</style><Login onLogin={onLogin}/></>;
@@ -1348,18 +1373,7 @@ export default function App(){
     <>
       <style>{css}</style>
       <div className="al">
-        {/* Hamburger button for mobile */}
-        <button className="ham" onClick={()=>setSideOpen(o=>!o)}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            {sideOpen
-              ?<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>
-              :<><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>
-            }
-          </svg>
-        </button>
-        {/* Mobile overlay */}
-        {sideOpen&&<div className="mob-ov" onClick={()=>setSideOpen(false)}/>}
-        <aside className={`sb${sideOpen?" open":""}`}>
+        <aside className="sb">
           <div className="sbb"><h2>Bono & Lacerda</h2><span>Painel Administrativo</span></div>
           <div className="sbw"><div className="av" style={{width:36,height:36,fontSize:".78rem"}}>RL</div>
             <div>
@@ -1369,22 +1383,22 @@ export default function App(){
           </div>
           <nav className="sbnv">
             {nav.map(n=>(
-              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>handleNav(n.id)}>
+              <div key={n.id} className={`ni${tab===n.id&&!openC?" on":""}`} onClick={()=>{setTab(n.id);setOpenC(null);if(n.id==="documents")setNewDocs(0);if(n.id==="meetings"){setPendentes(0);api.get("meetings","?status=eq.pendente&select=id").then(r=>{if(r&&!r.error)seenMeetRef.current=r.length;});}if(n.id==="chat")setNewMsgs(0);}}>
                 <Icon name={n.ic} size={16}/>{n.label}
                 {n.badge>0&&<span className="nbdg">{n.badge}</span>}
               </div>
             ))}
           </nav>
-          <div className="sbft"><button className="out" onClick={()=>{setAuth(false);setClients([]);setGDocs([]);setGMsgs([]);setGMeets([]);}}><Icon name="logout" size={15}/>Sair</button></div>
+          <div className="sbft"><button className="out" onClick={()=>{setAuth(false);setClients([]);}}><Icon name="logout" size={15}/>Sair</button></div>
         </aside>
         <main className="mc">
           {loading?<div className="ld"><Icon name="spin" size={28}/><span>Carregando {clients.length} clientes…</span></div>:
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
-          tab==="documents"?<AllDocuments docs={gDocs} clientMap={clientMap} openClient={id=>setOpenC(id)} onDelete={deleteDocGlobal}/>:
-          tab==="messages"?<AllMessages msgs={gMsgs} clientMap={clientMap} openClient={id=>setOpenC(id)}/>:
-          tab==="meetings"?<AllMeetings meetings={gMeets} clientMap={clientMap} openClient={id=>setOpenC(id)}/>:null}
+          tab==="documents"?<AllDocuments clients={clients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
+          tab==="meetings"?<AllMeetings clients={clients} openClient={id=>setOpenC(id)}/>:
+          tab==="chat"?<AllChats clients={clients} openClient={id=>setOpenC(id)} showToast={showToast}/>:null}
         </main>
       </div>
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
@@ -1415,12 +1429,10 @@ function ClaudeChat({ totalClients }) {
     try {
       const context = `És o assistente de IA do escritório de advocacia Bono & Lacerda Advogados, especializado em imigração e nacionalidade portuguesa. O sistema tem actualmente ${totalClients} clientes cadastrados. Responde sempre em português europeu, de forma profissional e concisa.`;
       const history = newMsgs.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text }));
-      const r = await fetch("https://api.anthropic.com/v1/messages", {
+      const r = await fetch("https://jrkreiidaxadwryjhdzu.supabase.co/functions/v1/claude-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
           system: context,
           messages: history,
         })
@@ -1437,9 +1449,9 @@ function ClaudeChat({ totalClients }) {
   return (
     <>
       <style>{`
-        .cl-btn { position:fixed; bottom:2rem; right:2rem; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#1d3557,#c9a84c); border:none; cursor:pointer; box-shadow:0 4px 20px rgba(15,30,53,.35); display:flex; align-items:center; justify-content:center; z-index:1000; transition:transform .2s; }
+        .cl-btn { position:fixed; bottom:2rem; left:2rem; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#1d3557,#c9a84c); border:none; cursor:pointer; box-shadow:0 4px 20px rgba(15,30,53,.35); display:flex; align-items:center; justify-content:center; z-index:1000; transition:transform .2s; }
         .cl-btn:hover { transform:scale(1.08); }
-        .cl-win { position:fixed; bottom:5.5rem; right:2rem; width:360px; max-height:520px; background:#fff; border-radius:20px; box-shadow:0 8px 40px rgba(15,30,53,.2); display:flex; flex-direction:column; z-index:1000; overflow:hidden; border:1px solid #e2ddd5; animation:up .2s ease; }
+        .cl-win { position:fixed; bottom:5.5rem; left:2rem; width:360px; max-height:520px; background:#fff; border-radius:20px; box-shadow:0 8px 40px rgba(15,30,53,.2); display:flex; flex-direction:column; z-index:1000; overflow:hidden; border:1px solid #e2ddd5; animation:up .2s ease; }
         .cl-hdr { background:linear-gradient(135deg,#0f1e35,#1d3557); padding:1rem 1.25rem; display:flex; align-items:center; gap:.75rem; }
         .cl-av  { width:36px; height:36px; border-radius:50%; background:rgba(201,168,76,.2); border:1px solid rgba(201,168,76,.4); display:flex; align-items:center; justify-content:center; font-size:.75rem; font-weight:700; color:#c9a84c; flex-shrink:0; }
         .cl-hdr-info h4 { color:#fff; font-size:.88rem; font-weight:600; }
@@ -1460,7 +1472,7 @@ function ClaudeChat({ totalClients }) {
         .cl-dot span:nth-child(2) { animation-delay:.15s; }
         .cl-dot span:nth-child(3) { animation-delay:.3s; }
         @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
-        @media(max-width:768px){ .cl-win{width:calc(100vw - 2rem);right:1rem;bottom:5rem;} .cl-btn{bottom:5rem;right:1rem;} }
+        @media(max-width:768px){ .cl-win{width:calc(100vw - 2rem);left:1rem;bottom:5rem;} .cl-btn{bottom:5rem;left:1rem;} }
       `}</style>
 
       {/* Toggle button */}
