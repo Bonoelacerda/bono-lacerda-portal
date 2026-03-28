@@ -1402,7 +1402,6 @@ export default function App(){
         </main>
       </div>
       {toast&&<Toast msg={toast} onClose={()=>setToast(null)}/>}
-      <ClaudeChat totalClients={clients.length}/>
     </>
   );
 }
