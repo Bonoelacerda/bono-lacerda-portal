@@ -198,7 +198,6 @@ function Login({onLogin}){
         <div className="lf"><label>Senha</label><input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
         <button className="abtn" onClick={go}>Entrar no Painel</button>
         {err&&<div className="aerr">{err}</div>}
-        <p className="hint">Demo: bonoelacerda@gmail.com / admin123</p>
       </div>
     </div>
   );
