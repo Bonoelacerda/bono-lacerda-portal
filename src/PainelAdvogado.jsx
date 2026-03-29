@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
+import { createClient } from '@supabase/supabase-js';
 
 const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
+const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 const api = {
   get:   (t, q="")  => fetch(`${SUPA_URL}/rest/v1/${t}${q}`, { headers: H }).then(r => r.json()),
@@ -32,7 +34,7 @@ const api = {
 
 const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const ini  = n => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
-const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
+const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "â";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", {hour:"2-digit",minute:"2-digit"}) : "";
 
 function Icon({ name, size=18 }) {
@@ -174,28 +176,28 @@ body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--tx);min-he
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--bo);border-radius:99px}
 `;
 
-function Toast({msg,onClose}){useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t)},[]);return<div className="toast">✓ {msg}</div>;}
-function Spin(){return<div className="ld"><Icon name="spin" size={28}/><span>Carregando…</span></div>;}
+function Toast({msg,onClose}){useEffect(()=>{const t=setTimeout(onClose,3500);return()=>clearTimeout(t)},[]);return<div className="toast">â {msg}</div>;}
+function Spin(){return<div className="ld"><Icon name="spin" size={28}/><span>Carregandoâ¦</span></div>;}
 function Av({name="",size=36}){return<div className="av" style={{width:size,height:size,fontSize:size*.22}}>{ini(name)}</div>;}
-function StatusBadge({s}){return s==="em_andamento"?<span className="bd ba">Em andamento</span>:s==="concluido"?<span className="bd bg">Concluído</span>:<span className="bd bgr">Aguardando</span>;}
+function StatusBadge({s}){return s==="em_andamento"?<span className="bd ba">Em andamento</span>:s==="concluido"?<span className="bd bg">ConcluÃ­do</span>:<span className="bd bgr">Aguardando</span>;}
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
+// ââ LOGIN âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Login({onLogin}){
   const [email,setEmail]=useState("");
   const [pass,setPass]=useState("");
   const [err,setErr]=useState("");
   const go=()=>{
     if(email==="bonoelacerda@gmail.com"&&pass==="admin123") onLogin();
-    else setErr("Credenciais inválidas.");
+    else setErr("Credenciais invÃ¡lidas.");
   };
   return(
     <div className="alog">
       <div className="alc">
         <span className="tag">Painel Administrativo</span>
         <h1>Bono & Lacerda</h1>
-        <p>Advocacia Internacional — Acesso restrito</p>
+        <p>Advocacia Internacional â Acesso restrito</p>
         <div className="lf"><label>E-mail</label><input type="email" placeholder="bonoelacerda@gmail.com" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
-        <div className="lf"><label>Senha</label><input type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
+        <div className="lf"><label>Senha</label><input type="password" placeholder="â¢â¢â¢â¢â¢â¢â¢â¢" value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&go()}/></div>
         <button className="abtn" onClick={go}>Entrar no Painel</button>
         {err&&<div className="aerr">{err}</div>}
       </div>
@@ -203,7 +205,7 @@ function Login({onLogin}){
   );
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+// ââ DASHBOARD âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Dash({ clients }) {
   const [calEvents, setCalEvents] = useState([]);
   const [ldCal, setLdCal]         = useState(true);
@@ -220,8 +222,8 @@ function Dash({ clients }) {
           body: JSON.stringify({
             model: "claude-sonnet-4-20250514",
             max_tokens: 800,
-            system: "Responde APENAS com JSON válido, sem texto adicional. Formato: {\"events\":[{\"title\":\"...\",\"date\":\"DD/MM\",\"time\":\"HH:MM\",\"day\":\"Seg/Ter/Qua/Qui/Sex/Sáb/Dom\"}]}",
-            messages:[{ role:"user", content:"Lista os próximos 5 eventos do calendário bonoelacerda@gmail.com esta semana em formato JSON." }]
+            system: "Responde APENAS com JSON vÃ¡lido, sem texto adicional. Formato: {\"events\":[{\"title\":\"...\",\"date\":\"DD/MM\",\"time\":\"HH:MM\",\"day\":\"Seg/Ter/Qua/Qui/Sex/SÃ¡b/Dom\"}]}",
+            messages:[{ role:"user", content:"Lista os prÃ³ximos 5 eventos do calendÃ¡rio bonoelacerda@gmail.com esta semana em formato JSON." }]
           })
         });
         const d = await r.json();
@@ -241,7 +243,7 @@ function Dash({ clients }) {
   const emAndamento = clients.filter(c => c.proc?.status === "em_andamento").length;
   const aguardando  = clients.filter(c => c.proc?.status === "aguardando").length;
   const porto       = clients.filter(c => c.proc?.arquivo?.includes("Porto")).length;
-  const crc         = clients.filter(c => c.proc?.arquivo?.includes("Conservatória")).length;
+  const crc         = clients.filter(c => c.proc?.arquivo?.includes("ConservatÃ³ria")).length;
   const reunPend    = clients.reduce((a,c) => a + (c.meetings||[]).filter(m => m.status==="pendente").length, 0);
 
   // Search
@@ -257,21 +259,21 @@ function Dash({ clients }) {
       <div className="tb">
         <div>
           <h1 className="pt">Painel Geral</h1>
-          <p className="ps">Bono & Lacerda Advogados — {new Date().toLocaleDateString("pt-BR", {weekday:"long", day:"numeric", month:"long"})}</p>
+          <p className="ps">Bono & Lacerda Advogados â {new Date().toLocaleDateString("pt-BR", {weekday:"long", day:"numeric", month:"long"})}</p>
         </div>
         <a href="https://calendar.google.com/calendar" target="_blank" rel="noreferrer"
           style={{display:"flex",alignItems:"center",gap:".4rem",background:"#fff",border:"1px solid var(--bo)",borderRadius:8,padding:".5rem .9rem",fontSize:".82rem",fontWeight:600,color:"var(--n)",textDecoration:"none"}}>
-          📅 Google Calendar
+          ð Google Calendar
         </a>
       </div>
 
-      {/* 1. KPIs REAIS ─────────────────────────────────────────────────────── */}
+      {/* 1. KPIs REAIS âââââââââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <div className="sg" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
         {[
-          ["👥 Total Clientes",  total,       `${comChave} com acesso`,         "#0f1e35"],
-          ["⚡ Em Andamento",    emAndamento, `${aguardando} aguardando docs`,   "#1d6b48"],
-          ["⚠️ Com Pendências",  pendentes,   "requerem atenção",               "#92400e"],
-          ["🔑 Sem Chave",       semChave,    "não podem aceder ao portal",      "#991b1b"],
+          ["ð¥ Total Clientes",  total,       `${comChave} com acesso`,         "#0f1e35"],
+          ["â¡ Em Andamento",    emAndamento, `${aguardando} aguardando docs`,   "#1d6b48"],
+          ["â ï¸ Com PendÃªncias",  pendentes,   "requerem atenÃ§Ã£o",               "#92400e"],
+          ["ð Sem Chave",       semChave,    "nÃ£o podem aceder ao portal",      "#991b1b"],
         ].map(([l,v,s,c]) => (
           <div className="st" key={l} style={{borderTop:`3px solid ${c}`}}>
             <div className="stl">{l}</div>
@@ -281,26 +283,26 @@ function Dash({ clients }) {
         ))}
       </div>
 
-      {/* Alert reuniões pendentes */}
+      {/* Alert reuniÃµes pendentes */}
       {reunPend > 0 && (
         <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem",display:"flex",gap:".75rem",alignItems:"center"}}>
-          <span style={{fontSize:"1.3rem"}}>📬</span>
+          <span style={{fontSize:"1.3rem"}}>ð¬</span>
           <div>
-            <div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>{reunPend} pedido(s) de reunião a aguardar confirmação</div>
-            <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Abra o cliente → aba Reuniões para confirmar</div>
+            <div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>{reunPend} pedido(s) de reuniÃ£o a aguardar confirmaÃ§Ã£o</div>
+            <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Abra o cliente â aba ReuniÃµes para confirmar</div>
           </div>
         </div>
       )}
 
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
 
-        {/* 2. BUSCA RÁPIDA ────────────────────────────────────────────────── */}
+        {/* 2. BUSCA RÃPIDA ââââââââââââââââââââââââââââââââââââââââââââââââââ */}
         <div className="card cp">
-          <div className="ct" style={{marginBottom:".75rem"}}>🔍 Busca Rápida de Cliente</div>
+          <div className="ct" style={{marginBottom:".75rem"}}>ð Busca RÃ¡pida de Cliente</div>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Nome ou chave de acesso…"
+            placeholder="Nome ou chave de acessoâ¦"
             style={{width:"100%",padding:".7rem 1rem",border:"1.5px solid var(--bo)",borderRadius:10,fontFamily:"inherit",fontSize:".88rem",outline:"none",marginBottom:".75rem"}}
           />
           {search.trim() && (
@@ -311,28 +313,28 @@ function Dash({ clients }) {
                   <Av name={c.name} size={34}/>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:600,fontSize:".85rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
-                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} · <StatusBadge s={c.proc?.status}/></div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} Â· <StatusBadge s={c.proc?.status}/></div>
                   </div>
-                  {c.pendencias && <span title={c.pendencias} style={{fontSize:"1rem"}}>⚠️</span>}
+                  {c.pendencias && <span title={c.pendencias} style={{fontSize:"1rem"}}>â ï¸</span>}
                 </div>
               ))
           )}
           {!search.trim() && (
             <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:".75rem"}}>
-              {total} clientes — comece a escrever para filtrar
+              {total} clientes â comece a escrever para filtrar
             </div>
           )}
         </div>
 
-        {/* 3. AGENDA DA SEMANA ─────────────────────────────────────────────── */}
+        {/* 3. AGENDA DA SEMANA âââââââââââââââââââââââââââââââââââââââââââââââ */}
         <div className="card cp">
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
-            <div className="ct" style={{margin:0}}>📅 Agenda desta semana</div>
+            <div className="ct" style={{margin:0}}>ð Agenda desta semana</div>
             <a href="https://calendar.google.com/calendar" target="_blank" rel="noreferrer"
-              style={{fontSize:".72rem",color:"var(--g)",textDecoration:"none",fontWeight:600}}>Ver tudo →</a>
+              style={{fontSize:".72rem",color:"var(--g)",textDecoration:"none",fontWeight:600}}>Ver tudo â</a>
           </div>
           {ldCal
-            ? <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:"1.5rem"}}>A carregar agenda…</div>
+            ? <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:"1.5rem"}}>A carregar agendaâ¦</div>
             : [
                 {title:"Marcelo",      date:"24/03",time:"13:30",day:"Seg"},
                 {title:"Keily",        date:"27/03",time:"18:00",day:"Qui"},
@@ -345,7 +347,7 @@ function Dash({ clients }) {
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:600,fontSize:".85rem"}}>{ev.title}</div>
-                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{ev.time} · {ev.date}</div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{ev.time} Â· {ev.date}</div>
                   </div>
                   <span style={{fontSize:".7rem",background:"var(--gd)",color:"var(--g)",border:"1px solid var(--g)",borderRadius:99,padding:".15rem .5rem",fontWeight:600}}>Confirmado</span>
                 </div>
@@ -356,16 +358,16 @@ function Dash({ clients }) {
 
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
 
-        {/* 4. DISTRIBUIÇÃO DOS PROCESSOS ─────────────────────────────────── */}
+        {/* 4. DISTRIBUIÃÃO DOS PROCESSOS âââââââââââââââââââââââââââââââââââ */}
         <div className="card cp">
-          <div className="ct" style={{marginBottom:"1rem"}}>📊 Distribuição dos Processos</div>
+          <div className="ct" style={{marginBottom:"1rem"}}>ð DistribuiÃ§Ã£o dos Processos</div>
 
           <div style={{marginBottom:"1rem"}}>
             <div style={{fontSize:".75rem",color:"var(--mu)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:".5rem"}}>Por local de processamento</div>
             {[
-              ["🏛️ Arquivo Central do Porto", porto,  "#0f1e35"],
-              ["🏛️ Conservatória Reg. Centrais", crc, "#b8860b"],
-              ["❓ Sem arquivo atribuído", total - porto - crc, "#999"],
+              ["ðï¸ Arquivo Central do Porto", porto,  "#0f1e35"],
+              ["ðï¸ ConservatÃ³ria Reg. Centrais", crc, "#b8860b"],
+              ["â Sem arquivo atribuÃ­do", total - porto - crc, "#999"],
             ].map(([l,v,c]) => v > 0 && (
               <div key={l} style={{marginBottom:".5rem"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:".78rem",marginBottom:3}}>
@@ -381,8 +383,8 @@ function Dash({ clients }) {
           <div>
             <div style={{fontSize:".75rem",color:"var(--mu)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:".5rem"}}>Por estado</div>
             {[
-              ["✅ Em andamento",  emAndamento, "#16a34a"],
-              ["⏳ Aguardando",    aguardando,  "#d97706"],
+              ["â Em andamento",  emAndamento, "#16a34a"],
+              ["â³ Aguardando",    aguardando,  "#d97706"],
             ].map(([l,v,c]) => (
               <div key={l} style={{marginBottom:".5rem"}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:".78rem",marginBottom:3}}>
@@ -397,9 +399,9 @@ function Dash({ clients }) {
 
           <div style={{marginTop:"1rem",paddingTop:"1rem",borderTop:"1px solid var(--bo)",display:"grid",gridTemplateColumns:"1fr 1fr",gap:".5rem"}}>
             {[
-              ["Art.º 6º n.º 7",         974+233],
-              ["Art.º 1º C/D",            43+26],
-              ["Art.º 6º n.º 1",          16],
+              ["Art.Âº 6Âº n.Âº 7",         974+233],
+              ["Art.Âº 1Âº C/D",            43+26],
+              ["Art.Âº 7Âº n.Âº 1",          16],
               ["Outros / Sem artigo",     total-974-233-43-26-16],
             ].map(([l,v]) => (
               <div key={l} style={{background:"var(--bg)",borderRadius:8,padding:".5rem .7rem",border:"1px solid var(--bo)"}}>
@@ -410,24 +412,24 @@ function Dash({ clients }) {
           </div>
         </div>
 
-        {/* 5. CLIENTES COM PENDÊNCIAS ─────────────────────────────────────── */}
+        {/* 5. CLIENTES COM PENDÃNCIAS âââââââââââââââââââââââââââââââââââââââ */}
         <div className="card cp">
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
-            <div className="ct" style={{margin:0}}>⚠️ Pendências Activas</div>
+            <div className="ct" style={{margin:0}}>â ï¸ PendÃªncias Activas</div>
             <span style={{background:"#fef3c7",color:"#92400e",border:"1px solid #fcd34d",borderRadius:99,fontSize:".7rem",fontWeight:700,padding:".15rem .6rem"}}>{pendentes} clientes</span>
           </div>
           <div style={{maxHeight:320,overflowY:"auto"}}>
             {comPendencias.length === 0
-              ? <div style={{color:"var(--mu)",fontSize:".85rem",textAlign:"center",padding:"2rem"}}>✅ Sem pendências activas</div>
+              ? <div style={{color:"var(--mu)",fontSize:".85rem",textAlign:"center",padding:"2rem"}}>â Sem pendÃªncias activas</div>
               : comPendencias.map(c => (
                 <div key={c.id} style={{padding:".65rem .75rem",borderRadius:10,border:"1px solid #fcd34d",background:"#fffbeb",marginBottom:".5rem"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:".5rem"}}>
                     <div style={{fontWeight:600,fontSize:".84rem",color:"var(--n)"}}>{c.name}</div>
-                    <span style={{fontSize:".68rem",color:"var(--mu)",flexShrink:0}}>{c.chave_acesso||"—"}</span>
+                    <span style={{fontSize:".68rem",color:"var(--mu)",flexShrink:0}}>{c.chave_acesso||"â"}</span>
                   </div>
                   <div style={{fontSize:".76rem",color:"#92400e",marginTop:3,lineHeight:1.4}}>{c.pendencias}</div>
                   {c.observacao && (
-                    <div style={{fontSize:".72rem",color:"#b45309",marginTop:2,fontStyle:"italic"}}>{c.observacao?.slice(0,80)}{c.observacao?.length>80?"…":""}</div>
+                    <div style={{fontSize:".72rem",color:"#b45309",marginTop:2,fontStyle:"italic"}}>{c.observacao?.slice(0,80)}{c.observacao?.length>80?"â¦":""}</div>
                   )}
                 </div>
               ))
@@ -435,7 +437,7 @@ function Dash({ clients }) {
           </div>
           {pendentes > 8 && (
             <div style={{textAlign:"center",marginTop:".5rem",fontSize:".78rem",color:"var(--mu)"}}>
-              + {pendentes - 8} outros clientes com pendências — use a busca para localizar
+              + {pendentes - 8} outros clientes com pendÃªncias â use a busca para localizar
             </div>
           )}
         </div>
@@ -444,87 +446,87 @@ function Dash({ clients }) {
   );
 }
 
-// ── WHATSAPP NOTIFY ───────────────────────────────────────────────────────────
+// ââ WHATSAPP NOTIFY âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const WA_TEMPLATES = [
   {
     id: "acesso",
-    label: "🔑 Enviar Acesso ao Portal",
-    icon: "🔑",
+    label: "ð Enviar Acesso ao Portal",
+    icon: "ð",
     msg: (c) =>
-`Olá ${c.name.split(" ")[0]}! 👋
+`OlÃ¡ ${c.name.split(" ")[0]}! ð
 
-O escritório *Bono & Lacerda Advogados* criou o seu portal exclusivo para acompanhar o seu processo de Nacionalidade Portuguesa.
+O escritÃ³rio *Bono & Lacerda Advogados* criou o seu portal exclusivo para acompanhar o seu processo de Nacionalidade Portuguesa.
 
-🔗 *Acesse agora:* bono-lacerda-portal.vercel.app
-🔑 *Chave de acesso:* ${c.chave_acesso || "—"}
+ð *Acesse agora:* bono-lacerda-portal.vercel.app
+ð *Chave de acesso:* ${c.chave_acesso || "â"}
 
-No portal pode acompanhar o estado do seu processo em tempo real, enviar documentos, agendar reuniões e enviar mensagens directamente para a equipa.
+No portal pode acompanhar o estado do seu processo em tempo real, enviar documentos, agendar reuniÃµes e enviar mensagens directamente para a equipa.
 
-Qualquer dúvida estamos disponíveis! 😊
+Qualquer dÃºvida estamos disponÃ­veis! ð
 *Bono & Lacerda Advogados*
-📞 +351 21 793 1934`
+ð +351 21 793 1934`
   },
   {
     id: "atualizacao",
-    label: "📋 Actualização do Processo",
-    icon: "📋",
+    label: "ð ActualizaÃ§Ã£o do Processo",
+    icon: "ð",
     msg: (c, proc) =>
-`Olá ${c.name.split(" ")[0]}! 👋
+`OlÃ¡ ${c.name.split(" ")[0]}! ð
 
-Temos uma actualização sobre o seu processo de Nacionalidade Portuguesa.
+Temos uma actualizaÃ§Ã£o sobre o seu processo de Nacionalidade Portuguesa.
 
-📌 *Estado actual:* ${proc?.status === "em_andamento" ? "Em andamento ✅" : proc?.status === "aguardando" ? "Aguardando documentos ⚠️" : "Concluído 🎉"}
-🏛️ *Local:* ${proc?.arquivo || "IRN"}
-📅 *Última atualização:* ${proc?.last_update ? new Date(proc.last_update).toLocaleDateString("pt-BR") : "—"}
+ð *Estado actual:* ${proc?.status === "em_andamento" ? "Em andamento â" : proc?.status === "aguardando" ? "Aguardando documentos â ï¸" : "ConcluÃ­do ð"}
+ðï¸ *Local:* ${proc?.arquivo || "IRN"}
+ð *Ãltima atualizaÃ§Ã£o:* ${proc?.last_update ? new Date(proc.last_update).toLocaleDateString("pt-BR") : "â"}
 
 Para mais detalhes aceda ao portal:
-🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || "—"}
+ð bono-lacerda-portal.vercel.app
+ð Chave: ${c.chave_acesso || "â"}
 
 *Bono & Lacerda Advogados*
-📞 +351 21 793 1934`
+ð +351 21 793 1934`
   },
   {
     id: "pendencia",
-    label: "⚠️ Pendência Identificada",
-    icon: "⚠️",
+    label: "â ï¸ PendÃªncia Identificada",
+    icon: "â ï¸",
     msg: (c) =>
-`Olá ${c.name.split(" ")[0]}! 👋
+`OlÃ¡ ${c.name.split(" ")[0]}! ð
 
-Identificámos uma pendência no seu processo que requer a sua atenção:
+IdentificÃ¡mos uma pendÃªncia no seu processo que requer a sua atenÃ§Ã£o:
 
-⚠️ *Pendência:* ${c.pendencias || "Documentação em falta"}
-${c.observacao ? `📝 *Detalhe:* ${c.observacao}` : ""}
+â ï¸ *PendÃªncia:* ${c.pendencias || "DocumentaÃ§Ã£o em falta"}
+${c.observacao ? `ð *Detalhe:* ${c.observacao}` : ""}
 
-Por favor envie os documentos necessários o mais breve possível para evitar atrasos no seu processo.
+Por favor envie os documentos necessÃ¡rios o mais breve possÃ­vel para evitar atrasos no seu processo.
 
-Pode enviá-los directamente pelo portal:
-🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || "—"}
+Pode enviÃ¡-los directamente pelo portal:
+ð bono-lacerda-portal.vercel.app
+ð Chave: ${c.chave_acesso || "â"}
 
 *Bono & Lacerda Advogados*
-📞 +351 21 793 1934`
+ð +351 21 793 1934`
   },
   {
     id: "reuniao",
-    label: "📅 Confirmar Reunião",
-    icon: "📅",
+    label: "ð Confirmar ReuniÃ£o",
+    icon: "ð",
     msg: (c) =>
-`Olá ${c.name.split(" ")[0]}! 👋
+`OlÃ¡ ${c.name.split(" ")[0]}! ð
 
-A sua reunião com o escritório Bono & Lacerda foi confirmada. 🎉
+A sua reuniÃ£o com o escritÃ³rio Bono & Lacerda foi confirmada. ð
 
 Consulte os detalhes no portal:
-🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || "—"}
+ð bono-lacerda-portal.vercel.app
+ð Chave: ${c.chave_acesso || "â"}
 
 *Bono & Lacerda Advogados*
-📞 +351 21 793 1934`
+ð +351 21 793 1934`
   },
   {
     id: "custom",
-    label: "✏️ Mensagem Personalizada",
-    icon: "✏️",
+    label: "âï¸ Mensagem Personalizada",
+    icon: "âï¸",
     msg: () => ""
   },
 ];
@@ -542,11 +544,11 @@ function WhatsAppNotify({ client, proc, showToast }) {
 
   const sendWhatsApp = () => {
     const num = phone.replace(/\D/g, "");
-    if (!num) { showToast("⚠️ Número de telefone em falta!"); return; }
+    if (!num) { showToast("â ï¸ NÃºmero de telefone em falta!"); return; }
     const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");
     setOpen(false);
-    showToast("✅ WhatsApp aberto!");
+    showToast("â WhatsApp aberto!");
   };
 
   return (
@@ -570,16 +572,16 @@ function WhatsAppNotify({ client, proc, showToast }) {
             {/* Header */}
             <div style={{background:"#25D366",padding:"1.25rem 1.5rem",borderRadius:"20px 20px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div>
-                <div style={{color:"#fff",fontWeight:700,fontSize:"1rem"}}>💬 Notificação WhatsApp</div>
+                <div style={{color:"#fff",fontWeight:700,fontSize:"1rem"}}>ð¬ NotificaÃ§Ã£o WhatsApp</div>
                 <div style={{color:"rgba(255,255,255,.8)",fontSize:".78rem",marginTop:2}}>{client.name}</div>
               </div>
-              <button onClick={() => setOpen(false)} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:"1.4rem",lineHeight:1}}>×</button>
+              <button onClick={() => setOpen(false)} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",fontSize:"1.4rem",lineHeight:1}}>Ã</button>
             </div>
 
             <div style={{padding:"1.25rem 1.5rem"}}>
               {/* Phone */}
               <div style={{marginBottom:"1rem"}}>
-                <label style={{display:"block",fontSize:".75rem",fontWeight:600,color:"#666",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>Número WhatsApp</label>
+                <label style={{display:"block",fontSize:".75rem",fontWeight:600,color:"#666",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>NÃºmero WhatsApp</label>
                 <input
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
@@ -610,7 +612,7 @@ function WhatsAppNotify({ client, proc, showToast }) {
               {sel && (
                 <div style={{marginBottom:"1rem"}}>
                   <label style={{display:"block",fontSize:".75rem",fontWeight:600,color:"#666",textTransform:"uppercase",letterSpacing:".06em",marginBottom:6}}>
-                    Mensagem {sel==="custom"?"(personalize abaixo)":"(editável)"}
+                    Mensagem {sel==="custom"?"(personalize abaixo)":"(editÃ¡vel)"}
                   </label>
                   <textarea
                     value={msg}
@@ -655,17 +657,17 @@ function WhatsAppNotify({ client, proc, showToast }) {
   );
 }
 
-// ── CONTACT CARD (editable) ──────────────────────────────────────────────────
+// ââ CONTACT CARD (editable) ââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ContactCard({client, setClients, showToast}){
   const fields = [
-    {key:"email",    label:"📧 Email",         type:"email"},
-    {key:"phone",    label:"📞 Telefone",      type:"tel"},
-    {key:"whatsapp", label:"💬 WhatsApp",      type:"tel"},
-    {key:"address",  label:"🏠 Morada",        type:"text"},
-    {key:"city",     label:"🏙️ Cidade",        type:"text"},
-    {key:"state",    label:"📍 Região",        type:"text"},
-    {key:"zip",      label:"📮 Código Postal", type:"text"},
-    {key:"country",  label:"🌍 País",          type:"text"},
+    {key:"email",    label:"ð§ Email",         type:"email"},
+    {key:"phone",    label:"ð Telefone",      type:"tel"},
+    {key:"whatsapp", label:"ð¬ WhatsApp",      type:"tel"},
+    {key:"address",  label:"ð  Morada",        type:"text"},
+    {key:"city",     label:"ðï¸ Cidade",        type:"text"},
+    {key:"state",    label:"ð RegiÃ£o",        type:"text"},
+    {key:"zip",      label:"ð® CÃ³digo Postal", type:"text"},
+    {key:"country",  label:"ð PaÃ­s",          type:"text"},
   ];
   const [form, setForm] = useState(()=>{
     const o = {};
@@ -680,7 +682,7 @@ function ContactCard({client, setClients, showToast}){
     const r = await api.patch("clients", client.id, form);
     if(r && r[0]){
       setClients(cs => cs.map(c => c.id === client.id ? {...c, ...form} : c));
-      showToast("✅ Dados de contacto actualizados!");
+      showToast("â Dados de contacto actualizados!");
       setEditing(false);
     } else {
       showToast("Erro ao guardar. Tente novamente.");
@@ -696,12 +698,12 @@ function ContactCard({client, setClients, showToast}){
   return (
     <div className="card cp" style={{marginBottom:"1.25rem"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
-        <div className="ct" style={{margin:0,fontSize:"1rem"}}>📇 Dados de Contacto</div>
+        <div className="ct" style={{margin:0,fontSize:"1rem"}}>ð Dados de Contacto</div>
         {!editing
-          ? <button className="btn btn-gh" style={{fontSize:".75rem",padding:".35rem .8rem"}} onClick={()=>setEditing(true)}>✏️ Editar</button>
+          ? <button className="btn btn-gh" style={{fontSize:".75rem",padding:".35rem .8rem"}} onClick={()=>setEditing(true)}>âï¸ Editar</button>
           : <div style={{display:"flex",gap:".5rem"}}>
               <button className="btn btn-gh" style={{fontSize:".75rem",padding:".35rem .8rem"}} onClick={()=>{setEditing(false);const o={};fields.forEach(f=>o[f.key]=client[f.key]||"");setForm(o);}}>Cancelar</button>
-              <button className="btn btn-dk" style={{fontSize:".75rem",padding:".35rem .8rem"}} onClick={save} disabled={saving}>{saving?"A guardar…":"💾 Guardar"}</button>
+              <button className="btn btn-dk" style={{fontSize:".75rem",padding:".35rem .8rem"}} onClick={save} disabled={saving}>{saving?"A guardarâ¦":"ð¾ Guardar"}</button>
             </div>
         }
       </div>
@@ -710,8 +712,8 @@ function ContactCard({client, setClients, showToast}){
           <div key={f.key}>
             <div style={{fontSize:".68rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:4}}>{f.label}</div>
             {editing
-              ? <input type={f.type} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))} style={inputStyle} placeholder="—"/>
-              : <div style={{fontWeight:500,fontSize:".85rem",color:form[f.key]?"var(--tx)":"var(--mu)",minHeight:"1.5rem"}}>{form[f.key] || "—"}</div>
+              ? <input type={f.type} value={form[f.key]} onChange={e=>setForm(p=>({...p,[f.key]:e.target.value}))} style={inputStyle} placeholder="â"/>
+              : <div style={{fontWeight:500,fontSize:".85rem",color:form[f.key]?"var(--tx)":"var(--mu)",minHeight:"1.5rem"}}>{form[f.key] || "â"}</div>
             }
           </div>
         ))}
@@ -720,7 +722,7 @@ function ContactCard({client, setClients, showToast}){
   );
 }
 
-// ── CLIENT DETAIL ─────────────────────────────────────────────────────────────
+// ââ CLIENT DETAIL âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Detail({cid,clients,setClients,showToast,onBack}){
   const client=clients.find(c=>c.id===cid);
   const [tab,setTab]=useState("processo");
@@ -736,9 +738,10 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   const fileRef=useRef(); const botRef=useRef();
   useEffect(()=>{botRef.current?.scrollIntoView({behavior:"smooth"})},[msgs]);
 
-  // Load full data when client is opened
+  // Load full data when client is opened â Realtime (sem polling)
   useEffect(()=>{
     if(!client) return;
+    let channel=null;
     const load=async(initial)=>{
       if(initial) setLdData(true);
       const procs=await api.get("processes",`?client_id=eq.${client.id}&limit=1`);
@@ -755,12 +758,18 @@ function Detail({cid,clients,setClients,showToast,onBack}){
         if(mm&&!mm.error) setMsgs(mm);
         if(mt&&!mt.error) setMeets(mt);
         setClients(cs=>cs.map(c=>c.id===client.id?{...c,proc,steps:ss,docs:dd,msgs:mm,meetings:mt}:c));
+        if(initial&&!channel){
+          channel=supabase.channel(`detail-${proc.id}`)
+            .on('postgres_changes',{event:'*',schema:'public',table:'messages',filter:`process_id=eq.${proc.id}`},()=>load(false))
+            .on('postgres_changes',{event:'*',schema:'public',table:'documents',filter:`process_id=eq.${proc.id}`},()=>load(false))
+            .on('postgres_changes',{event:'*',schema:'public',table:'meetings',filter:`process_id=eq.${proc.id}`},()=>load(false))
+            .subscribe();
+        }
       }
       if(initial) setLdData(false);
     };
     load(true);
-    const iv=setInterval(()=>load(false),10000);
-    return()=>clearInterval(iv);
+    return()=>{if(channel)supabase.removeChannel(channel);};
   },[cid]);
 
   if(!client) return null;
@@ -768,7 +777,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   const done=steps.filter(s=>s.done).length;
   const pct=steps.length?Math.round(done/steps.length*100):0;
 
-  if(ldData) return <div style={{marginTop:"4rem"}}><div className="ld"><Icon name="spin" size={28}/><span>Carregando dados do cliente…</span></div></div>;
+  if(ldData) return <div style={{marginTop:"4rem"}}><div className="ld"><Icon name="spin" size={28}/><span>Carregando dados do clienteâ¦</span></div></div>;
 
   const toggleStep=async s=>{
     const r=await api.patch("process_steps",s.id,{done:!s.done});
@@ -787,8 +796,8 @@ function Detail({cid,clients,setClients,showToast,onBack}){
     const r=await api.post("meetings",{process_id:proc.id,...mf,status:"confirmado"});
     if(r[0]){
       setMeets(m=>[...m,r[0]]);
-      await api.post("notifications",{client_id:client.id,text:`Reunião agendada para ${mf.date.split("-").reverse().join("/")} às ${mf.time}. Tipo: ${mf.type}.`,icon:"📅",read:false});
-      showToast("Reunião agendada!");
+      await api.post("notifications",{client_id:client.id,text:`ReuniÃ£o agendada para ${mf.date.split("-").reverse().join("/")} Ã s ${mf.time}. Tipo: ${mf.type}.`,icon:"ð",read:false});
+      showToast("ReuniÃ£o agendada!");
     }
     setSaving(false); setShowMtg(false); setMf({title:"",date:"",time:"10:00",type:"presencial",notes:""});
   };
@@ -799,28 +808,28 @@ function Detail({cid,clients,setClients,showToast,onBack}){
     setMeets(ms=>ms.map(x=>x.id===m.id?updated:x));
     // Update global clients state so badge updates too
     setClients(cs=>cs.map(c=>c.id===client.id?{...c,meetings:(c.meetings||[]).map(x=>x.id===m.id?updated:x)}:c));
-    await api.post("notifications",{client_id:client.id,text:`Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}.`,icon:"✅",read:false});
+    await api.post("notifications",{client_id:client.id,text:`ReuniÃ£o confirmada para ${m.date.split("-").reverse().join("/")} Ã s ${m.time}.`,icon:"â",read:false});
     // Ask Claude to create the Google Calendar event
-    const msg = `Cria um evento no Google Calendar (bonoelacerda@gmail.com): Título: "📅 ${m.title} — ${client.name}", Data: ${m.date}T${m.time}:00, fuso horário Europe/Lisbon, duração 1 hora, descrição: "Cliente: ${client.name}\\nTipo: ${m.type}${m.notes?"\\nNotas: "+m.notes:""}", lembrete 30min popup e 60min email.`;
+    const msg = `Cria um evento no Google Calendar (bonoelacerda@gmail.com): TÃ­tulo: "ð ${m.title} â ${client.name}", Data: ${m.date}T${m.time}:00, fuso horÃ¡rio Europe/Lisbon, duraÃ§Ã£o 1 hora, descriÃ§Ã£o: "Cliente: ${client.name}\\nTipo: ${m.type}${m.notes?"\\nNotas: "+m.notes:""}", lembrete 30min popup e 60min email.`;
     if(window.sendPrompt) window.sendPrompt(msg);
-    showToast("✅ Reunião confirmada!");
+    showToast("â ReuniÃ£o confirmada!");
   };
-  const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("Reunião removida.");};
+  const delMeeting=async id=>{await api.del("meetings",id);setMeets(m=>m.filter(x=>x.id!==id));showToast("ReuniÃ£o removida.");};
   const uploadDoc=async f=>{
     if(!f) return;
-    if(!proc){showToast("Erro: processo não encontrado. Recarregue a página.");return;}
-    if(f.size>20*1024*1024){showToast("Ficheiro demasiado grande. Máximo 20 MB.");return;}
+    if(!proc){showToast("Erro: processo nÃ£o encontrado. Recarregue a pÃ¡gina.");return;}
+    if(f.size>20*1024*1024){showToast("Ficheiro demasiado grande. MÃ¡ximo 20 MB.");return;}
     const path=`${proc.id}/${Date.now()}_${f.name}`;
     try{
       const ok=await api.upload(path,f);
       if(!ok){showToast("Erro ao enviar ficheiro. Verifique o formato e tente novamente.");return;}
-      const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponível",uploaded_by:"advogado",storage_path:path});
+      const r=await api.post("documents",{process_id:proc.id,name:f.name,size:`${(f.size/1024).toFixed(0)} KB`,date:new Date().toISOString().split("T")[0],status:"disponÃ­vel",uploaded_by:"advogado",storage_path:path});
       if(r&&r[0]){setDocs(d=>[r[0],...d]);showToast(`"${f.name}" adicionado!`);}
       else{showToast("Ficheiro enviado mas erro ao registar. Tente novamente.");}
-    }catch(e){console.error("Upload exception:",e);showToast("Erro de conexão ao enviar ficheiro.");}
+    }catch(e){console.error("Upload exception:",e);showToast("Erro de conexÃ£o ao enviar ficheiro.");}
   };
   const delDoc=async d=>{
-    if(!confirm(`Eliminar "${d.name}"? Esta ação não pode ser desfeita.`)) return;
+    if(!confirm(`Eliminar "${d.name}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`)) return;
     try{
       if(d.storage_path){
         const safePath=d.storage_path.split("/").map(p=>encodeURIComponent(p)).join("/");
@@ -832,8 +841,8 @@ function Detail({cid,clients,setClients,showToast,onBack}){
     }catch(e){console.error("Delete error:",e);showToast("Erro ao eliminar documento.");}
   };
   const notify=async()=>{
-    await api.post("notifications",{client_id:client.id,text:"Nova atualização no seu processo. Acesse o portal para ver.",icon:"🔔",read:false});
-    showToast("Notificação enviada!");
+    await api.post("notifications",{client_id:client.id,text:"Nova atualizaÃ§Ã£o no seu processo. Acesse o portal para ver.",icon:"ð",read:false});
+    showToast("NotificaÃ§Ã£o enviada!");
   };
 
   const pendentes=meets.filter(m=>m.status==="pendente");
@@ -842,10 +851,10 @@ function Detail({cid,clients,setClients,showToast,onBack}){
     <div>
       <div className="tb">
         <div style={{display:"flex",alignItems:"center",gap:"1rem"}}>
-          <button className="btn btn-gh" onClick={onBack}>← Voltar</button>
+          <button className="btn btn-gh" onClick={onBack}>â Voltar</button>
           <Av name={client.name} size={44}/>
           <div><h1 className="pt" style={{fontSize:"1.6rem"}}>{client.name}</h1>
-          <p className="ps">{client.chave_acesso||client.email} · {client.whatsapp||client.phone||"—"}</p></div>
+          <p className="ps">{client.chave_acesso||client.email} Â· {client.whatsapp||client.phone||"â"}</p></div>
         </div>
         <div style={{display:"flex",gap:".6rem",alignItems:"center"}}>
           <StatusBadge s={proc?.status}/>
@@ -855,18 +864,18 @@ function Detail({cid,clients,setClients,showToast,onBack}){
 
       <div className="card cp" style={{marginBottom:"1.25rem",display:"flex",gap:"2rem",flexWrap:"wrap",alignItems:"center"}}>
         {[
-          ["Processo", proc?.number || client.chave_acesso || "—"],
-          ["Artigo",   client.artigo || proc?.type || "—"],
-          ["Protocolo",fmtd(proc?.opened_at) || "—"],
-          ["Submissão IRN", proc?.submissao_irn || "—"],
-          ["Local",    proc?.arquivo || "—"],
+          ["Processo", proc?.number || client.chave_acesso || "â"],
+          ["Artigo",   client.artigo || proc?.type || "â"],
+          ["Protocolo",fmtd(proc?.opened_at) || "â"],
+          ["SubmissÃ£o IRN", proc?.submissao_irn || "â"],
+          ["Local",    proc?.arquivo || "â"],
           ["Desde",    fmtd(client.since)],
         ].map(([k,v])=>(
           <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".85rem",maxWidth:220}}>{v}</div></div>
         ))}
         {client.pendencias&&(
           <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:8,padding:".6rem .9rem"}}>
-            <div style={{fontWeight:600,fontSize:".78rem",color:"#92400e"}}>⚠️ {client.pendencias}</div>
+            <div style={{fontWeight:600,fontSize:".78rem",color:"#92400e"}}>â ï¸ {client.pendencias}</div>
             {client.observacao&&<div style={{fontSize:".75rem",color:"#b45309",marginTop:2}}>{client.observacao}</div>}
           </div>
         )}
@@ -876,11 +885,11 @@ function Detail({cid,clients,setClients,showToast,onBack}){
         </div>
       </div>
 
-      {/* Dados de Contacto — editável pelo advogado */}
+      {/* Dados de Contacto â editÃ¡vel pelo advogado */}
       <ContactCard client={client} setClients={setClients} showToast={showToast}/>
 
       <div className="tabs">
-        {[["processo","Processo"],["documentos","Documentos"],["reunioes","Reuniões"+(pendentes.length?` (${pendentes.length})`:"")],["chat","Chat"]].map(([id,label])=>(
+        {[["processo","Processo"],["documentos","Documentos"],["reunioes","ReuniÃµes"+(pendentes.length?` (${pendentes.length})`:"")],["chat","Chat"]].map(([id,label])=>(
           <button key={id} className={`tab${tab===id?" on":""}`} onClick={()=>setTab(id)}>{label}</button>
         ))}
       </div>
@@ -888,12 +897,12 @@ function Detail({cid,clients,setClients,showToast,onBack}){
       {tab==="processo"&&(
         <div className="card cp">
           <div className="ct">Etapas do Processo</div>
-          <p style={{fontSize:".82rem",color:"var(--mu)",marginBottom:"1rem"}}>Clique no círculo para marcar/desmarcar.</p>
+          <p style={{fontSize:".82rem",color:"var(--mu)",marginBottom:"1rem"}}>Clique no cÃ­rculo para marcar/desmarcar.</p>
           {steps.map(s=>(
             <div className="sr" key={s.id}>
               <div className={`sc2${s.done?" dn":""}`} onClick={()=>toggleStep(s)}>{s.done&&<Icon name="check" size={12}/>}</div>
               <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".9rem",color:s.done?"var(--tx)":"var(--mu)"}}>{s.title}</div><div style={{fontSize:".75rem",color:"var(--mu)",marginTop:1}}>{s.date}</div></div>
-              <span className={`bd${s.done?" bg":" bgr"}`}>{s.done?"Concluído":"Pendente"}</span>
+              <span className={`bd${s.done?" bg":" bgr"}`}>{s.done?"ConcluÃ­do":"Pendente"}</span>
             </div>
           ))}
           <button className="btn btn-dk" style={{marginTop:"1.25rem"}} onClick={notify}><Icon name="bell" size={15}/> Notificar cliente</button>
@@ -906,16 +915,16 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           <div className="uz" onClick={()=>fileRef.current.click()}>
             <Icon name="upload" size={28}/>
             <div style={{fontWeight:600,marginTop:8,fontSize:".9rem"}}>Enviar documento ao cliente</div>
-            <div style={{fontSize:".78rem",marginTop:4}}>PDF, DOC, JPG — até 20 MB</div>
+            <div style={{fontSize:".78rem",marginTop:4}}>PDF, DOC, JPG â atÃ© 20 MB</div>
             <input ref={fileRef} type="file" style={{display:"none"}} onChange={e=>uploadDoc(e.target.files[0])}/>
           </div>
           {docs.map(d=>(
             <div className="dr" key={d.id}>
               <div className="dic"><Icon name="file" size={16}/></div>
-              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} Â· {d.date} Â· {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
-              <button className="ib" style={{marginLeft:4,color:"#ef4444"}} onClick={()=>delDoc(d)} title="Eliminar">🗑️</button>
+              <button className="ib" style={{marginLeft:4,color:"#ef4444"}} onClick={()=>delDoc(d)} title="Eliminar">ðï¸</button>
             </div>
           ))}
           {!docs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"1.5rem",fontSize:".85rem"}}>Nenhum documento ainda.</p>}
@@ -925,16 +934,16 @@ function Detail({cid,clients,setClients,showToast,onBack}){
       {tab==="reunioes"&&(
         <div className="card cp">
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.25rem"}}>
-            <div className="ct" style={{margin:0}}>Reuniões</div>
-            <button className="btn btn-dk" onClick={()=>setShowMtg(true)}><Icon name="plus" size={15}/> Nova Reunião</button>
+            <div className="ct" style={{margin:0}}>ReuniÃµes</div>
+            <button className="btn btn-dk" onClick={()=>setShowMtg(true)}><Icon name="plus" size={15}/> Nova ReuniÃ£o</button>
           </div>
           {pendentes.length>0&&(
             <div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:10,padding:".9rem 1.1rem",marginBottom:"1.25rem"}}>
-              <div style={{fontWeight:600,fontSize:".85rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) do cliente aguardando confirmação</div>
-              <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Clique em "✓ Confirmar" para criar o evento no Google Calendar automaticamente</div>
+              <div style={{fontWeight:600,fontSize:".85rem",color:"#92400e"}}>ð¬ {pendentes.length} pedido(s) do cliente aguardando confirmaÃ§Ã£o</div>
+              <div style={{fontSize:".78rem",color:"#b45309",marginTop:2}}>Clique em "â Confirmar" para criar o evento no Google Calendar automaticamente</div>
             </div>
           )}
-          {!meets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"2rem",fontSize:".85rem"}}>Nenhuma reunião agendada.</p>}
+          {!meets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"2rem",fontSize:".85rem"}}>Nenhuma reuniÃ£o agendada.</p>}
           {meets.map(m=>{
             const d=new Date((m.date||"")+"T12:00:00");
             const isPending=m.status==="pendente";
@@ -943,18 +952,18 @@ function Detail({cid,clients,setClients,showToast,onBack}){
                 <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>⏰ {m.time} · {m.type==="videochamada"?"📹 Video":m.type==="whatsapp"?"💬 WhatsApp":m.type==="presencial"?"📍 Presencial":"📞 Tel"}</div>
-                  {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
+                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>â° {m.time} Â· {m.type==="videochamada"?"ð¹ Video":m.type==="whatsapp"?"ð¬ WhatsApp":m.type==="presencial"?"ð Presencial":"ð Tel"}</div>
+                  {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>ð {m.notes}</div>}
                 </div>
                 <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
                   {isPending?(
                     <>
-                      <button className="btn btn-ok" style={{fontSize:".78rem",padding:".4rem .9rem"}} onClick={()=>confirmMeet(m)}>✓ Confirmar + 📅</button>
+                      <button className="btn btn-ok" style={{fontSize:".78rem",padding:".4rem .9rem"}} onClick={()=>confirmMeet(m)}>â Confirmar + ð</button>
                       <button className="ib d" onClick={async()=>{await api.patch("meetings",m.id,{status:"recusado"});setMeets(ms=>ms.map(x=>x.id===m.id?{...x,status:"recusado"}:x));}}><Icon name="close" size={13}/></button>
                     </>
                   ):(
                     <>
-                      <span className={`bd${m.status==="confirmado"?" bg":m.status==="recusado"?" br":" bgr"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="recusado"?"Recusado":m.status}</span>
+                      <span className={`bd${m.status==="confirmado"?" bg":m.status==="recusado"?" br":" bgr"}`}>{m.status==="confirmado"?"â Confirmado":m.status==="recusado"?"Recusado":m.status}</span>
                       <button className="ib d" onClick={()=>delMeeting(m.id)}><Icon name="trash" size={13}/></button>
                     </>
                   )}
@@ -980,7 +989,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
               <div ref={botRef}/>
             </div>
             <div className="cir">
-              <input className="cin" placeholder="Escreva uma mensagem para o cliente…" value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()}/>
+              <input className="cin" placeholder="Escreva uma mensagem para o clienteâ¦" value={chatIn} onChange={e=>setChatIn(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMsg()}/>
               <button className="bsend" onClick={sendMsg}><Icon name="send" size={14}/></button>
             </div>
           </div>
@@ -990,26 +999,26 @@ function Detail({cid,clients,setClients,showToast,onBack}){
       {showMtg&&(
         <div className="ov" onClick={e=>e.target===e.currentTarget&&setShowMtg(false)}>
           <div className="mo">
-            <div className="moh"><h2>Agendar Reunião</h2><button className="ib" onClick={()=>setShowMtg(false)}><Icon name="close" size={15}/></button></div>
+            <div className="moh"><h2>Agendar ReuniÃ£o</h2><button className="ib" onClick={()=>setShowMtg(false)}><Icon name="close" size={15}/></button></div>
             <div className="mob">
-              <div className="ff"><label>Título *</label><input value={mf.title} onChange={e=>setMf(f=>({...f,title:e.target.value}))} placeholder="Ex: Alinhamento processual"/></div>
+              <div className="ff"><label>TÃ­tulo *</label><input value={mf.title} onChange={e=>setMf(f=>({...f,title:e.target.value}))} placeholder="Ex: Alinhamento processual"/></div>
               <div className="fr">
                 <div className="ff"><label>Data *</label><input type="date" value={mf.date} onChange={e=>setMf(f=>({...f,date:e.target.value}))}/></div>
                 <div className="ff"><label>Hora</label><input type="time" value={mf.time} onChange={e=>setMf(f=>({...f,time:e.target.value}))}/></div>
               </div>
               <div className="ff"><label>Tipo</label>
                 <select value={mf.type} onChange={e=>setMf(f=>({...f,type:e.target.value}))}>
-                  <option value="presencial">📍 Presencial</option>
-                  <option value="videochamada">📹 Videochamada</option>
-                  <option value="telefone">📞 Telefone</option>
-                  <option value="whatsapp">💬 WhatsApp</option>
+                  <option value="presencial">ð Presencial</option>
+                  <option value="videochamada">ð¹ Videochamada</option>
+                  <option value="telefone">ð Telefone</option>
+                  <option value="whatsapp">ð¬ WhatsApp</option>
                 </select>
               </div>
               <div className="ff"><label>Notas</label><textarea value={mf.notes} onChange={e=>setMf(f=>({...f,notes:e.target.value}))}/></div>
             </div>
             <div className="mof">
               <button className="btn btn-gh" onClick={()=>setShowMtg(false)}>Cancelar</button>
-              <button className="btn btn-dk" onClick={addMeeting} disabled={saving}>{saving?<><Icon name="spin" size={15}/>Agendando…</>:<><Icon name="check" size={15}/>Agendar + 📅</>}</button>
+              <button className="btn btn-dk" onClick={addMeeting} disabled={saving}>{saving?<><Icon name="spin" size={15}/>Agendandoâ¦</>:<><Icon name="check" size={15}/>Agendar + ð</>}</button>
             </div>
           </div>
         </div>
@@ -1018,7 +1027,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
   );
 }
 
-// ── CLIENTS SCREEN ────────────────────────────────────────────────────────────
+// ââ CLIENTS SCREEN ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function Clients({clients,setClients,showToast,openClient}){
   const [q,setQ]=useState("");
   const [showAdd,setShowAdd]=useState(false);
@@ -1031,10 +1040,10 @@ function Clients({clients,setClients,showToast,openClient}){
     setBusy(true);
     const cl=await api.post("clients",{name:form.name,email:form.email,password:form.pass||"123456",phone:form.phone,cpf:form.cpf});
     if(cl[0]){
-      const pr=await api.post("processes",{client_id:cl[0].id,number:`BL-${Date.now().toString().slice(-6)}`,type:form.type||"Processo Jurídico",status:"aguardando",current_step:1,lawyer:"Dr. Ramom Lacerda",lawyer_avatar:"RL"});
+      const pr=await api.post("processes",{client_id:cl[0].id,number:`BL-${Date.now().toString().slice(-6)}`,type:form.type||"Processo JurÃ­dico",status:"aguardando",current_step:1,lawyer:"Dr. Ramom Lacerda",lawyer_avatar:"RL"});
       if(pr[0]){
-        const ss=["Análise Documental","Submissão do Requerimento","Entrevista / Análise","Aprovação","Emissão do Documento Final"];
-        await Promise.all(ss.map((title,i)=>api.post("process_steps",{process_id:pr[0].id,step_order:i+1,title,detail:"Fase não iniciada.",done:false,date:"—"})));
+        const ss=["AnÃ¡lise Documental","SubmissÃ£o do Requerimento","Entrevista / AnÃ¡lise","AprovaÃ§Ã£o","EmissÃ£o do Documento Final"];
+        await Promise.all(ss.map((title,i)=>api.post("process_steps",{process_id:pr[0].id,step_order:i+1,title,detail:"Fase nÃ£o iniciada.",done:false,date:"â"})));
         const steps=await api.get("process_steps",`?process_id=eq.${pr[0].id}&order=step_order.asc`);
         setClients(cs=>[...cs,{...cl[0],proc:pr[0],steps,docs:[],msgs:[],meetings:[]}]);
         showToast(`Cliente "${form.name}" cadastrado!`);
@@ -1049,14 +1058,14 @@ function Clients({clients,setClients,showToast,openClient}){
         <button className="btn btn-dk" onClick={()=>setShowAdd(true)}><Icon name="plus" size={16}/> Novo Cliente</button>
       </div>
       <div className="card cp">
-        <div className="sw"><span className="si"><Icon name="search" size={16}/></span><input placeholder="Buscar por nome, chave ou tipo…" value={q} onChange={e=>setQ(e.target.value)}/></div>
+        <div className="sw"><span className="si"><Icon name="search" size={16}/></span><input placeholder="Buscar por nome, chave ou tipoâ¦" value={q} onChange={e=>setQ(e.target.value)}/></div>
         <table className="tbl">
           <thead><tr><th>Cliente</th><th>Chave / Email</th><th>Tipo</th><th>Status</th><th></th></tr></thead>
           <tbody>{filtered.map(c=>(
             <tr key={c.id}>
               <td><div style={{display:"flex",alignItems:"center",gap:".75rem"}}><Av name={c.name} size={34}/><div><div style={{fontWeight:600,fontSize:".88rem"}}>{c.name}</div></div></div></td>
-              <td style={{fontSize:".82rem",color:"var(--mu)",letterSpacing:".05em"}}>{c.chave_acesso||c.email||"—"}</td>
-              <td style={{fontSize:".85rem"}}>{c.proc?.type||"—"}</td>
+              <td style={{fontSize:".82rem",color:"var(--mu)",letterSpacing:".05em"}}>{c.chave_acesso||c.email||"â"}</td>
+              <td style={{fontSize:".85rem"}}>{c.proc?.type||"â"}</td>
               <td><StatusBadge s={c.proc?.status}/></td>
               <td><div style={{display:"flex",gap:".4rem"}}>
                 <button className="btn btn-gh" style={{padding:".4rem .8rem",fontSize:".78rem"}} onClick={()=>openClient(c.id)}><Icon name="arrow" size={13}/> Abrir</button>
@@ -1077,7 +1086,7 @@ function Clients({clients,setClients,showToast,openClient}){
               <div className="fr"><div className="ff"><label>E-mail *</label><input type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))}/></div><div className="ff"><label>Telefone</label><input value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/></div></div>
               <div className="fr"><div className="ff"><label>Tipo de Processo</label><input placeholder="Ex: Nacionalidade Portuguesa" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}/></div><div className="ff"><label>Senha inicial</label><input value={form.pass} onChange={e=>setForm(f=>({...f,pass:e.target.value}))}/></div></div>
             </div>
-            <div className="mof"><button className="btn btn-gh" onClick={()=>setShowAdd(false)}>Cancelar</button><button className="btn btn-dk" onClick={save} disabled={busy}>{busy?<><Icon name="spin" size={15}/>Salvando…</>:<><Icon name="check" size={15}/>Cadastrar</>}</button></div>
+            <div className="mof"><button className="btn btn-gh" onClick={()=>setShowAdd(false)}>Cancelar</button><button className="btn btn-dk" onClick={save} disabled={busy}>{busy?<><Icon name="spin" size={15}/>Salvandoâ¦</>:<><Icon name="check" size={15}/>Cadastrar</>}</button></div>
           </div>
         </div>
       )}
@@ -1085,7 +1094,7 @@ function Clients({clients,setClients,showToast,openClient}){
   );
 }
 
-// ── ALL MEETINGS ──────────────────────────────────────────────────────────────
+// ââ ALL MEETINGS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AllMeetings({clients,openClient}){
   const [allMeets,setAllMeets]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -1105,33 +1114,35 @@ function AllMeetings({clients,openClient}){
       const enriched=meets.map(m=>{
         const cid=procMap.current[m.process_id]||null;
         const cl=cid?clients.find(c=>c.id===cid):null;
-        return{...m,clientName:cl?cl.name:"—",clientId:cid};
+        return{...m,clientName:cl?cl.name:"â",clientId:cid};
       });
       setAllMeets(enriched);
       if(initial) setLoading(false);
     };
     load(true);
-    const iv=setInterval(()=>load(false),10000);
-    return()=>clearInterval(iv);
+    const ch=supabase.channel('all-meetings')
+      .on('postgres_changes',{event:'*',schema:'public',table:'meetings'},()=>load(false))
+      .subscribe();
+    return()=>supabase.removeChannel(ch);
   },[clients]);
 
   const pendentes=allMeets.filter(m=>m.status==="pendente");
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{allMeets.length} reuniões · {pendentes.length} pendentes</p></div></div>
-      {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
+      <div className="tb"><div><h1 className="pt">Todas as ReuniÃµes</h1><p className="ps">{allMeets.length} reuniÃµes Â· {pendentes.length} pendentes</p></div></div>
+      {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>ð¬ {pendentes.length} pedido(s) aguardando â abra o cliente para confirmar</div></div>}
       <div className="card cp">
-        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando reuniões…</span></div>}
-        {!loading&&!allMeets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reunião ainda.</p>}
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando reuniÃµesâ¦</span></div>}
+        {!loading&&!allMeets.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma reuniÃ£o ainda.</p>}
         {!loading&&allMeets.map(m=>{const d=new Date((m.date||"")+"T12:00:00");return(
           <div className="mcard" key={m.id} style={{borderColor:m.status==="pendente"?"#fcd34d":"var(--bo)",background:m.status==="pendente"?"#fffbf0":"var(--bg)"}}>
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
-              {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>ð¤ {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} Â· â° {m.time} Â· {m.type==="videochamada"?"ð¹":m.type==="whatsapp"?"ð¬":m.type==="presencial"?"ð":"ð"} {m.type}</div>
+              {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>ð {m.notes}</div>}
             </div>
-            <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
+            <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"â Confirmado":m.status==="pendente"?"â³ Pendente":"Recusado"}</span>
           </div>
         );})}
       </div>
@@ -1139,7 +1150,7 @@ function AllMeetings({clients,openClient}){
   );
 }
 
-// ── ALL DOCUMENTS ────────────────────────────────────────────────────────────
+// ââ ALL DOCUMENTS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AllDocuments({clients,showToast,openClient}){
   const [allDocs,setAllDocs]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -1159,14 +1170,16 @@ function AllDocuments({clients,showToast,openClient}){
       const enriched=docs.map(d=>{
         const cid=procMap.current[d.process_id]||null;
         const cl=cid?clients.find(c=>c.id===cid):null;
-        return{...d,clientName:cl?cl.name:"—",clientId:cid};
+        return{...d,clientName:cl?cl.name:"â",clientId:cid};
       });
       setAllDocs(enriched);
       if(initial) setLoading(false);
     };
     load(true);
-    const iv=setInterval(()=>load(false),10000);
-    return()=>clearInterval(iv);
+    const ch=supabase.channel('all-documents')
+      .on('postgres_changes',{event:'*',schema:'public',table:'documents'},()=>load(false))
+      .subscribe();
+    return()=>supabase.removeChannel(ch);
   },[clients]);
 
   const filtered=filter==="todos"?allDocs:filter==="cliente"?allDocs.filter(d=>d.uploaded_by==="cliente"):allDocs.filter(d=>d.uploaded_by==="advogado");
@@ -1174,29 +1187,29 @@ function AllDocuments({clients,showToast,openClient}){
 
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos · {aguardando} aguardando revisão</p></div></div>
-      {aguardando>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {aguardando} documento(s) enviados por clientes aguardando revisão</div></div>}
+      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos Â· {aguardando} aguardando revisÃ£o</p></div></div>
+      {aguardando>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>ð¬ {aguardando} documento(s) enviados por clientes aguardando revisÃ£o</div></div>}
       <div style={{display:"flex",gap:".5rem",marginBottom:"1.25rem"}}>
         {["todos","cliente","advogado"].map(f=>(
           <button key={f} onClick={()=>setFilter(f)} className={`btn${filter===f?" btn-dk":" btn-gh"}`} style={{padding:".5rem 1rem",fontSize:".8rem"}}>
-            {f==="todos"?"📋 Todos":f==="cliente"?"👤 Do Cliente":"⚖️ Do Advogado"}
+            {f==="todos"?"ð Todos":f==="cliente"?"ð¤ Do Cliente":"âï¸ Do Advogado"}
           </button>
         ))}
       </div>
       <div className="card cp">
-        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando documentos…</span></div>}
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando documentosâ¦</span></div>}
         {!loading&&!filtered.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhum documento encontrado.</p>}
         {!loading&&filtered.map(d=>(
           <div key={d.id} className="mcard" style={{borderColor:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fcd34d":"var(--bo)",background:d.uploaded_by==="cliente"&&d.status==="aguardando"?"#fffbf0":"var(--bg)"}}>
             <div className="mdb" style={{background:d.uploaded_by==="cliente"?"#dbeafe":"#f0fdf4",borderColor:d.uploaded_by==="cliente"?"#93c5fd":"#86efac"}}>
-              <div className="day" style={{fontSize:"1.2rem"}}>📄</div>
+              <div className="day" style={{fontSize:"1.2rem"}}>ð</div>
               <div className="mon">{d.uploaded_by==="cliente"?"CLI":"ADV"}</div>
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontWeight:600,fontSize:".9rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} · 📦 {d.size} · 📅 {d.date}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>ð¤ {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} Â· ð¦ {d.size} Â· ð {d.date}</div>
             </div>
-            <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"👤 Cliente":"⚖️ Advogado"}</span>
+            <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"ð¤ Cliente":"âï¸ Advogado"}</span>
             {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
           </div>
         ))}
@@ -1205,7 +1218,7 @@ function AllDocuments({clients,showToast,openClient}){
   );
 }
 
-// ── ALL CHATS ────────────────────────────────────────────────────────────────
+// ââ ALL CHATS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AllChats({clients,openClient,showToast}){
   const [allMsgs,setAllMsgs]=useState([]);
   const [loading,setLoading]=useState(true);
@@ -1221,7 +1234,7 @@ function AllChats({clients,openClient,showToast}){
         const ps=await api.get("processes",`?id=in.(${unknown.join(",")})&select=id,client_id`);
         if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
       }
-      // Group by client — show latest message per client
+      // Group by client â show latest message per client
       const byClient={};
       msgs.forEach(m=>{
         const cid=procMap.current[m.process_id]||null;
@@ -1229,7 +1242,7 @@ function AllChats({clients,openClient,showToast}){
       });
       const grouped=Object.entries(byClient).map(([cid,m])=>{
         const cl=clients.find(c=>c.id===cid);
-        return{...m,clientName:cl?cl.name:"—",clientId:cid};
+        return{...m,clientName:cl?cl.name:"â",clientId:cid};
       }).sort((a,b)=>(b.created_at||"").localeCompare(a.created_at||""));
       setAllMsgs(grouped);
       if(initial) setLoading(false);
@@ -1243,12 +1256,12 @@ function AllChats({clients,openClient,showToast}){
     <div>
       <div className="tb"><div><h1 className="pt">Mensagens de Clientes</h1><p className="ps">{allMsgs.length} conversa(s) com mensagens recentes</p></div></div>
       <div className="card cp">
-        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando mensagens…</span></div>}
+        {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando mensagensâ¦</span></div>}
         {!loading&&!allMsgs.length&&<p style={{textAlign:"center",color:"var(--mu)",padding:"3rem",fontSize:".88rem"}}>Nenhuma mensagem de clientes ainda.</p>}
         {!loading&&allMsgs.map(m=>(
           <div className="mcard" key={m.id} style={{cursor:"pointer"}} onClick={()=>openClient&&openClient(m.clientId)}>
             <div className="mdb" style={{background:"#dbeafe",borderColor:"#93c5fd"}}>
-              <div className="day" style={{fontSize:"1.2rem"}}>💬</div>
+              <div className="day" style={{fontSize:"1.2rem"}}>ð¬</div>
               <div className="mon">MSG</div>
             </div>
             <div style={{flex:1,minWidth:0}}>
@@ -1256,9 +1269,9 @@ function AllChats({clients,openClient,showToast}){
                 <strong style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline",fontSize:".9rem"}}>{m.clientName}</strong>
               </div>
               <div style={{fontSize:".82rem",color:"var(--mu)",marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>"{m.text}"</div>
-              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>📅 {fmtd(m.created_at)} · ⏰ {fmtt(m.created_at)}</div>
+              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>ð {fmtd(m.created_at)} Â· â° {fmtt(m.created_at)}</div>
             </div>
-            <span className="bd ba">Abrir Chat →</span>
+            <span className="bd ba">Abrir Chat â</span>
           </div>
         ))}
       </div>
@@ -1266,7 +1279,7 @@ function AllChats({clients,openClient,showToast}){
   );
 }
 
-// ── APP ───────────────────────────────────────────────────────────────────────
+// ââ APP âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export default function App(){
   const [auth,setAuth]=useState(false);
   const [tab,setTab]=useState("dash");
@@ -1279,7 +1292,7 @@ export default function App(){
   const loadClients=async()=>{
     setLoading(true);
     try{
-      // Supabase limit is now 10000 — single query gets all clients
+      // Supabase limit is now 10000 â single query gets all clients
       const allClients=await api.get("clients","?order=created_at.desc&limit=10000");
       if(!allClients||allClients.error){showToast("Erro ao carregar clientes.");setLoading(false);return;}
       // Set clients immediately so count shows
@@ -1299,70 +1312,49 @@ export default function App(){
   const [newDocs,setNewDocs]=useState(0);
   const [pendentes,setPendentes]=useState(0);
   const [newMsgs,setNewMsgs]=useState(0);
-  const lastDocCheck=useRef(null);
-  const lastMsgCheck=useRef(null);
+  const seenMeetRef=useRef(0);
+  const tabRef=useRef("dash");
+  const clientsRef=useRef([]);
+  useEffect(()=>{tabRef.current=tab;},[tab]);
+  useEffect(()=>{clientsRef.current=clients;},[clients]);
 
   const onLogin=()=>{setAuth(true);loadClients();};
 
-  // Poll for new client documents every 10s
+  // Realtime: notificaÃ§Ãµes globais em tempo real (sem polling)
   useEffect(()=>{
     if(!auth) return;
-    const check=async()=>{
-      const since=lastDocCheck.current||new Date().toISOString();
-      const recent=await api.get("documents",`?uploaded_by=eq.cliente&created_at=gt.${since}&order=created_at.desc`);
-      if(recent&&recent.length>0){
-        setNewDocs(n=>n+recent.length);
-        const last=recent[0];
-        const cl=clients.find(c=>c.proc&&c.proc.id===last.process_id);
-        showToast(`📄 Novo documento de ${cl?cl.name:"cliente"}: "${last.name}"`);
-      }
-      lastDocCheck.current=new Date().toISOString();
-    };
-    lastDocCheck.current=new Date().toISOString();
-    const iv=setInterval(check,10000);
-    return()=>clearInterval(iv);
-  },[auth,clients]);
-
-  // Poll for new client chat messages every 10s
-  useEffect(()=>{
-    if(!auth) return;
-    const check=async()=>{
-      const since=lastMsgCheck.current||new Date().toISOString();
-      const recent=await api.get("messages",`?from_role=eq.client&created_at=gt.${since}&order=created_at.desc`);
-      if(recent&&recent.length>0){
-        setNewMsgs(n=>n+recent.length);
-        showToast(`💬 ${recent.length} nova(s) mensagem(ns) de cliente(s)`);
-      }
-      lastMsgCheck.current=new Date().toISOString();
-    };
-    lastMsgCheck.current=new Date().toISOString();
-    const iv=setInterval(check,10000);
-    return()=>clearInterval(iv);
+    // VerificaÃ§Ã£o inicial de reuniÃµes pendentes
+    api.get("meetings","?status=eq.pendente&select=id").then(r=>{
+      if(r&&!r.error) seenMeetRef.current=r.length;
+    });
+    const ch=supabase.channel('global-notifs')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'documents',filter:'uploaded_by=eq.cliente'},(payload)=>{
+        setNewDocs(n=>n+1);
+        const cl=clientsRef.current.find(c=>c.proc&&c.proc.id===payload.new.process_id);
+        showToast(`ð Novo documento de ${cl?cl.name:"cliente"}: "${payload.new.name}"`);
+      })
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'from_role=eq.client'},()=>{
+        setNewMsgs(n=>n+1);
+        showToast(`ð¬ Nova mensagem de cliente`);
+      })
+      .on('postgres_changes',{event:'*',schema:'public',table:'meetings'},async()=>{
+        const r=await api.get("meetings","?status=eq.pendente&select=id");
+        if(r&&!r.error){
+          const total=r.length;
+          const newOnes=total-seenMeetRef.current;
+          if(tabRef.current!=="meetings") setPendentes(newOnes>0?newOnes:0);
+          else seenMeetRef.current=total;
+        }
+      })
+      .subscribe();
+    return()=>supabase.removeChannel(ch);
   },[auth]);
-
-  // Poll for pending meetings count every 10s (only update badge when NOT on meetings tab)
-  const seenMeetRef=useRef(0);
-  useEffect(()=>{
-    if(!auth) return;
-    const check=async()=>{
-      const r=await api.get("meetings","?status=eq.pendente&select=id");
-      if(r&&!r.error){
-        const total=r.length;
-        const newOnes=total-seenMeetRef.current;
-        if(tab!=="meetings") setPendentes(newOnes>0?newOnes:0);
-        else seenMeetRef.current=total;
-      }
-    };
-    check();
-    const iv=setInterval(check,10000);
-    return()=>clearInterval(iv);
-  },[auth,tab]);
 
   const nav=[
     {id:"dash",label:"Painel Geral",ic:"dash"},
     {id:"clients",label:"Clientes",ic:"users",badge:clients.length},
     {id:"documents",label:"Documentos",ic:"file",badge:newDocs||undefined},
-    {id:"meetings",label:"Reuniões",ic:"cal",badge:pendentes||undefined},
+    {id:"meetings",label:"ReuniÃµes",ic:"cal",badge:pendentes||undefined},
     {id:"chat",label:"Chat",ic:"chat",badge:newMsgs||undefined},
   ];
 
@@ -1377,7 +1369,7 @@ export default function App(){
           <div className="sbw"><div className="av" style={{width:36,height:36,fontSize:".78rem"}}>RL</div>
             <div>
               <div className="wn">Dr. Ramom Lacerda</div>
-              <div className="wr">OAB/PB 19.165 · 🇵🇹 Lisboa 65899L · 🇪🇸 Madrid 142952</div>
+              <div className="wr">OAB/PB 19.165 Â· ðµð¹ Lisboa 65899L Â· ðªð¸ Madrid 142952</div>
             </div>
           </div>
           <nav className="sbnv">
@@ -1391,7 +1383,7 @@ export default function App(){
           <div className="sbft"><button className="out" onClick={()=>{setAuth(false);setClients([]);}}><Icon name="logout" size={15}/>Sair</button></div>
         </aside>
         <main className="mc">
-          {loading?<div className="ld"><Icon name="spin" size={28}/><span>Carregando {clients.length} clientes…</span></div>:
+          {loading?<div className="ld"><Icon name="spin" size={28}/><span>Carregando {clients.length} clientesâ¦</span></div>:
           openC?<Detail cid={openC} clients={clients} setClients={setClients} showToast={showToast} onBack={()=>setOpenC(null)}/>:
           tab==="dash"?<Dash clients={clients}/>:
           tab==="clients"?<Clients clients={clients} setClients={setClients} showToast={showToast} openClient={id=>setOpenC(id)}/>:
@@ -1405,11 +1397,11 @@ export default function App(){
   );
 }
 
-// ── CLAUDE CHAT ───────────────────────────────────────────────────────────────
+// ââ CLAUDE CHAT âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function ClaudeChat({ totalClients }) {
   const [open,  setOpen]  = useState(false);
   const [msgs,  setMsgs]  = useState([
-    { role:"assistant", text:"Olá! Sou o Claude, o assistente de IA do escritório Bono & Lacerda. Posso ajudá-lo com actualizações do sistema, dúvidas sobre clientes, geração de documentos ou qualquer outra questão. Como posso ajudar?" }
+    { role:"assistant", text:"OlÃ¡! Sou o Claude, o assistente de IA do escritÃ³rio Bono & Lacerda. Posso ajudÃ¡-lo com actualizaÃ§Ãµes do sistema, dÃºvidas sobre clientes, geraÃ§Ã£o de documentos ou qualquer outra questÃ£o. Como posso ajudar?" }
   ]);
   const [input, setInput] = useState("");
   const [ld,    setLd]    = useState(false);
@@ -1425,7 +1417,7 @@ function ClaudeChat({ totalClients }) {
     setMsgs(newMsgs);
     setLd(true);
     try {
-      const context = `És o assistente de IA do escritório de advocacia Bono & Lacerda Advogados, especializado em imigração e nacionalidade portuguesa. O sistema tem actualmente ${totalClients} clientes cadastrados. Responde sempre em português europeu, de forma profissional e concisa.`;
+      const context = `Ãs o assistente de IA do escritÃ³rio de advocacia Bono & Lacerda Advogados, especializado em imigraÃ§Ã£o e nacionalidade portuguesa. O sistema tem actualmente ${totalClients} clientes cadastrados. Responde sempre em portuguÃªs europeu, de forma profissional e concisa.`;
       const history = newMsgs.map(m => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.text }));
       const r = await fetch("https://jrkreiidaxadwryjhdzu.supabase.co/functions/v1/claude-chat", {
         method: "POST",
@@ -1436,10 +1428,10 @@ function ClaudeChat({ totalClients }) {
         })
       });
       const d = await r.json();
-      const reply = d.content?.[0]?.text || "Desculpe, não consegui processar a sua mensagem.";
+      const reply = d.content?.[0]?.text || "Desculpe, nÃ£o consegui processar a sua mensagem.";
       setMsgs(m => [...m, { role:"assistant", text:reply }]);
     } catch(e) {
-      setMsgs(m => [...m, { role:"assistant", text:"Erro de ligação. Por favor tente novamente." }]);
+      setMsgs(m => [...m, { role:"assistant", text:"Erro de ligaÃ§Ã£o. Por favor tente novamente." }]);
     }
     setLd(false);
   };
@@ -1488,7 +1480,7 @@ function ClaudeChat({ totalClients }) {
             <div className="cl-av">AI</div>
             <div className="cl-hdr-info">
               <h4>Claude AI</h4>
-              <p>Assistente Bono & Lacerda · {totalClients} clientes</p>
+              <p>Assistente Bono & Lacerda Â· {totalClients} clientes</p>
             </div>
           </div>
           <div className="cl-msgs">
@@ -1509,7 +1501,7 @@ function ClaudeChat({ totalClients }) {
           <div className="cl-inp">
             <textarea
               rows={2}
-              placeholder="Escreva a sua mensagem…"
+              placeholder="Escreva a sua mensagemâ¦"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); send(); } }}
