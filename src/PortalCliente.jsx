@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 
-/* -- SECURITY: Prototype Pollution Protection (V-008) ------------------- */
+/* ── SECURITY: Prototype Pollution Protection (V-008) ─────────────────── */
 if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object.freeze(Array.prototype);}catch(e){}}
 
-/* -- SECURITY: Strip Meta Pixel fbclid tracking parameter (V-007 LGPD) -- */
+/* ── SECURITY: Strip Meta Pixel fbclid tracking parameter (V-007 LGPD) ── */
 (function stripFbclid(){
   try{
     const url=new URL(window.location.href);
@@ -18,7 +18,7 @@ const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
 
-/* -- SECURITY: Input sanitization (V-008) ------------------------------- */
+/* ── SECURITY: Input sanitization (V-008) ─────────────────────────────── */
 const sanitizeInput = (str) => {
   if(typeof str !== "string") return "";
   return str.replace(/[<>'"]/g, c => ({"<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]||c);
@@ -28,7 +28,7 @@ const sanitizeQueryParam = (str) => {
   return str.replace(/__proto__|constructor\[|prototype\[/gi, "");
 };
 
-/* -- SECURITY: Safe JSON parse (V-010) ---------------------------------- */
+/* ── SECURITY: Safe JSON parse (V-010) ────────────────────────────────── */
 const safeJsonParse = async (response) => {
   try {
     const data = await response.json();
@@ -56,7 +56,7 @@ const db = {
 
 const safeName = n => n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]/g,"_");
 const MO = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "-";
+const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
 const ini  = n  => n.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase();
 
@@ -84,7 +84,7 @@ function Icon({ name, size = 20 }) {
   return map[name] || null;
 }
 
-/* -- CSS - GLASSMORPHISM DESIGN ------------------------------------------ */
+/* ── CSS — GLASSMORPHISM DESIGN ────────────────────────────────────────── */
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -119,7 +119,7 @@ body::before {
               radial-gradient(ellipse at 50% 50%, rgba(18,36,61,.5) 0%, transparent 70%);
 }
 
-/* -- LOGIN -- */
+/* ── LOGIN ── */
 .login-wrap { display:flex; flex-direction:column; min-height:100vh; width:100%; max-width:100vw; }
 .lw { flex:1; display:flex; overflow-x:hidden; width:100%; }
 .ll { width:44%; background:linear-gradient(160deg, var(--nd) 0%, #0c1a2f 50%, #14294a 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3rem; position:relative; overflow:hidden; }
@@ -146,7 +146,7 @@ body::before {
 .btnp:disabled { opacity:.5; cursor:not-allowed; transform:none; }
 .errmsg { color:var(--er); font-size:.82rem; margin-top:.9rem; text-align:center; padding:.7rem; background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.15); border-radius:10px; }
 
-/* -- LAYOUT -- */
+/* ── LAYOUT ── */
 .al  { display:flex; min-height:100vh; overflow-x:hidden; width:100%; }
 .sb  { width:270px; background:rgba(6,14,26,.85); backdrop-filter:var(--blur); border-right:1px solid var(--glass-border); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
 .sbl { padding:1.8rem 1.5rem 1.4rem; border-bottom:1px solid var(--glass-border); }
@@ -165,7 +165,7 @@ body::before {
 .out:hover { color:rgba(255,255,255,.7); }
 .mc { margin-left:270px; flex:1; padding:2.5rem 3rem; min-height:100vh; animation:fadeUp .4s ease; }
 
-/* -- MOBILE -- */
+/* ── MOBILE ── */
 .mob-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(6,14,26,.92); backdrop-filter:var(--blur); border-top:1px solid var(--glass-border); z-index:200; padding:.4rem 0 calc(.4rem + env(safe-area-inset-bottom)); }
 .mob-nav-inner { display:flex; justify-content:space-around; align-items:center; }
 .mob-ni { display:flex; flex-direction:column; align-items:center; gap:.2rem; padding:.4rem .7rem; color:var(--mus); font-size:.58rem; font-weight:500; cursor:pointer; border:none; background:none; font-family:'DM Sans',sans-serif; transition:all .2s; min-width:50px; }
@@ -204,14 +204,14 @@ body::before {
   ::-webkit-scrollbar { display:none; }
 }
 
-/* -- COMPONENTS - GLASS CARDS -- */
+/* ── COMPONENTS — GLASS CARDS ── */
 .ph h1 { font-family:'Playfair Display',serif; font-size:1.9rem; color:#fff; letter-spacing:-.01em; }
 .ph p  { color:var(--mu); font-size:.88rem; margin-top:.35rem; margin-bottom:2rem; line-height:1.5; }
 .card { background:var(--glass); backdrop-filter:var(--blur); border-radius:var(--r2); padding:1.6rem; box-shadow:var(--sh); border:1px solid var(--glass-border); transition:all .3s; }
 .card:hover { background:var(--glass-hover); box-shadow:var(--sh2); border-color:rgba(255,255,255,.15); }
 .ct { font-family:'Playfair Display',serif; font-size:1.1rem; color:#fff; margin-bottom:1rem; }
 
-/* -- STATS -- */
+/* ── STATS ── */
 .dg { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.75rem; }
 .sc { background:var(--glass); backdrop-filter:var(--blur2); border-radius:var(--r); padding:1.3rem 1.5rem; border:1px solid var(--glass-border); box-shadow:var(--sh); transition:all .3s; }
 .sc:hover { background:var(--glass-hover); box-shadow:var(--sh2); transform:translateY(-3px); border-color:rgba(212,168,67,.2); }
@@ -221,14 +221,14 @@ body::before {
 .pb  { background:rgba(255,255,255,.08); border-radius:99px; height:8px; margin-top:.5rem; overflow:hidden; }
 .pbf { height:8px; border-radius:99px; background:linear-gradient(90deg, var(--g), var(--gl), var(--g)); background-size:200% 100%; animation:shimmer 2.5s ease infinite; transition:width 1s cubic-bezier(.4,0,.2,1); }
 
-/* -- BADGES -- */
+/* ── BADGES ── */
 .bd { display:inline-flex; align-items:center; padding:.3rem .75rem; border-radius:99px; font-size:.72rem; font-weight:600; letter-spacing:.01em; backdrop-filter:var(--blur2); }
 .bg { background:rgba(74,222,128,.12); color:#4ade80; border:1px solid rgba(74,222,128,.2); }
 .ba { background:rgba(212,168,67,.12); color:var(--gl); border:1px solid rgba(212,168,67,.2); }
 .bb { background:rgba(96,165,250,.12); color:#60a5fa; border:1px solid rgba(96,165,250,.2); }
 .br { background:rgba(248,113,113,.12); color:#f87171; border:1px solid rgba(248,113,113,.2); }
 
-/* -- TIMELINE -- */
+/* ── TIMELINE ── */
 .tl { position:relative; padding-left:2rem; }
 .tl::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px; background:linear-gradient(180deg, var(--g), rgba(255,255,255,.08)); }
 .ti { position:relative; padding-bottom:1.75rem; }
@@ -241,7 +241,7 @@ body::before {
 .tdt { font-size:.78rem; color:var(--mu); margin-top:.15rem; }
 .tde { font-size:.82rem; color:var(--mu); margin-top:.3rem; background:var(--glass2); padding:.5rem .75rem; border-radius:8px; }
 
-/* -- DOCUMENTS -- */
+/* ── DOCUMENTS ── */
 .dl  { display:flex; flex-direction:column; gap:.65rem; }
 .dit { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; background:var(--glass2); border-radius:14px; border:1px solid var(--glass-border); transition:all .3s; }
 .dit:hover { background:var(--glass-hover); border-color:rgba(212,168,67,.25); transform:translateX(6px); }
@@ -255,7 +255,7 @@ body::before {
 .uz:hover .uz-icon { transform:translateY(-6px); }
 .uz-icon { transition:transform .3s; }
 
-/* -- NOTIFICATIONS -- */
+/* ── NOTIFICATIONS ── */
 .nl2 { display:flex; flex-direction:column; gap:.6rem; }
 .ni2 { display:flex; gap:1rem; padding:1.1rem 1.25rem; border-radius:var(--r); border:1px solid var(--glass-border); background:var(--glass2); transition:all .25s; }
 .ni2:hover { background:var(--glass-hover); box-shadow:var(--sh); }
@@ -264,14 +264,14 @@ body::before {
 .ntm { font-size:.73rem; color:var(--mu); margin-top:.25rem; }
 .ud  { width:9px; height:9px; background:var(--g); border-radius:50%; flex-shrink:0; margin-top:6px; animation:glow 2s infinite; box-shadow:0 0 8px rgba(212,168,67,.4); }
 
-/* -- MEETINGS -- */
+/* ── MEETINGS ── */
 .mcard { border:1px solid var(--glass-border); border-radius:var(--r); padding:1.1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:.65rem; background:var(--glass2); transition:all .25s; }
 .mcard:hover { background:var(--glass-hover); box-shadow:var(--sh); border-color:rgba(212,168,67,.2); }
 .mdb  { background:linear-gradient(135deg, rgba(212,168,67,.15), rgba(212,168,67,.05)); border:1px solid rgba(212,168,67,.2); color:var(--g); border-radius:14px; width:58px; text-align:center; padding:.65rem 0; flex-shrink:0; }
 .mdb .day { font-family:'Playfair Display',serif; font-size:1.7rem; line-height:1; color:#fff; }
 .mdb .mon { font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; opacity:.7; margin-top:3px; }
 
-/* -- FORMS -- */
+/* ── FORMS ── */
 .fg { margin-bottom:1.2rem; }
 .fg label { display:block; font-size:.76rem; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.5rem; }
 .fg input, .fg select, .fg textarea { width:100%; padding:.85rem 1rem; border:1.5px solid var(--glass-border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:.9rem; color:#fff; background:var(--glass); backdrop-filter:var(--blur2); outline:none; transition:all .3s; }
@@ -282,7 +282,7 @@ body::before {
 .fg2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
 .fg-hint { font-size:.72rem; color:var(--mus); margin-top:4px; }
 
-/* -- CHAT -- */
+/* ── CHAT ── */
 .cw  { display:flex; flex-direction:column; height:calc(100vh - 230px); min-height:380px; }
 .che { display:flex; align-items:center; gap:.75rem; padding-bottom:1rem; border-bottom:1px solid var(--glass-border); margin-bottom:1rem; }
 .chi h3 { font-weight:600; font-size:.92rem; color:#fff; }
@@ -302,7 +302,7 @@ body::before {
 .bsend:hover { transform:scale(1.08); box-shadow:0 4px 20px rgba(212,168,67,.35); }
 .chat-reply-notice { background:rgba(212,168,67,.06); border:1px solid rgba(212,168,67,.12); border-radius:12px; padding:.7rem 1rem; text-align:center; font-size:.78rem; color:var(--gl); margin-bottom:.5rem; }
 
-/* -- IRN TRACKER -- */
+/* ── IRN TRACKER ── */
 .irn-track { display:flex; align-items:flex-start; margin-bottom:1.5rem; overflow-x:hidden; padding-bottom:.5rem; }
 .irn-step  { display:flex; flex-direction:column; align-items:center; flex:1; min-width:55px; position:relative; }
 .irn-line  { position:absolute; top:18px; right:50%; width:100%; height:3px; background:rgba(255,255,255,.06); z-index:0; border-radius:2px; }
@@ -325,7 +325,7 @@ body::before {
   .irn-dot   { display:inline; margin-left:.4rem; }
 }
 
-/* -- MEETING TYPES -- */
+/* ── MEETING TYPES ── */
 .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-top:.25rem; }
 .type-opt  { border:2px solid var(--glass-border); border-radius:14px; padding:.9rem 1rem; cursor:pointer; transition:all .25s; background:var(--glass2); }
 .type-opt:hover { border-color:rgba(212,168,67,.25); background:var(--glass); }
@@ -333,7 +333,7 @@ body::before {
 .type-opt h4 { font-weight:600; font-size:.88rem; color:#fff; }
 .type-opt p  { font-size:.73rem; color:var(--mu); margin-top:3px; }
 
-/* -- MISC -- */
+/* ── MISC ── */
 .ld { display:flex; align-items:center; justify-content:center; min-height:200px; flex-direction:column; gap:1rem; color:var(--mu); font-size:.88rem; }
 .toast { position:fixed; bottom:2rem; right:2rem; background:rgba(10,22,40,.85); backdrop-filter:var(--blur); color:#fff; padding:1rem 1.5rem; border-radius:var(--r); font-size:.88rem; z-index:9999; box-shadow:var(--sh3); border-left:3px solid var(--g); animation:slideIn .35s ease; }
 ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:99px; } ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.2); }
@@ -343,22 +343,22 @@ body::before {
 .empty-state .desc { font-size:.85rem; line-height:1.6; max-width:320px; margin:0 auto; }
 `;
 
-/* -- TOAST -- */
+/* ── TOAST ── */
 function Toast({ msg, onClose }) {
   useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, []);
   return <div className="toast">{msg}</div>;
 }
 
-function Loader({ text = "Carregando..." }) {
+function Loader({ text = "Carregando…" }) {
   return <div className="ld"><Icon name="spin" size={28} /><span>{text}</span></div>;
 }
 
-/* -- LOGIN -------------------------------------------------------------- */
+/* ── LOGIN ────────────────────────────────────────────────────────────── */
 function Login({ onLogin, legalDoc, setLegalDoc }) {
   const [chave, setChave] = useState("");
   const [err,   setErr]   = useState("");
   const [busy,  setBusy]  = useState(false);
-  /* -- SECURITY: Rate limiting on login (V-006) -- */
+  /* ── SECURITY: Rate limiting on login (V-006) ── */
   const [attempts,setAttempts] = useState(0);
   const [locked,setLocked] = useState(false);
 
@@ -397,7 +397,7 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
             <h1>Bono & Lacerda<br />Advogados</h1>
             <p>Portal do Cliente</p>
           </div>
-          <p className="ltag">Advocacia Internacional<br />Migração . Nacionalidade . Empresarial</p>
+          <p className="ltag">Advocacia Internacional<br />Migração · Nacionalidade · Empresarial</p>
         </div>
         <div className="lr">
           <div className="lc">
@@ -413,7 +413,7 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
             />
             <p className="chave-hint">A chave foi enviada pelo escritório Bono & Lacerda</p>
             <button className="btnp" onClick={go} disabled={busy}>
-              {busy ? <><Icon name="spin" size={16} /> A verificar...</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
+              {busy ? <><Icon name="spin" size={16} /> A verificar…</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
             </button>
             {err && <p className="errmsg">{err}</p>}
             <div onClick={() => setLegalDoc('irn')} style={{ marginTop:"1.5rem", padding:".85rem 1.1rem", background:"rgba(212,168,67,.06)", border:"1px solid rgba(212,168,67,.18)", borderRadius:14, cursor:"pointer", transition:"all .25s", display:"flex", alignItems:"center", gap:".75rem" }}
@@ -433,15 +433,15 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
   );
 }
 
-/* -- IRN STEPS ---------------------------------------------------------- */
+/* ── IRN STEPS ────────────────────────────────────────────────────────── */
 const IRN_STEPS = [
   { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN.",
-    optimista: "O seu pedido chegou ao IRN e está devidamente registado no sistema. Este é o primeiro passo de uma jornada que termina com a sua nacionalidade portuguesa. Tudo começa aqui - e o seu processo já está dentro do sistema!",
-    detalhes:  "Nesta fase, o IRN confirma que recebeu o seu pedido e que toda a documentação foi entregue. A equipa de registo está a verificar os dados iniciais. É completamente normal estar nesta fase - todos os processos passam por ela obrigatoriamente.",
+    optimista: "O seu pedido chegou ao IRN e está devidamente registado no sistema. Este é o primeiro passo de uma jornada que termina com a sua nacionalidade portuguesa. Tudo começa aqui — e o seu processo já está dentro do sistema!",
+    detalhes:  "Nesta fase, o IRN confirma que recebeu o seu pedido e que toda a documentação foi entregue. A equipa de registo está a verificar os dados iniciais. É completamente normal estar nesta fase — todos os processos passam por ela obrigatoriamente.",
     prazo_irn: "Segundo o IRN, o prazo total estimado para adultos é de 24 a 29 meses desde a submissão até ao registo final. Cerca de 9 a 11 meses decorrem entre a entrega do pedido e o início da análise. Pedidos de menores (filhos de pai/mãe portuguesa) são tratados com prioridade, com análise e decisão entre 2 a 4 meses." },
   { num:2, label:"Registado",   icon:"📋", desc:"Pedido registado no sistema IRN.",
     optimista: "Excelente notícia! O seu processo foi registado oficialmente e tem agora um número único no sistema do IRN. Está na fila de análise e a avançar!",
-    detalhes:  "O registo significa que o IRN validou a sua candidatura e atribuiu-lhe um número de processo oficial. A partir deste momento, o seu processo está em linha aguardando a sua vez de ser analisado. O IRN segue rigorosamente a ordem de entrada - cada processo protocolado antes do seu será analisado primeiro, garantindo total imparcialidade.",
+    detalhes:  "O registo significa que o IRN validou a sua candidatura e atribuiu-lhe um número de processo oficial. A partir deste momento, o seu processo está em linha aguardando a sua vez de ser analisado. O IRN segue rigorosamente a ordem de entrada — cada processo protocolado antes do seu será analisado primeiro, garantindo total imparcialidade.",
     prazo_irn: "Segundo o IRN, cerca de 9 a 11 meses decorrem entre a entrega do pedido e o início da análise. O seu processo está nesta fase de preparação. O prazo total estimado para adultos é de 24 a 29 meses até ao registo final." },
   { num:3, label:"Consultas",   icon:"🔍", desc:"IRN a consultar entidades externas.",
     optimista: "O seu processo está activamente a ser trabalhado! O IRN está a consultar outras entidades oficiais para verificar e confirmar os dados da sua candidatura. Isso significa que há movimento real no seu processo.",
@@ -449,23 +449,23 @@ const IRN_STEPS = [
     prazo_irn: "Segundo o IRN, a fase de análise e diligências (que inclui consultas, verificação e análise jurídica) tem uma duração normal de 9 a 12 meses. Após esta fase, a decisão e o registo final ocorrem em 6 a 8 meses." },
   { num:4, label:"Documentos",  icon:"📄", desc:"Análise da documentação submetida.",
     optimista: "O seu processo está a ser analisado a fundo! A equipa do IRN está a examinar toda a documentação que submeteu. Cada documento analisado é mais um passo em direcção ao despacho favorável.",
-    detalhes:  "Nesta etapa, um técnico especializado do IRN revê minuciosamente todos os documentos do seu processo - certidões de nascimento, procurações, passaportes, certificados comunitários e demais comprovativos. A qualidade e completude da documentação que o escritório Bono & Lacerda preparou para si é fundamental para que esta fase decorra sem contratempos.",
+    detalhes:  "Nesta etapa, um técnico especializado do IRN revê minuciosamente todos os documentos do seu processo — certidões de nascimento, procurações, passaportes, certificados comunitários e demais comprovativos. A qualidade e completude da documentação que o escritório Bono & Lacerda preparou para si é fundamental para que esta fase decorra sem contratempos.",
     prazo_irn: "Segundo o IRN, a fase de análise e diligências tem uma duração normal de 9 a 12 meses. O seu processo já ultrapassou a fase de preparação e está a ser activamente trabalhado. A decisão e o registo final ocorrem em 6 a 8 meses após a conclusão da análise." },
   { num:5, label:"Análise",     icon:"⚖️",  desc:"Análise jurídica do pedido em curso.",
     optimista: "Estamos muito perto! O IRN está a realizar a análise jurídica final do seu processo. Um jurista especializado está a estudar o seu caso para emitir a decisão. Esta é uma das etapas mais avançadas do processo!",
     detalhes:  "A análise jurídica é a fase em que um consultor jurídico ou conservador avalia todos os elementos do processo à luz da legislação portuguesa sobre nacionalidade. O escritório Bono & Lacerda acompanha activamente esta fase e está disponível para responder a qualquer pedido de informação adicional do IRN com a máxima celeridade.",
-    prazo_irn: "Segundo o IRN, a decisão e o registo final ocorrem em 6 a 8 meses após finalizar a análise. O seu processo está numa fase avançada - a análise jurídica é a última etapa antes do despacho." },
+    prazo_irn: "Segundo o IRN, a decisão e o registo final ocorrem em 6 a 8 meses após finalizar a análise. O seu processo está numa fase avançada — a análise jurídica é a última etapa antes do despacho." },
   { num:6, label:"Despacho",    icon:"✍️",  desc:"Decisão final em elaboração.",
     optimista: "A linha de chegada está à vista! O Conservador está a elaborar o despacho final do seu processo. Em breve receberá a confirmação oficial da sua nacionalidade portuguesa. Estamos quase lá!",
     detalhes:  "O despacho é a decisão formal e definitiva do Conservador dos Registos Centrais ou do Arquivo Central do Porto. Nesta fase, o documento oficial de concessão (ou o despacho fundamentado em caso de necessidade de documentação adicional) está a ser redigido. O escritório Bono & Lacerda será notificado assim que o despacho for emitido.",
-    prazo_irn: "Segundo o IRN, a decisão e o registo final ocorrem em 6 a 8 meses após finalizar a análise. O seu processo está na fase de decisão - é a penúltima etapa antes da conclusão." },
+    prazo_irn: "Segundo o IRN, a decisão e o registo final ocorrem em 6 a 8 meses após finalizar a análise. O seu processo está na fase de decisão — é a penúltima etapa antes da conclusão." },
   { num:7, label:"Terminado",   icon:"🎉", desc:"Processo concluído.",
     optimista: "Parabéns! O seu processo de nacionalidade portuguesa está concluído! Bem-vindo à família portuguesa! Este momento representa o culminar de toda a sua jornada.",
     detalhes:  "O processo chegou ao fim com sucesso! Pode agora solicitar a certidão de nascimento portuguesa e, posteriormente, o passaporte português. O escritório Bono & Lacerda irá orientá-lo nos próximos passos para usufruir plenamente dos seus direitos como cidadão português e europeu.",
     prazo_irn: "" },
 ];
 
-/* -- IRN TIMELINE ------------------------------------------------------- */
+/* ── IRN TIMELINE ─────────────────────────────────────────────────────── */
 function IRNTimeline({ proc, submissao }) {
   const getStep = () => {
     if (!proc) return 0;
@@ -504,7 +504,7 @@ function IRNTimeline({ proc, submissao }) {
               {i > 0 && <div className={`irn-line${done || active ? " lit" : ""}`} />}
               <div className="irn-circle-wrap">
                 <div className={`irn-circle${done ? " done" : active ? " active" : ""}`}>
-                  {done ? "v" : s.num}
+                  {done ? "✓" : s.num}
                 </div>
                 <div className={`irn-label${active ? " active" : done ? " done" : ""}`}>
                   {s.label}
@@ -526,7 +526,7 @@ function IRNTimeline({ proc, submissao }) {
             <div style={{ fontSize:"1.6rem", lineHeight:1 }}>{s.icon}</div>
             <div>
               <div style={{ fontWeight:700, fontSize:".9rem", color:"#fff", marginBottom:4 }}>
-                Etapa {s.num} de 7 - {s.label}
+                Etapa {s.num} de 7 — {s.label}
               </div>
               <div style={{ fontSize:".82rem", color:"var(--mu)", lineHeight:1.55 }}>{s.desc}</div>
               {proc?.arquivo && (
@@ -581,7 +581,7 @@ function IRNTimeline({ proc, submissao }) {
   );
 }
 
-/* -- DASHBOARD ---------------------------------------------------------- */
+/* ── DASHBOARD ────────────────────────────────────────────────────────── */
 function Dashboard({ client, proc, steps }) {
   const done = steps.filter(s => s.done).length;
   const totalSteps  = 7;
@@ -602,7 +602,7 @@ function Dashboard({ client, proc, steps }) {
           O escritório Bono & Lacerda está a preparar o seu processo.<br />Em breve terá acesso a todas as informações aqui.
         </p>
         <div style={{ marginTop:"2rem", padding:".75rem 1.25rem", background:"rgba(255,255,255,.04)", borderRadius:12, display:"inline-block", fontSize:".82rem", color:"var(--mu)" }}>
-          +351 21 793 1934 . bonoelacerda@gmail.com
+          +351 21 793 1934 · bonoelacerda@gmail.com
         </div>
       </div>
     </div>
@@ -620,7 +620,7 @@ function Dashboard({ client, proc, steps }) {
           <div>
             <div style={{ fontSize:".72rem", textTransform:"uppercase", letterSpacing:".12em", color:"rgba(201,168,76,.7)", marginBottom:".5rem", fontWeight:600 }}>Progresso do Processo</div>
             <div className="hero-pct" style={{ fontSize:"3rem", fontFamily:"'Playfair Display',serif", fontWeight:700, lineHeight:1 }}>{pct}%</div>
-            <div style={{ fontSize:".85rem", color:"rgba(255,255,255,.6)", marginTop:".4rem" }}>Etapa {currentStep} de {totalSteps} - {stepName}</div>
+            <div style={{ fontSize:".85rem", color:"rgba(255,255,255,.6)", marginTop:".4rem" }}>Etapa {currentStep} de {totalSteps} — {stepName}</div>
           </div>
           <div className="hero-right" style={{ textAlign:"right" }}>
             <div style={{ fontSize:".72rem", textTransform:"uppercase", letterSpacing:".1em", color:"rgba(201,168,76,.7)", marginBottom:".4rem", fontWeight:600 }}>{client.artigo || proc.type}</div>
@@ -635,7 +635,7 @@ function Dashboard({ client, proc, steps }) {
       <div className="dg" style={{ gridTemplateColumns:"1fr 1fr 1fr" }}>
         <div className="sc">
           <div className="sl">Data de Protocolo</div>
-          <div className="sv" style={{ fontSize:"1.1rem", marginTop:4 }}>{proc.opened_at ? fmtd(proc.opened_at) : "-"}</div>
+          <div className="sv" style={{ fontSize:"1.1rem", marginTop:4 }}>{proc.opened_at ? fmtd(proc.opened_at) : "—"}</div>
           <div style={{ marginTop:8 }}>
             <span className={`bd ${proc.status==="concluido"?"bg":proc.status==="aguardando"?"ba":"bb"}`}>
               {proc.status==="concluido"?"Concluído":proc.status==="aguardando"?"Aguardando":"Em andamento"}
@@ -645,13 +645,13 @@ function Dashboard({ client, proc, steps }) {
         <div className="sc">
           <div className="sl">Local de Processamento</div>
           <div style={{ fontWeight:600, fontSize:".88rem", color:"#fff", marginTop:6, lineHeight:1.4 }}>
-            {proc.arquivo || proc.submissao_irn || client.fonte || (client.observacao?.includes("IRN") ? "IRN - Em análise" : "-")}
+            {proc.arquivo || proc.submissao_irn || client.fonte || (client.observacao?.includes("IRN") ? "IRN — Em análise" : "—")}
           </div>
           <div className="ss" style={{ marginTop:6 }}>{fmtd(proc.last_update)}</div>
         </div>
         <div className="sc">
           <div className="sl">Artigo</div>
-          <div style={{ fontWeight:700, fontSize:"1rem", color:"#fff", marginTop:6 }}>{client.artigo || proc.type || "-"}</div>
+          <div style={{ fontWeight:700, fontSize:"1rem", color:"#fff", marginTop:6 }}>{client.artigo || proc.type || "—"}</div>
           <div className="ss" style={{ marginTop:4 }}>Nacionalidade Portuguesa</div>
         </div>
       </div>
@@ -674,57 +674,57 @@ function Dashboard({ client, proc, steps }) {
         const PRAZOS = [
           // Art.º 6º n.º 7 - Naturalização
           { match: a => a.includes('6') && (a.includes('n.º 7') || a.includes('n. 7') || a.includes('no 7') || a.includes('n7')),
-            porto:  { julgando: '2ª quinzena de maio de 2022',     fonte: 'ACP - Jan/2026' },
-            lisboa: { julgando: '1ª quinzena de maio de 2021',     fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '2ª quinzena de maio de 2022',     fonte: 'ACP — Jan/2026' },
+            lisboa: { julgando: '1ª quinzena de maio de 2021',     fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 1 - Naturalização
           { match: a => a.includes('6') && (a.includes('n.º 1') || a.includes('n. 1') || a.includes('no 1') || a.includes('n1')),
-            porto:  { julgando: '2ª quinzena de setembro de 2023', fonte: 'ACP - Jan/2026' },
-            lisboa: { julgando: '1ª quinzena de janeiro de 2024',  fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '2ª quinzena de setembro de 2023', fonte: 'ACP — Jan/2026' },
+            lisboa: { julgando: '1ª quinzena de janeiro de 2024',  fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 2
           { match: a => a.includes('6') && (a.includes('n.º 2') || a.includes('n. 2') || a.includes('no 2') || a.includes('n2')),
-            porto:  { julgando: '1ª quinzena de setembro de 2025', fonte: 'ACP - Jan/2026' },
-            lisboa: { julgando: '2ª quinzena de fevereiro de 2026',fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '1ª quinzena de setembro de 2025', fonte: 'ACP — Jan/2026' },
+            lisboa: { julgando: '2ª quinzena de fevereiro de 2026',fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 3
           { match: a => a.includes('6') && (a.includes('n.º 3') || a.includes('n. 3') || a.includes('no 3') || a.includes('n3')),
-            porto:  { julgando: '-',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de janeiro de 2026',  fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de janeiro de 2026',  fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 4
           { match: a => a.includes('6') && (a.includes('n.º 4') || a.includes('n. 4') || a.includes('no 4') || a.includes('n4')),
-            porto:  { julgando: '-',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de dezembro de 2024', fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de dezembro de 2024', fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 5
           { match: a => a.includes('6') && (a.includes('n.º 5') || a.includes('n. 5') || a.includes('no 5') || a.includes('n5')),
-            porto:  { julgando: '-',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de abril de 2025',    fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de abril de 2025',    fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 6
           { match: a => a.includes('6') && (a.includes('n.º 6') || a.includes('n. 6') || a.includes('no 6') || a.includes('n6')),
-            porto:  { julgando: '-',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de novembro de 2021', fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de novembro de 2021', fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 8 - Naturalização (ascendentes)
           { match: a => a.includes('6') && (a.includes('n.º 8') || a.includes('n. 8') || a.includes('no 8') || a.includes('n8')),
-            porto:  { julgando: '-',                               fonte: 'ACP' },
-            lisboa: { julgando: '1ª quinzena de outubro de 2023',  fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '1ª quinzena de outubro de 2023',  fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 9
           { match: a => a.includes('6') && (a.includes('n.º 9') || a.includes('n. 9') || a.includes('no 9') || a.includes('n9')),
-            porto:  { julgando: '-',                               fonte: 'ACP' },
-            lisboa: { julgando: '1ª quinzena de abril de 2025',    fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '1ª quinzena de abril de 2025',    fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 3º n.º 1 - Aquisição (casamento)
           { match: a => (a.includes('3') && a.includes('1')) || a.includes('casamento') || a.includes('aquisição'),
-            porto:  { julgando: '-',                               fonte: 'ACP' },
-            lisboa: { julgando: '2ª quinzena de outubro de 2021',  fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '2ª quinzena de outubro de 2021',  fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 2º - Aquisição de Nacionalidade
           { match: a => a.includes('art') && a.includes('2') && !a.includes('6') && !a.includes('1') && !a.includes('3'),
-            porto:  { julgando: '-',                               fonte: 'ACP' },
-            lisboa: { julgando: '1ª quinzena de setembro de 2022', fonte: 'CRC Lisboa - Fev/2026' } },
-          // Art.º 1º D - Atribuição (netos) - Maiores e Menores
+            porto:  { julgando: '—',                               fonte: 'ACP' },
+            lisboa: { julgando: '1ª quinzena de setembro de 2022', fonte: 'CRC Lisboa — Fev/2026' } },
+          // Art.º 1º D - Atribuição (netos) — Maiores e Menores
           { match: a => (a.includes('1') && a.includes('d')) || a.includes('netos'),
             dual: true,
-            porto:  { maiores: '1ª quinzena de dezembro de 2021', menores: '1ª quinzena de janeiro de 2026', fonte: 'ACP - Jan/2026' },
-            lisboa: { maiores: '2ª quinzena de janeiro de 2022',  menores: '1ª quinzena de janeiro de 2025', fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { maiores: '1ª quinzena de dezembro de 2021', menores: '1ª quinzena de janeiro de 2026', fonte: 'ACP — Jan/2026' },
+            lisboa: { maiores: '2ª quinzena de janeiro de 2022',  menores: '1ª quinzena de janeiro de 2025', fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 1º C - Atribuição (nasc. estrangeiro)
           { match: a => (a.includes('1') && a.includes('c')) || a.includes('nasc') || a.includes('estrangeiro'),
-            porto:  { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'ACP - Jan/2026' },
-            lisboa: { julgando: '1ª quinzena de novembro de 2025', fonte: 'CRC Lisboa - Fev/2026' } },
+            porto:  { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'ACP — Jan/2026' },
+            lisboa: { julgando: '1ª quinzena de novembro de 2025', fonte: 'CRC Lisboa — Fev/2026' } },
         ];
 
         const isPorto  = arquivo.includes('porto');
@@ -748,7 +748,7 @@ function Dashboard({ client, proc, steps }) {
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"1rem" }}>
                 <div style={{ background:"rgba(255,255,255,.04)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid var(--glass-border)" }}>
                   <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--mu)", marginBottom:5, fontWeight:600 }}>O seu processo entrou em</div>
-                  <div style={{ fontWeight:700, fontSize:".95rem", color:"#fff" }}>{protocolo ? fmtd(protocolo) : "-"}</div>
+                  <div style={{ fontWeight:700, fontSize:".95rem", color:"#fff" }}>{protocolo ? fmtd(protocolo) : "—"}</div>
                   <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || proc.type}</div>
                 </div>
                 <div style={{ background:"rgba(212,168,67,.08)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid rgba(212,168,67,.2)" }}>
@@ -769,7 +769,7 @@ function Dashboard({ client, proc, steps }) {
           );
         }
 
-        if (info.julgando === '-') return null;
+        if (info.julgando === '—') return null;
 
         const isLate = protocolo && new Date(protocolo) < new Date('2022-06-01');
         const isRecent = protocolo && new Date(protocolo) > new Date('2024-06-01');
@@ -785,7 +785,7 @@ function Dashboard({ client, proc, steps }) {
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"1rem" }}>
               <div style={{ background:"rgba(255,255,255,.04)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid var(--glass-border)" }}>
                 <div style={{ fontSize:".7rem", textTransform:"uppercase", letterSpacing:".07em", color:"var(--mu)", marginBottom:5, fontWeight:600 }}>O seu processo entrou em</div>
-                <div style={{ fontWeight:700, fontSize:".95rem", color:"#fff" }}>{protocolo ? fmtd(protocolo) : "-"}</div>
+                <div style={{ fontWeight:700, fontSize:".95rem", color:"#fff" }}>{protocolo ? fmtd(protocolo) : "—"}</div>
                 <div style={{ fontSize:".75rem", color:"var(--mu)", marginTop:3 }}>{client.artigo || proc.type}</div>
               </div>
               <div style={{ background:"rgba(212,168,67,.08)", borderRadius:12, padding:".85rem 1.1rem", border:"1px solid rgba(212,168,67,.2)" }}>
@@ -818,7 +818,7 @@ function Dashboard({ client, proc, steps }) {
               <div style={{ minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Ramom Lacerda</div>
                 <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L . Madrid 142952</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L · Madrid 142952</div>
                 <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
@@ -826,8 +826,8 @@ function Dashboard({ client, proc, steps }) {
               <div className="av" style={{ width:42, height:42, fontSize:".85rem", flexShrink:0 }}>LF</div>
               <div style={{ minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Luis Felipe Bono</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 . OAB/PB 33587A</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L . Madrid 142951</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 · OAB/PB 33587A</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L · Madrid 142951</div>
                 <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
@@ -851,7 +851,7 @@ function Dashboard({ client, proc, steps }) {
   );
 }
 
-/* -- DOCUMENTS ---------------------------------------------------------- */
+/* ── DOCUMENTS ────────────────────────────────────────────────────────── */
 function Docs({ proc, toast }) {
   const [docs, setDocs] = useState([]);
   const [ld,   setLd]   = useState(true);
@@ -904,7 +904,7 @@ function Docs({ proc, toast }) {
           {uploading ? (
             <>
               <Icon name="spin" size={32} />
-              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem" }}>A enviar ficheiro...</div>
+              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem" }}>A enviar ficheiro…</div>
             </>
           ) : (
             <>
@@ -912,7 +912,7 @@ function Docs({ proc, toast }) {
               <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem", color:"#fff" }}>
                 {dragOver ? "Solte o ficheiro aqui" : "Arraste um ficheiro ou clique para selecionar"}
               </div>
-              <div style={{ fontSize:".78rem", marginTop:6, color:"var(--mu)" }}>PDF, DOC, JPG, PNG - até 20 MB</div>
+              <div style={{ fontSize:".78rem", marginTop:6, color:"var(--mu)" }}>PDF, DOC, JPG, PNG — até 20 MB</div>
             </>
           )}
           <input ref={ref} type="file" style={{ display:"none" }} onChange={e => upload(e.target.files[0])} />
@@ -930,7 +930,7 @@ function Docs({ proc, toast }) {
                 <div className="dic"><Icon name="file" size={18} /></div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div className="dn2">{d.name}</div>
-                  <div className="dm">{d.size} . {d.date} . {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
+                  <div className="dm">{d.size} · {d.date} · {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
                 </div>
                 <div style={{ marginRight:8 }}>{badge(d.status)}</div>
                 <button className="ib" onClick={() => download(d)} title="Download">
@@ -952,7 +952,7 @@ function Docs({ proc, toast }) {
   );
 }
 
-/* -- NOTIFICATIONS ------------------------------------------------------ */
+/* ── NOTIFICATIONS ────────────────────────────────────────────────────── */
 function Notifs({ client }) {
   const [ns, setNs] = useState([]);
   const [ld, setLd] = useState(true);
@@ -1005,7 +1005,7 @@ function Notifs({ client }) {
   );
 }
 
-/* -- MEETINGS ----------------------------------------------------------- */
+/* ── MEETINGS ─────────────────────────────────────────────────────────── */
 function Meetings({ proc, client }) {
   const [ms,    setMs]    = useState([]);
   const [ld,    setLd]    = useState(true);
@@ -1097,10 +1097,10 @@ function Meetings({ proc, client }) {
             </div>
             <div className="fg">
               <label>Mensagem (opcional)</label>
-              <textarea value={form.notes} onChange={e => setForm(f => ({...f, notes:e.target.value}))} placeholder="Descreva o assunto ou dúvidas que quer esclarecer..." />
+              <textarea value={form.notes} onChange={e => setForm(f => ({...f, notes:e.target.value}))} placeholder="Descreva o assunto ou dúvidas que quer esclarecer…" />
             </div>
             <button className="btnp" onClick={submit} disabled={busy || !form.date}>
-              {busy ? <><Icon name="spin" size={16} /> A enviar...</> : "Enviar Pedido de Reunião"}
+              {busy ? <><Icon name="spin" size={16} /> A enviar…</> : "Enviar Pedido de Reunião"}
             </button>
           </>
         )}
@@ -1124,7 +1124,7 @@ function Meetings({ proc, client }) {
               <div style={{ flex:1 }}>
                 <div style={{ fontWeight:600, fontSize:".9rem" }}>{m.title}</div>
                 <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
-                  {m.time} . {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
+                  {m.time} · {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
                 </div>
                 {m.notes && <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4, fontStyle:"italic" }}>{m.notes}</div>}
               </div>
@@ -1140,7 +1140,7 @@ function Meetings({ proc, client }) {
   );
 }
 
-/* -- CHAT --------------------------------------------------------------- */
+/* ── CHAT ─────────────────────────────────────────────────────────────── */
 function Chat({ client, proc }) {
   const [msgs,       setMsgs]       = useState([]);
   const [input,      setInput]      = useState("");
@@ -1205,7 +1205,7 @@ function Chat({ client, proc }) {
             </div>
           )}
           <div className="cir">
-            <textarea className="cin" rows={1} placeholder="Digite a sua mensagem..." value={input}
+            <textarea className="cin" rows={1} placeholder="Digite a sua mensagem…" value={input}
               onChange={e => { setInput(e.target.value); setJustSent(false); }}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <button className="bsend" onClick={send}><Icon name="send" size={16} /></button>
@@ -1216,7 +1216,7 @@ function Chat({ client, proc }) {
   );
 }
 
-/* -- PROFILE ------------------------------------------------------------ */
+/* ── PROFILE ──────────────────────────────────────────────────────────── */
 function Perfil({ client, toast, onUpdate }) {
   const [form,   setForm]   = useState({
     email:    client.email    || "",
@@ -1320,7 +1320,7 @@ function Perfil({ client, toast, onUpdate }) {
               <label>País</label>
               <select value={form.country} onChange={e => set("country", e.target.value)}>
                 {COUNTRIES.map(c => c === "---"
-                  ? <option key="---" disabled>--------------</option>
+                  ? <option key="---" disabled>──────────────</option>
                   : <option key={c} value={c}>{c}</option>
                 )}
               </select>
@@ -1355,7 +1355,7 @@ function Perfil({ client, toast, onUpdate }) {
             transition:"all .25s", display:"flex", alignItems:"center", justifyContent:"center", gap:".6rem",
             opacity: saving ? .6 : 1,
           }}>
-            {saving ? <><Icon name="spin" size={16} /> A guardar...</>
+            {saving ? <><Icon name="spin" size={16} /> A guardar…</>
             : saved  ? <><Icon name="check" size={16} /> Dados guardados!</>
             :           <>Guardar alterações</>}
           </button>
@@ -1369,11 +1369,11 @@ function Perfil({ client, toast, onUpdate }) {
   );
 }
 
-/* -- LEGAL / POLÍTICAS -------------------------------------------------- */
+/* ── LEGAL / POLÍTICAS ────────────────────────────────────────────────── */
 const LEGAL = {
   privacidade: {
     title: "Política de Privacidade",
-    body: `Bono & Lacerda Advogados ("nós") compromete-se a proteger a privacidade dos seus dados pessoais em conformidade com o Regulamento Geral de Proteção de Dados (RGPD - Regulamento UE 2016/679) e a Lei Geral de Proteção de Dados brasileira (LGPD - Lei 13.709/2018).
+    body: `Bono & Lacerda Advogados ("nós") compromete-se a proteger a privacidade dos seus dados pessoais em conformidade com o Regulamento Geral de Proteção de Dados (RGPD — Regulamento UE 2016/679) e a Lei Geral de Proteção de Dados brasileira (LGPD — Lei 13.709/2018).
 
 Dados recolhidos: nome completo, contacto telefónico, e-mail, número de processo IRN, chave de acesso ao portal, documentos de identificação e certidões, e dados de navegação (cookies essenciais).
 
@@ -1401,7 +1401,7 @@ Acesso: o acesso é pessoal e intransmissível, sendo feito através de uma chav
 
 Utilização: o portal destina-se exclusivamente à consulta de informações processuais. É proibida qualquer utilização indevida, incluindo tentativas de acesso não autorizado, extracção automatizada de dados ou partilha de credenciais.
 
-Informações: as informações apresentadas no portal são de carácter meramente informativo e não substituem comunicações oficiais do IRN - Instituto dos Registos e do Notariado.
+Informações: as informações apresentadas no portal são de carácter meramente informativo e não substituem comunicações oficiais do IRN — Instituto dos Registos e do Notariado.
 
 Propriedade intelectual: todo o conteúdo, design e código do portal são propriedade de Bono & Lacerda Advogados, sendo proibida a reprodução sem autorização.
 
@@ -1418,9 +1418,9 @@ Legislação aplicável: aplica-se a legislação portuguesa, com foro na comarc
 O que são cookies: cookies são pequenos ficheiros de texto armazenados no seu dispositivo quando visita um website.
 
 Cookies utilizados:
-- Cookies de sessão: necessários para manter a sua sessão activa enquanto navega no portal. Expiram ao fechar o navegador.
-- Cookies de autenticação: armazenam a sua chave de acesso de forma segura durante a sessão.
-- Cookies de preferência: guardam configurações como o separador activo.
+— Cookies de sessão: necessários para manter a sua sessão activa enquanto navega no portal. Expiram ao fechar o navegador.
+— Cookies de autenticação: armazenam a sua chave de acesso de forma segura durante a sessão.
+— Cookies de preferência: guardam configurações como o separador activo.
 
 Cookies de terceiros: este portal não utiliza cookies de terceiros, de publicidade ou de rastreamento.
 
@@ -1435,7 +1435,7 @@ Base legal: o uso de cookies estritamente necessários é permitido sem consenti
 Sede: Lisboa, Portugal.
 Contacto: bonoelacerda@gmail.com
 
-Informação processual: as datas de análise e previsões apresentadas neste portal baseiam-se em tabelas oficiais publicadas pelo IRN - Instituto dos Registos e do Notariado (Arquivo Central do Porto e Conservatória dos Registos Centrais de Lisboa). Estas datas são indicativas e podem sofrer alterações sem aviso prévio por parte do IRN.
+Informação processual: as datas de análise e previsões apresentadas neste portal baseiam-se em tabelas oficiais publicadas pelo IRN — Instituto dos Registos e do Notariado (Arquivo Central do Porto e Conservatória dos Registos Centrais de Lisboa). Estas datas são indicativas e podem sofrer alterações sem aviso prévio por parte do IRN.
 
 Responsabilidade: o escritório não se responsabiliza por eventuais atrasos do IRN, alterações legislativas supervenientes ou decisões administrativas que escapam ao nosso controlo.
 
@@ -1445,7 +1445,7 @@ As informações contidas neste portal não constituem aconselhamento jurídico 
   },
   irn: {
     title: "Consulta Oficial do Processo",
-    body: `O acompanhamento oficial do seu processo de nacionalidade portuguesa deve ser feito directamente no portal do IRN - Instituto dos Registos e do Notariado.
+    body: `O acompanhamento oficial do seu processo de nacionalidade portuguesa deve ser feito directamente no portal do IRN — Instituto dos Registos e do Notariado.
 
 Para consultar o estado oficial do seu processo:
 1. Aceda a https://justica.gov.pt/Servicos/Consultar-estado-do-processo-de-nacionalidade
@@ -1493,15 +1493,15 @@ function LegalFooter({ onOpen }) {
       {links.map((l, i) => (
         <span key={l.key}>
           <a href="#" onClick={e => { e.preventDefault(); onOpen(l.key); }} style={{ color:"rgba(212,168,67,.5)", textDecoration:"none", transition:"color .2s" }} onMouseOver={e => e.target.style.color="rgba(212,168,67,.9)"} onMouseOut={e => e.target.style.color="rgba(212,168,67,.5)"}>{l.label}</a>
-          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>.</span>}
+          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>·</span>}
         </span>
       ))}
     </div>
   );
 }
 
-/* -- APP ---------------------------------------------------------------- */
-/* -- LGPD CONSENT BANNER (V-007) ---------------------------------------- */
+/* ── APP ──────────────────────────────────────────────────────────────── */
+/* ── LGPD CONSENT BANNER (V-007) ──────────────────────────────────────── */
 function LGPDConsent(){
   const [show,setShow]=useState(()=>{try{return !localStorage.getItem("bl_lgpd_consent");}catch{return true;}});
   if(!show)return null;
@@ -1564,7 +1564,7 @@ export default function App() {
             <img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="BL" style={{width:32,height:32,objectFit:'contain'}} />
             <div>
               <h2>Bono & Lacerda</h2>
-              <span>{client.name.split(" ")[0]} . {client.chave_acesso}</span>
+              <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
             </div>
           </div>
           <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
@@ -1604,7 +1604,7 @@ export default function App() {
         </aside>
 
         <main className="mc">
-          {loading ? <Loader text="A carregar o seu processo..." /> : (
+          {loading ? <Loader text="A carregar o seu processo…" /> : (
             <>
               {tab === "home"     && <Dashboard client={client} proc={proc} steps={steps} />}
               {tab === "docs"     && <Docs proc={proc} toast={showToast} />}
