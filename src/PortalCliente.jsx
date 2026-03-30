@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 
-/* ── SECURITY: Prototype Pollution Protection (V-008) ─────────────────── */
+/* -- SECURITY: Prototype Pollution Protection (V-008) ------------------- */
 if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object.freeze(Array.prototype);}catch(e){}}
 
-/* ── SECURITY: Strip Meta Pixel fbclid tracking parameter (V-007 LGPD) ── */
+/* -- SECURITY: Strip Meta Pixel fbclid tracking parameter (V-007 LGPD) -- */
 (function stripFbclid(){
   try{
     const url=new URL(window.location.href);
@@ -18,7 +18,7 @@ const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
 
-/* ── SECURITY: Input sanitization (V-008) ─────────────────────────────── */
+/* -- SECURITY: Input sanitization (V-008) ------------------------------- */
 const sanitizeInput = (str) => {
   if(typeof str !== "string") return "";
   return str.replace(/[<>'"]/g, c => ({"<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"})[c]||c);
@@ -28,7 +28,7 @@ const sanitizeQueryParam = (str) => {
   return str.replace(/__proto__|constructor\[|prototype\[/gi, "");
 };
 
-/* ── SECURITY: Safe JSON parse (V-010) ────────────────────────────────── */
+/* -- SECURITY: Safe JSON parse (V-010) ---------------------------------- */
 const safeJsonParse = async (response) => {
   try {
     const data = await response.json();
@@ -84,7 +84,7 @@ function Icon({ name, size = 20 }) {
   return map[name] || null;
 }
 
-/* ── CSS - GLASSMORPHISM DESIGN ────────────────────────────────────────── */
+/* -- CSS - GLASSMORPHISM DESIGN ------------------------------------------ */
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -119,7 +119,7 @@ body::before {
               radial-gradient(ellipse at 50% 50%, rgba(18,36,61,.5) 0%, transparent 70%);
 }
 
-/* ── LOGIN ── */
+/* -- LOGIN -- */
 .login-wrap { display:flex; flex-direction:column; min-height:100vh; width:100%; max-width:100vw; }
 .lw { flex:1; display:flex; overflow-x:hidden; width:100%; }
 .ll { width:44%; background:linear-gradient(160deg, var(--nd) 0%, #0c1a2f 50%, #14294a 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; padding:3rem; position:relative; overflow:hidden; }
@@ -146,7 +146,7 @@ body::before {
 .btnp:disabled { opacity:.5; cursor:not-allowed; transform:none; }
 .errmsg { color:var(--er); font-size:.82rem; margin-top:.9rem; text-align:center; padding:.7rem; background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.15); border-radius:10px; }
 
-/* ── LAYOUT ── */
+/* -- LAYOUT -- */
 .al  { display:flex; min-height:100vh; overflow-x:hidden; width:100%; }
 .sb  { width:270px; background:rgba(6,14,26,.85); backdrop-filter:var(--blur); border-right:1px solid var(--glass-border); display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100vh; z-index:100; }
 .sbl { padding:1.8rem 1.5rem 1.4rem; border-bottom:1px solid var(--glass-border); }
@@ -165,7 +165,7 @@ body::before {
 .out:hover { color:rgba(255,255,255,.7); }
 .mc { margin-left:270px; flex:1; padding:2.5rem 3rem; min-height:100vh; animation:fadeUp .4s ease; }
 
-/* ── MOBILE ── */
+/* -- MOBILE -- */
 .mob-nav { display:none; position:fixed; bottom:0; left:0; right:0; background:rgba(6,14,26,.92); backdrop-filter:var(--blur); border-top:1px solid var(--glass-border); z-index:200; padding:.4rem 0 calc(.4rem + env(safe-area-inset-bottom)); }
 .mob-nav-inner { display:flex; justify-content:space-around; align-items:center; }
 .mob-ni { display:flex; flex-direction:column; align-items:center; gap:.2rem; padding:.4rem .7rem; color:var(--mus); font-size:.58rem; font-weight:500; cursor:pointer; border:none; background:none; font-family:'DM Sans',sans-serif; transition:all .2s; min-width:50px; }
@@ -204,14 +204,14 @@ body::before {
   ::-webkit-scrollbar { display:none; }
 }
 
-/* ── COMPONENTS - GLASS CARDS ── */
+/* -- COMPONENTS - GLASS CARDS -- */
 .ph h1 { font-family:'Playfair Display',serif; font-size:1.9rem; color:#fff; letter-spacing:-.01em; }
 .ph p  { color:var(--mu); font-size:.88rem; margin-top:.35rem; margin-bottom:2rem; line-height:1.5; }
 .card { background:var(--glass); backdrop-filter:var(--blur); border-radius:var(--r2); padding:1.6rem; box-shadow:var(--sh); border:1px solid var(--glass-border); transition:all .3s; }
 .card:hover { background:var(--glass-hover); box-shadow:var(--sh2); border-color:rgba(255,255,255,.15); }
 .ct { font-family:'Playfair Display',serif; font-size:1.1rem; color:#fff; margin-bottom:1rem; }
 
-/* ── STATS ── */
+/* -- STATS -- */
 .dg { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.25rem; margin-bottom:1.75rem; }
 .sc { background:var(--glass); backdrop-filter:var(--blur2); border-radius:var(--r); padding:1.3rem 1.5rem; border:1px solid var(--glass-border); box-shadow:var(--sh); transition:all .3s; }
 .sc:hover { background:var(--glass-hover); box-shadow:var(--sh2); transform:translateY(-3px); border-color:rgba(212,168,67,.2); }
@@ -221,14 +221,14 @@ body::before {
 .pb  { background:rgba(255,255,255,.08); border-radius:99px; height:8px; margin-top:.5rem; overflow:hidden; }
 .pbf { height:8px; border-radius:99px; background:linear-gradient(90deg, var(--g), var(--gl), var(--g)); background-size:200% 100%; animation:shimmer 2.5s ease infinite; transition:width 1s cubic-bezier(.4,0,.2,1); }
 
-/* ── BADGES ── */
+/* -- BADGES -- */
 .bd { display:inline-flex; align-items:center; padding:.3rem .75rem; border-radius:99px; font-size:.72rem; font-weight:600; letter-spacing:.01em; backdrop-filter:var(--blur2); }
 .bg { background:rgba(74,222,128,.12); color:#4ade80; border:1px solid rgba(74,222,128,.2); }
 .ba { background:rgba(212,168,67,.12); color:var(--gl); border:1px solid rgba(212,168,67,.2); }
 .bb { background:rgba(96,165,250,.12); color:#60a5fa; border:1px solid rgba(96,165,250,.2); }
 .br { background:rgba(248,113,113,.12); color:#f87171; border:1px solid rgba(248,113,113,.2); }
 
-/* ── TIMELINE ── */
+/* -- TIMELINE -- */
 .tl { position:relative; padding-left:2rem; }
 .tl::before { content:''; position:absolute; left:10px; top:0; bottom:0; width:2px; background:linear-gradient(180deg, var(--g), rgba(255,255,255,.08)); }
 .ti { position:relative; padding-bottom:1.75rem; }
@@ -241,7 +241,7 @@ body::before {
 .tdt { font-size:.78rem; color:var(--mu); margin-top:.15rem; }
 .tde { font-size:.82rem; color:var(--mu); margin-top:.3rem; background:var(--glass2); padding:.5rem .75rem; border-radius:8px; }
 
-/* ── DOCUMENTS ── */
+/* -- DOCUMENTS -- */
 .dl  { display:flex; flex-direction:column; gap:.65rem; }
 .dit { display:flex; align-items:center; gap:1rem; padding:1rem 1.25rem; background:var(--glass2); border-radius:14px; border:1px solid var(--glass-border); transition:all .3s; }
 .dit:hover { background:var(--glass-hover); border-color:rgba(212,168,67,.25); transform:translateX(6px); }
@@ -255,7 +255,7 @@ body::before {
 .uz:hover .uz-icon { transform:translateY(-6px); }
 .uz-icon { transition:transform .3s; }
 
-/* ── NOTIFICATIONS ── */
+/* -- NOTIFICATIONS -- */
 .nl2 { display:flex; flex-direction:column; gap:.6rem; }
 .ni2 { display:flex; gap:1rem; padding:1.1rem 1.25rem; border-radius:var(--r); border:1px solid var(--glass-border); background:var(--glass2); transition:all .25s; }
 .ni2:hover { background:var(--glass-hover); box-shadow:var(--sh); }
@@ -264,14 +264,14 @@ body::before {
 .ntm { font-size:.73rem; color:var(--mu); margin-top:.25rem; }
 .ud  { width:9px; height:9px; background:var(--g); border-radius:50%; flex-shrink:0; margin-top:6px; animation:glow 2s infinite; box-shadow:0 0 8px rgba(212,168,67,.4); }
 
-/* ── MEETINGS ── */
+/* -- MEETINGS -- */
 .mcard { border:1px solid var(--glass-border); border-radius:var(--r); padding:1.1rem 1.25rem; display:flex; align-items:center; gap:1rem; margin-bottom:.65rem; background:var(--glass2); transition:all .25s; }
 .mcard:hover { background:var(--glass-hover); box-shadow:var(--sh); border-color:rgba(212,168,67,.2); }
 .mdb  { background:linear-gradient(135deg, rgba(212,168,67,.15), rgba(212,168,67,.05)); border:1px solid rgba(212,168,67,.2); color:var(--g); border-radius:14px; width:58px; text-align:center; padding:.65rem 0; flex-shrink:0; }
 .mdb .day { font-family:'Playfair Display',serif; font-size:1.7rem; line-height:1; color:#fff; }
 .mdb .mon { font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; opacity:.7; margin-top:3px; }
 
-/* ── FORMS ── */
+/* -- FORMS -- */
 .fg { margin-bottom:1.2rem; }
 .fg label { display:block; font-size:.76rem; font-weight:600; color:var(--mu); text-transform:uppercase; letter-spacing:.08em; margin-bottom:.5rem; }
 .fg input, .fg select, .fg textarea { width:100%; padding:.85rem 1rem; border:1.5px solid var(--glass-border); border-radius:12px; font-family:'DM Sans',sans-serif; font-size:.9rem; color:#fff; background:var(--glass); backdrop-filter:var(--blur2); outline:none; transition:all .3s; }
@@ -282,7 +282,7 @@ body::before {
 .fg2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
 .fg-hint { font-size:.72rem; color:var(--mus); margin-top:4px; }
 
-/* ── CHAT ── */
+/* -- CHAT -- */
 .cw  { display:flex; flex-direction:column; height:calc(100vh - 230px); min-height:380px; }
 .che { display:flex; align-items:center; gap:.75rem; padding-bottom:1rem; border-bottom:1px solid var(--glass-border); margin-bottom:1rem; }
 .chi h3 { font-weight:600; font-size:.92rem; color:#fff; }
@@ -302,7 +302,7 @@ body::before {
 .bsend:hover { transform:scale(1.08); box-shadow:0 4px 20px rgba(212,168,67,.35); }
 .chat-reply-notice { background:rgba(212,168,67,.06); border:1px solid rgba(212,168,67,.12); border-radius:12px; padding:.7rem 1rem; text-align:center; font-size:.78rem; color:var(--gl); margin-bottom:.5rem; }
 
-/* ── IRN TRACKER ── */
+/* -- IRN TRACKER -- */
 .irn-track { display:flex; align-items:flex-start; margin-bottom:1.5rem; overflow-x:hidden; padding-bottom:.5rem; }
 .irn-step  { display:flex; flex-direction:column; align-items:center; flex:1; min-width:55px; position:relative; }
 .irn-line  { position:absolute; top:18px; right:50%; width:100%; height:3px; background:rgba(255,255,255,.06); z-index:0; border-radius:2px; }
@@ -325,7 +325,7 @@ body::before {
   .irn-dot   { display:inline; margin-left:.4rem; }
 }
 
-/* ── MEETING TYPES ── */
+/* -- MEETING TYPES -- */
 .type-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-top:.25rem; }
 .type-opt  { border:2px solid var(--glass-border); border-radius:14px; padding:.9rem 1rem; cursor:pointer; transition:all .25s; background:var(--glass2); }
 .type-opt:hover { border-color:rgba(212,168,67,.25); background:var(--glass); }
@@ -333,7 +333,7 @@ body::before {
 .type-opt h4 { font-weight:600; font-size:.88rem; color:#fff; }
 .type-opt p  { font-size:.73rem; color:var(--mu); margin-top:3px; }
 
-/* ── MISC ── */
+/* -- MISC -- */
 .ld { display:flex; align-items:center; justify-content:center; min-height:200px; flex-direction:column; gap:1rem; color:var(--mu); font-size:.88rem; }
 .toast { position:fixed; bottom:2rem; right:2rem; background:rgba(10,22,40,.85); backdrop-filter:var(--blur); color:#fff; padding:1rem 1.5rem; border-radius:var(--r); font-size:.88rem; z-index:9999; box-shadow:var(--sh3); border-left:3px solid var(--g); animation:slideIn .35s ease; }
 ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:99px; } ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,.2); }
@@ -343,22 +343,22 @@ body::before {
 .empty-state .desc { font-size:.85rem; line-height:1.6; max-width:320px; margin:0 auto; }
 `;
 
-/* ── TOAST ── */
+/* -- TOAST -- */
 function Toast({ msg, onClose }) {
   useEffect(() => { const t = setTimeout(onClose, 3500); return () => clearTimeout(t); }, []);
   return <div className="toast">{msg}</div>;
 }
 
-function Loader({ text = "Carregando…" }) {
+function Loader({ text = "Carregando..." }) {
   return <div className="ld"><Icon name="spin" size={28} /><span>{text}</span></div>;
 }
 
-/* ── LOGIN ────────────────────────────────────────────────────────────── */
+/* -- LOGIN -------------------------------------------------------------- */
 function Login({ onLogin, legalDoc, setLegalDoc }) {
   const [chave, setChave] = useState("");
   const [err,   setErr]   = useState("");
   const [busy,  setBusy]  = useState(false);
-  /* ── SECURITY: Rate limiting on login (V-006) ── */
+  /* -- SECURITY: Rate limiting on login (V-006) -- */
   const [attempts,setAttempts] = useState(0);
   const [locked,setLocked] = useState(false);
 
@@ -397,7 +397,7 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
             <h1>Bono & Lacerda<br />Advogados</h1>
             <p>Portal do Cliente</p>
           </div>
-          <p className="ltag">Advocacia Internacional<br />Migração · Nacionalidade · Empresarial</p>
+          <p className="ltag">Advocacia Internacional<br />Migração . Nacionalidade . Empresarial</p>
         </div>
         <div className="lr">
           <div className="lc">
@@ -413,7 +413,7 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
             />
             <p className="chave-hint">A chave foi enviada pelo escritório Bono & Lacerda</p>
             <button className="btnp" onClick={go} disabled={busy}>
-              {busy ? <><Icon name="spin" size={16} /> A verificar…</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
+              {busy ? <><Icon name="spin" size={16} /> A verificar...</> : <><Icon name="key" size={16} /> Aceder ao Portal</>}
             </button>
             {err && <p className="errmsg">{err}</p>}
             <div onClick={() => setLegalDoc('irn')} style={{ marginTop:"1.5rem", padding:".85rem 1.1rem", background:"rgba(212,168,67,.06)", border:"1px solid rgba(212,168,67,.18)", borderRadius:14, cursor:"pointer", transition:"all .25s", display:"flex", alignItems:"center", gap:".75rem" }}
@@ -433,7 +433,7 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
   );
 }
 
-/* ── IRN STEPS ────────────────────────────────────────────────────────── */
+/* -- IRN STEPS ---------------------------------------------------------- */
 const IRN_STEPS = [
   { num:1, label:"Recebido",    icon:"📥", desc:"Pedido recebido pelo IRN.",
     optimista: "O seu pedido chegou ao IRN e está devidamente registado no sistema. Este é o primeiro passo de uma jornada que termina com a sua nacionalidade portuguesa. Tudo começa aqui - e o seu processo já está dentro do sistema!",
@@ -465,7 +465,7 @@ const IRN_STEPS = [
     prazo_irn: "" },
 ];
 
-/* ── IRN TIMELINE ─────────────────────────────────────────────────────── */
+/* -- IRN TIMELINE ------------------------------------------------------- */
 function IRNTimeline({ proc, submissao }) {
   const getStep = () => {
     if (!proc) return 0;
@@ -504,7 +504,7 @@ function IRNTimeline({ proc, submissao }) {
               {i > 0 && <div className={`irn-line${done || active ? " lit" : ""}`} />}
               <div className="irn-circle-wrap">
                 <div className={`irn-circle${done ? " done" : active ? " active" : ""}`}>
-                  {done ? "✓" : s.num}
+                  {done ? "v" : s.num}
                 </div>
                 <div className={`irn-label${active ? " active" : done ? " done" : ""}`}>
                   {s.label}
@@ -581,7 +581,7 @@ function IRNTimeline({ proc, submissao }) {
   );
 }
 
-/* ── DASHBOARD ────────────────────────────────────────────────────────── */
+/* -- DASHBOARD ---------------------------------------------------------- */
 function Dashboard({ client, proc, steps }) {
   const done = steps.filter(s => s.done).length;
   const totalSteps  = 7;
@@ -602,7 +602,7 @@ function Dashboard({ client, proc, steps }) {
           O escritório Bono & Lacerda está a preparar o seu processo.<br />Em breve terá acesso a todas as informações aqui.
         </p>
         <div style={{ marginTop:"2rem", padding:".75rem 1.25rem", background:"rgba(255,255,255,.04)", borderRadius:12, display:"inline-block", fontSize:".82rem", color:"var(--mu)" }}>
-          +351 21 793 1934 · bonoelacerda@gmail.com
+          +351 21 793 1934 . bonoelacerda@gmail.com
         </div>
       </div>
     </div>
@@ -818,7 +818,7 @@ function Dashboard({ client, proc, steps }) {
               <div style={{ minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Ramom Lacerda</div>
                 <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L · Madrid 142952</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L . Madrid 142952</div>
                 <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
@@ -826,8 +826,8 @@ function Dashboard({ client, proc, steps }) {
               <div className="av" style={{ width:42, height:42, fontSize:".85rem", flexShrink:0 }}>LF</div>
               <div style={{ minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Luis Felipe Bono</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 · OAB/PB 33587A</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L · Madrid 142951</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 . OAB/PB 33587A</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L . Madrid 142951</div>
                 <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
@@ -851,7 +851,7 @@ function Dashboard({ client, proc, steps }) {
   );
 }
 
-/* ── DOCUMENTS ────────────────────────────────────────────────────────── */
+/* -- DOCUMENTS ---------------------------------------------------------- */
 function Docs({ proc, toast }) {
   const [docs, setDocs] = useState([]);
   const [ld,   setLd]   = useState(true);
@@ -904,7 +904,7 @@ function Docs({ proc, toast }) {
           {uploading ? (
             <>
               <Icon name="spin" size={32} />
-              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem" }}>A enviar ficheiro…</div>
+              <div style={{ fontWeight:600, marginTop:10, fontSize:".9rem" }}>A enviar ficheiro...</div>
             </>
           ) : (
             <>
@@ -930,7 +930,7 @@ function Docs({ proc, toast }) {
                 <div className="dic"><Icon name="file" size={18} /></div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div className="dn2">{d.name}</div>
-                  <div className="dm">{d.size} · {d.date} · {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
+                  <div className="dm">{d.size} . {d.date} . {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
                 </div>
                 <div style={{ marginRight:8 }}>{badge(d.status)}</div>
                 <button className="ib" onClick={() => download(d)} title="Download">
@@ -952,7 +952,7 @@ function Docs({ proc, toast }) {
   );
 }
 
-/* ── NOTIFICATIONS ────────────────────────────────────────────────────── */
+/* -- NOTIFICATIONS ------------------------------------------------------ */
 function Notifs({ client }) {
   const [ns, setNs] = useState([]);
   const [ld, setLd] = useState(true);
@@ -1005,7 +1005,7 @@ function Notifs({ client }) {
   );
 }
 
-/* ── MEETINGS ─────────────────────────────────────────────────────────── */
+/* -- MEETINGS ----------------------------------------------------------- */
 function Meetings({ proc, client }) {
   const [ms,    setMs]    = useState([]);
   const [ld,    setLd]    = useState(true);
@@ -1097,10 +1097,10 @@ function Meetings({ proc, client }) {
             </div>
             <div className="fg">
               <label>Mensagem (opcional)</label>
-              <textarea value={form.notes} onChange={e => setForm(f => ({...f, notes:e.target.value}))} placeholder="Descreva o assunto ou dúvidas que quer esclarecer…" />
+              <textarea value={form.notes} onChange={e => setForm(f => ({...f, notes:e.target.value}))} placeholder="Descreva o assunto ou dúvidas que quer esclarecer..." />
             </div>
             <button className="btnp" onClick={submit} disabled={busy || !form.date}>
-              {busy ? <><Icon name="spin" size={16} /> A enviar…</> : "Enviar Pedido de Reunião"}
+              {busy ? <><Icon name="spin" size={16} /> A enviar...</> : "Enviar Pedido de Reunião"}
             </button>
           </>
         )}
@@ -1124,7 +1124,7 @@ function Meetings({ proc, client }) {
               <div style={{ flex:1 }}>
                 <div style={{ fontWeight:600, fontSize:".9rem" }}>{m.title}</div>
                 <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
-                  {m.time} · {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
+                  {m.time} . {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
                 </div>
                 {m.notes && <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4, fontStyle:"italic" }}>{m.notes}</div>}
               </div>
@@ -1140,7 +1140,7 @@ function Meetings({ proc, client }) {
   );
 }
 
-/* ── CHAT ─────────────────────────────────────────────────────────────── */
+/* -- CHAT --------------------------------------------------------------- */
 function Chat({ client, proc }) {
   const [msgs,       setMsgs]       = useState([]);
   const [input,      setInput]      = useState("");
@@ -1205,7 +1205,7 @@ function Chat({ client, proc }) {
             </div>
           )}
           <div className="cir">
-            <textarea className="cin" rows={1} placeholder="Digite a sua mensagem…" value={input}
+            <textarea className="cin" rows={1} placeholder="Digite a sua mensagem..." value={input}
               onChange={e => { setInput(e.target.value); setJustSent(false); }}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
             <button className="bsend" onClick={send}><Icon name="send" size={16} /></button>
@@ -1216,7 +1216,7 @@ function Chat({ client, proc }) {
   );
 }
 
-/* ── PROFILE ──────────────────────────────────────────────────────────── */
+/* -- PROFILE ------------------------------------------------------------ */
 function Perfil({ client, toast, onUpdate }) {
   const [form,   setForm]   = useState({
     email:    client.email    || "",
@@ -1320,7 +1320,7 @@ function Perfil({ client, toast, onUpdate }) {
               <label>País</label>
               <select value={form.country} onChange={e => set("country", e.target.value)}>
                 {COUNTRIES.map(c => c === "---"
-                  ? <option key="---" disabled>──────────────</option>
+                  ? <option key="---" disabled>--------------</option>
                   : <option key={c} value={c}>{c}</option>
                 )}
               </select>
@@ -1355,7 +1355,7 @@ function Perfil({ client, toast, onUpdate }) {
             transition:"all .25s", display:"flex", alignItems:"center", justifyContent:"center", gap:".6rem",
             opacity: saving ? .6 : 1,
           }}>
-            {saving ? <><Icon name="spin" size={16} /> A guardar…</>
+            {saving ? <><Icon name="spin" size={16} /> A guardar...</>
             : saved  ? <><Icon name="check" size={16} /> Dados guardados!</>
             :           <>Guardar alterações</>}
           </button>
@@ -1369,7 +1369,7 @@ function Perfil({ client, toast, onUpdate }) {
   );
 }
 
-/* ── LEGAL / POLÍTICAS ────────────────────────────────────────────────── */
+/* -- LEGAL / POLÍTICAS -------------------------------------------------- */
 const LEGAL = {
   privacidade: {
     title: "Política de Privacidade",
@@ -1493,15 +1493,15 @@ function LegalFooter({ onOpen }) {
       {links.map((l, i) => (
         <span key={l.key}>
           <a href="#" onClick={e => { e.preventDefault(); onOpen(l.key); }} style={{ color:"rgba(212,168,67,.5)", textDecoration:"none", transition:"color .2s" }} onMouseOver={e => e.target.style.color="rgba(212,168,67,.9)"} onMouseOut={e => e.target.style.color="rgba(212,168,67,.5)"}>{l.label}</a>
-          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>·</span>}
+          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>.</span>}
         </span>
       ))}
     </div>
   );
 }
 
-/* ── APP ──────────────────────────────────────────────────────────────── */
-/* ── LGPD CONSENT BANNER (V-007) ──────────────────────────────────────── */
+/* -- APP ---------------------------------------------------------------- */
+/* -- LGPD CONSENT BANNER (V-007) ---------------------------------------- */
 function LGPDConsent(){
   const [show,setShow]=useState(()=>{try{return !localStorage.getItem("bl_lgpd_consent");}catch{return true;}});
   if(!show)return null;
@@ -1564,7 +1564,7 @@ export default function App() {
             <img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="BL" style={{width:32,height:32,objectFit:'contain'}} />
             <div>
               <h2>Bono & Lacerda</h2>
-              <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
+              <span>{client.name.split(" ")[0]} . {client.chave_acesso}</span>
             </div>
           </div>
           <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
@@ -1604,7 +1604,7 @@ export default function App() {
         </aside>
 
         <main className="mc">
-          {loading ? <Loader text="A carregar o seu processo…" /> : (
+          {loading ? <Loader text="A carregar o seu processo..." /> : (
             <>
               {tab === "home"     && <Dashboard client={client} proc={proc} steps={steps} />}
               {tab === "docs"     && <Docs proc={proc} toast={showToast} />}
