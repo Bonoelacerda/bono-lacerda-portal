@@ -397,7 +397,7 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
             <h1>Bono & Lacerda<br />Advogados</h1>
             <p>Portal do Cliente</p>
           </div>
-          <p className="ltag">Advocacia Internacional<br />Migração · Nacionalidade · Empresarial</p>
+          <p className="ltag">Advocacia Internacional<br />Migração . Nacionalidade . Empresarial</p>
         </div>
         <div className="lr">
           <div className="lc">
@@ -602,7 +602,7 @@ function Dashboard({ client, proc, steps }) {
           O escritório Bono & Lacerda está a preparar o seu processo.<br />Em breve terá acesso a todas as informações aqui.
         </p>
         <div style={{ marginTop:"2rem", padding:".75rem 1.25rem", background:"rgba(255,255,255,.04)", borderRadius:12, display:"inline-block", fontSize:".82rem", color:"var(--mu)" }}>
-          +351 21 793 1934 · bonoelacerda@gmail.com
+          +351 21 793 1934 . bonoelacerda@gmail.com
         </div>
       </div>
     </div>
@@ -818,7 +818,7 @@ function Dashboard({ client, proc, steps }) {
               <div style={{ minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Ramom Lacerda</div>
                 <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L · Madrid 142952</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L . Madrid 142952</div>
                 <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
@@ -826,8 +826,8 @@ function Dashboard({ client, proc, steps }) {
               <div className="av" style={{ width:42, height:42, fontSize:".85rem", flexShrink:0 }}>LF</div>
               <div style={{ minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Luis Felipe Bono</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 · OAB/PB 33587A</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L · Madrid 142951</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 . OAB/PB 33587A</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L . Madrid 142951</div>
                 <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
@@ -930,7 +930,7 @@ function Docs({ proc, toast }) {
                 <div className="dic"><Icon name="file" size={18} /></div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div className="dn2">{d.name}</div>
-                  <div className="dm">{d.size} · {d.date} · {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
+                  <div className="dm">{d.size} . {d.date} . {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
                 </div>
                 <div style={{ marginRight:8 }}>{badge(d.status)}</div>
                 <button className="ib" onClick={() => download(d)} title="Download">
@@ -1124,7 +1124,7 @@ function Meetings({ proc, client }) {
               <div style={{ flex:1 }}>
                 <div style={{ fontWeight:600, fontSize:".9rem" }}>{m.title}</div>
                 <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
-                  {m.time} · {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
+                  {m.time} . {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
                 </div>
                 {m.notes && <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4, fontStyle:"italic" }}>{m.notes}</div>}
               </div>
@@ -1493,7 +1493,7 @@ function LegalFooter({ onOpen }) {
       {links.map((l, i) => (
         <span key={l.key}>
           <a href="#" onClick={e => { e.preventDefault(); onOpen(l.key); }} style={{ color:"rgba(212,168,67,.5)", textDecoration:"none", transition:"color .2s" }} onMouseOver={e => e.target.style.color="rgba(212,168,67,.9)"} onMouseOut={e => e.target.style.color="rgba(212,168,67,.5)"}>{l.label}</a>
-          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>·</span>}
+          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>.</span>}
         </span>
       ))}
     </div>
@@ -1564,7 +1564,7 @@ export default function App() {
             <img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="BL" style={{width:32,height:32,objectFit:'contain'}} />
             <div>
               <h2>Bono & Lacerda</h2>
-              <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
+              <span>{client.name.split(" ")[0]} . {client.chave_acesso}</span>
             </div>
           </div>
           <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>

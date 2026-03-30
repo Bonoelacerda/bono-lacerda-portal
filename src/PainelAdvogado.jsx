@@ -313,7 +313,7 @@ function Dash({ clients }) {
                   <Av name={c.name} size={34}/>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:600,fontSize:".85rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
-                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} Â· <StatusBadge s={c.proc?.status}/></div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} Â. <StatusBadge s={c.proc?.status}/></div>
                   </div>
                   {c.pendencias && <span title={c.pendencias} style={{fontSize:"1rem"}}>â ï¸</span>}
                 </div>
@@ -347,7 +347,7 @@ function Dash({ clients }) {
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:600,fontSize:".85rem"}}>{ev.title}</div>
-                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{ev.time} Â· {ev.date}</div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{ev.time} Â. {ev.date}</div>
                   </div>
                   <span style={{fontSize:".7rem",background:"var(--gd)",color:"var(--g)",border:"1px solid var(--g)",borderRadius:99,padding:".15rem .5rem",fontWeight:600}}>Confirmado</span>
                 </div>
@@ -854,7 +854,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           <button className="btn btn-gh" onClick={onBack}>â Voltar</button>
           <Av name={client.name} size={44}/>
           <div><h1 className="pt" style={{fontSize:"1.6rem"}}>{client.name}</h1>
-          <p className="ps">{client.chave_acesso||client.email} Â· {client.whatsapp||client.phone||"â"}</p></div>
+          <p className="ps">{client.chave_acesso||client.email} Â. {client.whatsapp||client.phone||"â"}</p></div>
         </div>
         <div style={{display:"flex",gap:".6rem",alignItems:"center"}}>
           <StatusBadge s={proc?.status}/>
@@ -921,7 +921,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           {docs.map(d=>(
             <div className="dr" key={d.id}>
               <div className="dic"><Icon name="file" size={16}/></div>
-              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} Â· {d.date} Â· {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} Â. {d.date} Â. {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
               <button className="ib" style={{marginLeft:4,color:"#ef4444"}} onClick={()=>delDoc(d)} title="Eliminar">ðï¸</button>
@@ -952,7 +952,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
                 <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>â° {m.time} Â· {m.type==="videochamada"?"ð¹ Video":m.type==="whatsapp"?"ð¬ WhatsApp":m.type==="presencial"?"ð Presencial":"ð Tel"}</div>
+                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>â° {m.time} Â. {m.type==="videochamada"?"ð¹ Video":m.type==="whatsapp"?"ð¬ WhatsApp":m.type==="presencial"?"ð Presencial":"ð Tel"}</div>
                   {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>ð {m.notes}</div>}
                 </div>
                 <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
@@ -1129,7 +1129,7 @@ function AllMeetings({clients,openClient}){
   const pendentes=allMeets.filter(m=>m.status==="pendente");
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todas as ReuniÃµes</h1><p className="ps">{allMeets.length} reuniÃµes Â· {pendentes.length} pendentes</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todas as ReuniÃµes</h1><p className="ps">{allMeets.length} reuniÃµes Â. {pendentes.length} pendentes</p></div></div>
       {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>ð¬ {pendentes.length} pedido(s) aguardando â abra o cliente para confirmar</div></div>}
       <div className="card cp">
         {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando reuniÃµesâ¦</span></div>}
@@ -1139,7 +1139,7 @@ function AllMeetings({clients,openClient}){
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>ð¤ {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} Â· â° {m.time} Â· {m.type==="videochamada"?"ð¹":m.type==="whatsapp"?"ð¬":m.type==="presencial"?"ð":"ð"} {m.type}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>ð¤ {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} Â. â° {m.time} Â. {m.type==="videochamada"?"ð¹":m.type==="whatsapp"?"ð¬":m.type==="presencial"?"ð":"ð"} {m.type}</div>
               {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>ð {m.notes}</div>}
             </div>
             <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"â Confirmado":m.status==="pendente"?"â³ Pendente":"Recusado"}</span>
@@ -1187,7 +1187,7 @@ function AllDocuments({clients,showToast,openClient}){
 
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos Â· {aguardando} aguardando revisÃ£o</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos Â. {aguardando} aguardando revisÃ£o</p></div></div>
       {aguardando>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>ð¬ {aguardando} documento(s) enviados por clientes aguardando revisÃ£o</div></div>}
       <div style={{display:"flex",gap:".5rem",marginBottom:"1.25rem"}}>
         {["todos","cliente","advogado"].map(f=>(
@@ -1207,7 +1207,7 @@ function AllDocuments({clients,showToast,openClient}){
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontWeight:600,fontSize:".9rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>ð¤ {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} Â· ð¦ {d.size} Â· ð {d.date}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>ð¤ {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} Â. ð¦ {d.size} Â. ð {d.date}</div>
             </div>
             <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"ð¤ Cliente":"âï¸ Advogado"}</span>
             {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
@@ -1269,7 +1269,7 @@ function AllChats({clients,openClient,showToast}){
                 <strong style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline",fontSize:".9rem"}}>{m.clientName}</strong>
               </div>
               <div style={{fontSize:".82rem",color:"var(--mu)",marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>"{m.text}"</div>
-              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>ð {fmtd(m.created_at)} Â· â° {fmtt(m.created_at)}</div>
+              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>ð {fmtd(m.created_at)} Â. â° {fmtt(m.created_at)}</div>
             </div>
             <span className="bd ba">Abrir Chat â</span>
           </div>
@@ -1369,7 +1369,7 @@ export default function App(){
           <div className="sbw"><div className="av" style={{width:36,height:36,fontSize:".78rem"}}>RL</div>
             <div>
               <div className="wn">Dr. Ramom Lacerda</div>
-              <div className="wr">OAB/PB 19.165 Â· ðµð¹ Lisboa 65899L Â· ðªð¸ Madrid 142952</div>
+              <div className="wr">OAB/PB 19.165 Â. ðµð¹ Lisboa 65899L Â. ðªð¸ Madrid 142952</div>
             </div>
           </div>
           <nav className="sbnv">
@@ -1480,7 +1480,7 @@ function ClaudeChat({ totalClients }) {
             <div className="cl-av">AI</div>
             <div className="cl-hdr-info">
               <h4>Claude AI</h4>
-              <p>Assistente Bono & Lacerda Â· {totalClients} clientes</p>
+              <p>Assistente Bono & Lacerda Â. {totalClients} clientes</p>
             </div>
           </div>
           <div className="cl-msgs">
