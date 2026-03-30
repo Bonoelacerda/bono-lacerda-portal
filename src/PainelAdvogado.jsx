@@ -34,7 +34,7 @@ return `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(pat
 
 const MONTHS = [“Jan”,“Fev”,“Mar”,“Abr”,“Mai”,“Jun”,“Jul”,“Ago”,“Set”,“Out”,“Nov”,“Dez”];
 const ini  = n => n.split(” “).map(w => w[0]).join(””).slice(0,2).toUpperCase();
-const fmtd = ts => ts ? new Date(ts).toLocaleDateString(“pt-BR”) : “—”;
+const fmtd = ts => ts ? new Date(ts).toLocaleDateString(“pt-BR”) : “-”;
 const fmtt = ts => ts ? new Date(ts).toLocaleTimeString(“pt-BR”, {hour:“2-digit”,minute:“2-digit”}) : “”;
 
 function Icon({ name, size=18 }) {
@@ -81,7 +81,7 @@ return(
 <div className="alc">
 <span className="tag">Painel Administrativo</span>
 <h1>Bono & Lacerda</h1>
-<p>Advocacia Internacional — Acesso restrito</p>
+<p>Advocacia Internacional - Acesso restrito</p>
 <div className="lf"><label>E-mail</label><input type=“email” placeholder=“bonoelacerda@gmail.com” value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key===“Enter”&&go()}/></div>
 <div className="lf"><label>Senha</label><input type=“password” placeholder=”••••••••” value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key===“Enter”&&go()}/></div>
 <button className="abtn" onClick={go}>Entrar no Painel</button>
@@ -145,7 +145,7 @@ return (
 <div className="tb">
 <div>
 <h1 className="pt">Painel Geral</h1>
-<p className="ps">Bono & Lacerda Advogados — {new Date().toLocaleDateString(“pt-BR”, {weekday:“long”, day:“numeric”, month:“long”})}</p>
+<p className="ps">Bono & Lacerda Advogados - {new Date().toLocaleDateString(“pt-BR”, {weekday:“long”, day:“numeric”, month:“long”})}</p>
 </div>
 <a href=“https://calendar.google.com/calendar” target=”_blank” rel=“noreferrer”
 style={{display:“flex”,alignItems:“center”,gap:”.4rem”,background:”#fff”,border:“1px solid var(–bo)”,borderRadius:8,padding:”.5rem .9rem”,fontSize:”.82rem”,fontWeight:600,color:“var(–n)”,textDecoration:“none”}}>
@@ -208,7 +208,7 @@ style={{display:“flex”,alignItems:“center”,gap:”.4rem”,background:�
       )}
       {!search.trim() && (
         <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:".75rem"}}>
-          {total} clientes — comece a escrever para filtrar
+          {total} clientes - comece a escrever para filtrar
         </div>
       )}
     </div>
@@ -312,7 +312,7 @@ style={{display:“flex”,alignItems:“center”,gap:”.4rem”,background:�
             <div key={c.id} style={{padding:".65rem .75rem",borderRadius:10,border:"1px solid #fcd34d",background:"#fffbeb",marginBottom:".5rem"}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:".5rem"}}>
                 <div style={{fontWeight:600,fontSize:".84rem",color:"var(--n)"}}>{c.name}</div>
-                <span style={{fontSize:".68rem",color:"var(--mu)",flexShrink:0}}>{c.chave_acesso||"—"}</span>
+                <span style={{fontSize:".68rem",color:"var(--mu)",flexShrink:0}}>{c.chave_acesso||"-"}</span>
               </div>
               <div style={{fontSize:".76rem",color:"#92400e",marginTop:3,lineHeight:1.4}}>{c.pendencias}</div>
               {c.observacao && (
@@ -324,7 +324,7 @@ style={{display:“flex”,alignItems:“center”,gap:”.4rem”,background:�
       </div>
       {pendentes > 8 && (
         <div style={{textAlign:"center",marginTop:".5rem",fontSize:".78rem",color:"var(--mu)"}}>
-          + {pendentes - 8} outros clientes com pendências — use a busca para localizar
+          + {pendentes - 8} outros clientes com pendências - use a busca para localizar
         </div>
       )}
     </div>
@@ -347,7 +347,7 @@ msg: (c) =>
 O escritório *Bono & Lacerda Advogados* criou o seu portal exclusivo para acompanhar o seu processo de Nacionalidade Portuguesa.
 
 🔗 *Acesse agora:* bono-lacerda-portal.vercel.app
-🔑 *Chave de acesso:* ${c.chave_acesso || “—”}
+🔑 *Chave de acesso:* ${c.chave_acesso || “-”}
 
 No portal pode acompanhar o estado do seu processo em tempo real, enviar documentos, agendar reuniões e enviar mensagens directamente para a equipa.
 
@@ -359,11 +359,11 @@ Temos uma actualização sobre o seu processo de Nacionalidade Portuguesa.
 
 📌 *Estado actual:* ${proc?.status === “em_andamento” ? “Em andamento ✅” : proc?.status === “aguardando” ? “Aguardando documentos ⚠️” : “Concluído 🎉”}
 🏛️ *Local:* ${proc?.arquivo || “IRN”}
-📅 *Última atualização:* ${proc?.last_update ? new Date(proc.last_update).toLocaleDateString(“pt-BR”) : “—”}
+📅 *Última atualização:* ${proc?.last_update ? new Date(proc.last_update).toLocaleDateString(“pt-BR”) : “-”}
 
 Para mais detalhes aceda ao portal:
 🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || “—”}
+🔑 Chave: ${c.chave_acesso || “-”}
 
 *Bono & Lacerda Advogados*
 📞 +351 21 793 1934`}, { id: "pendencia", label: "⚠️ Pendência Identificada", icon: "⚠️", msg: (c) =>`Olá ${c.name.split(” “)[0]}! 👋
@@ -377,7 +377,7 @@ Por favor envie os documentos necessários o mais breve possível para evitar at
 
 Pode enviá-los directamente pelo portal:
 🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || “—”}
+🔑 Chave: ${c.chave_acesso || “-”}
 
 *Bono & Lacerda Advogados*
 📞 +351 21 793 1934`}, { id: "reuniao", label: "📅 Confirmar Reunião", icon: "📅", msg: (c) =>`Olá ${c.name.split(” “)[0]}! 👋
@@ -386,7 +386,7 @@ A sua reunião com o escritório Bono & Lacerda foi confirmada. 🎉
 
 Consulte os detalhes no portal:
 🔗 bono-lacerda-portal.vercel.app
-🔑 Chave: ${c.chave_acesso || “—”}
+🔑 Chave: ${c.chave_acesso || “-”}
 
 *Bono & Lacerda Advogados*
 📞 +351 21 793 1934`
@@ -583,8 +583,8 @@ return (
 <div key={f.key}>
 <div style={{fontSize:”.68rem”,textTransform:“uppercase”,letterSpacing:”.07em”,color:“var(–mu)”,marginBottom:4}}>{f.label}</div>
 {editing
-? <input type={f.type} value={form[f.key]} onChange={e=>setForm(p=>({…p,[f.key]:e.target.value}))} style={inputStyle} placeholder=”—”/>
-: <div style={{fontWeight:500,fontSize:”.85rem”,color:form[f.key]?“var(–tx)”:“var(–mu)”,minHeight:“1.5rem”}}>{form[f.key] || “—”}</div>
+? <input type={f.type} value={form[f.key]} onChange={e=>setForm(p=>({…p,[f.key]:e.target.value}))} style={inputStyle} placeholder=”-”/>
+: <div style={{fontWeight:500,fontSize:”.85rem”,color:form[f.key]?“var(–tx)”:“var(–mu)”,minHeight:“1.5rem”}}>{form[f.key] || “-”}</div>
 }
 </div>
 ))}
@@ -610,7 +610,7 @@ const fileRef=useRef(); const botRef=useRef();
 useEffect(()=>{botRef.current?.scrollIntoView({behavior:“smooth”})},[msgs]);
 
 // Load full data when client is opened
-// Load full data when client is opened — Realtime (sem polling)
+// Load full data when client is opened - Realtime (sem polling)
 useEffect(()=>{
 if(!client) return;
 let channel=null;
@@ -682,7 +682,7 @@ setMeets(ms=>ms.map(x=>x.id===m.id?updated:x));
 setClients(cs=>cs.map(c=>c.id===client.id?{…c,meetings:(c.meetings||[]).map(x=>x.id===m.id?updated:x)}:c));
 await api.post(“notifications”,{client_id:client.id,text:`Reunião confirmada para ${m.date.split("-").reverse().join("/")} às ${m.time}.`,icon:“✅”,read:false});
 // Ask Claude to create the Google Calendar event
-const msg = `Cria um evento no Google Calendar (bonoelacerda@gmail.com): Título: "📅 ${m.title} — ${client.name}", Data: ${m.date}T${m.time}:00, fuso horário Europe/Lisbon, duração 1 hora, descrição: "Cliente: ${client.name}\\nTipo: ${m.type}${m.notes?"\\nNotas: "+m.notes:""}", lembrete 30min popup e 60min email.`;
+const msg = `Cria um evento no Google Calendar (bonoelacerda@gmail.com): Título: "📅 ${m.title} - ${client.name}", Data: ${m.date}T${m.time}:00, fuso horário Europe/Lisbon, duração 1 hora, descrição: "Cliente: ${client.name}\\nTipo: ${m.type}${m.notes?"\\nNotas: "+m.notes:""}", lembrete 30min popup e 60min email.`;
 if(window.sendPrompt) window.sendPrompt(msg);
 showToast(“✅ Reunião confirmada!”);
 };
@@ -726,7 +726,7 @@ return(
 <button className="btn btn-gh" onClick={onBack}>← Voltar</button>
 <Av name={client.name} size={44}/>
 <div><h1 className=“pt” style={{fontSize:“1.6rem”}}>{client.name}</h1>
-<p className="ps">{client.chave_acesso||client.email} · {client.whatsapp||client.phone||”—”}</p></div>
+<p className="ps">{client.chave_acesso||client.email} · {client.whatsapp||client.phone||”-”}</p></div>
 </div>
 <div style={{display:“flex”,gap:”.6rem”,alignItems:“center”}}>
 <StatusBadge s={proc?.status}/>
@@ -737,11 +737,11 @@ return(
 ```
   <div className="card cp" style={{marginBottom:"1.25rem",display:"flex",gap:"2rem",flexWrap:"wrap",alignItems:"center"}}>
     {[
-      ["Processo", proc?.number || client.chave_acesso || "—"],
-      ["Artigo",   client.artigo || proc?.type || "—"],
-      ["Protocolo",fmtd(proc?.opened_at) || "—"],
-      ["Submissão IRN", proc?.submissao_irn || "—"],
-      ["Local",    proc?.arquivo || "—"],
+      ["Processo", proc?.number || client.chave_acesso || "-"],
+      ["Artigo",   client.artigo || proc?.type || "-"],
+      ["Protocolo",fmtd(proc?.opened_at) || "-"],
+      ["Submissão IRN", proc?.submissao_irn || "-"],
+      ["Local",    proc?.arquivo || "-"],
       ["Desde",    fmtd(client.since)],
     ].map(([k,v])=>(
       <div key={k}><div style={{fontSize:".7rem",textTransform:"uppercase",letterSpacing:".07em",color:"var(--mu)",marginBottom:3}}>{k}</div><div style={{fontWeight:600,fontSize:".85rem",maxWidth:220}}>{v}</div></div>
@@ -758,7 +758,7 @@ return(
     </div>
   </div>
 
-  {/* Dados de Contacto — editável pelo advogado */}
+  {/* Dados de Contacto - editável pelo advogado */}
   <ContactCard client={client} setClients={setClients} showToast={showToast}/>
 
   <div className="tabs">
@@ -788,7 +788,7 @@ return(
       <div className="uz" onClick={()=>fileRef.current.click()}>
         <Icon name="upload" size={28}/>
         <div style={{fontWeight:600,marginTop:8,fontSize:".9rem"}}>Enviar documento ao cliente</div>
-        <div style={{fontSize:".78rem",marginTop:4}}>PDF, DOC, JPG — até 20 MB</div>
+        <div style={{fontSize:".78rem",marginTop:4}}>PDF, DOC, JPG - até 20 MB</div>
         <input ref={fileRef} type="file" style={{display:"none"}} onChange={e=>uploadDoc(e.target.files[0])}/>
       </div>
       {docs.map(d=>(
@@ -918,7 +918,7 @@ if(cl[0]){
 const pr=await api.post(“processes”,{client_id:cl[0].id,number:`BL-${Date.now().toString().slice(-6)}`,type:form.type||“Processo Jurídico”,status:“aguardando”,current_step:1,lawyer:“Dr. Ramom Lacerda”,lawyer_avatar:“RL”});
 if(pr[0]){
 const ss=[“Análise Documental”,“Submissão do Requerimento”,“Entrevista / Análise”,“Aprovação”,“Emissão do Documento Final”];
-await Promise.all(ss.map((title,i)=>api.post(“process_steps”,{process_id:pr[0].id,step_order:i+1,title,detail:“Fase não iniciada.”,done:false,date:”—”})));
+await Promise.all(ss.map((title,i)=>api.post(“process_steps”,{process_id:pr[0].id,step_order:i+1,title,detail:“Fase não iniciada.”,done:false,date:”-”})));
 const steps=await api.get(“process_steps”,`?process_id=eq.${pr[0].id}&order=step_order.asc`);
 setClients(cs=>[…cs,{…cl[0],proc:pr[0],steps,docs:[],msgs:[],meetings:[]}]);
 showToast(`Cliente "${form.name}" cadastrado!`);
@@ -939,8 +939,8 @@ return(
 <tbody>{filtered.map(c=>(
 <tr key={c.id}>
 <td><div style={{display:“flex”,alignItems:“center”,gap:”.75rem”}}><Av name={c.name} size={34}/><div><div style={{fontWeight:600,fontSize:”.88rem”}}>{c.name}</div></div></div></td>
-<td style={{fontSize:”.82rem”,color:“var(–mu)”,letterSpacing:”.05em”}}>{c.chave_acesso||c.email||”—”}</td>
-<td style={{fontSize:”.85rem”}}>{c.proc?.type||”—”}</td>
+<td style={{fontSize:”.82rem”,color:“var(–mu)”,letterSpacing:”.05em”}}>{c.chave_acesso||c.email||”-”}</td>
+<td style={{fontSize:”.85rem”}}>{c.proc?.type||”-”}</td>
 <td><StatusBadge s={c.proc?.status}/></td>
 <td><div style={{display:“flex”,gap:”.4rem”}}>
 <button className=“btn btn-gh” style={{padding:”.4rem .8rem”,fontSize:”.78rem”}} onClick={()=>openClient(c.id)}><Icon name="arrow" size={13}/> Abrir</button>
@@ -989,7 +989,7 @@ if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
 const enriched=meets.map(m=>{
 const cid=procMap.current[m.process_id]||null;
 const cl=cid?clients.find(c=>c.id===cid):null;
-return{…m,clientName:cl?cl.name:”—”,clientId:cid};
+return{…m,clientName:cl?cl.name:”-”,clientId:cid};
 });
 setAllMeets(enriched);
 if(initial) setLoading(false);
@@ -1005,7 +1005,7 @@ const pendentes=allMeets.filter(m=>m.status===“pendente”);
 return(
 <div>
 <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{allMeets.length} reuniões · {pendentes.length} pendentes</p></div></div>
-{pendentes.length>0&&<div style={{background:”#fef3c7”,border:“1px solid #fcd34d”,borderRadius:12,padding:“1rem 1.25rem”,marginBottom:“1.25rem”}}><div style={{fontWeight:600,fontSize:”.9rem”,color:”#92400e”}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
+{pendentes.length>0&&<div style={{background:”#fef3c7”,border:“1px solid #fcd34d”,borderRadius:12,padding:“1rem 1.25rem”,marginBottom:“1.25rem”}}><div style={{fontWeight:600,fontSize:”.9rem”,color:”#92400e”}}>📬 {pendentes.length} pedido(s) aguardando - abra o cliente para confirmar</div></div>}
 <div className="card cp">
 {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando reuniões…</span></div>}
 {!loading&&!allMeets.length&&<p style={{textAlign:“center”,color:“var(–mu)”,padding:“3rem”,fontSize:”.88rem”}}>Nenhuma reunião ainda.</p>}
@@ -1045,7 +1045,7 @@ if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
 const enriched=docs.map(d=>{
 const cid=procMap.current[d.process_id]||null;
 const cl=cid?clients.find(c=>c.id===cid):null;
-return{…d,clientName:cl?cl.name:”—”,clientId:cid};
+return{…d,clientName:cl?cl.name:”-”,clientId:cid};
 });
 setAllDocs(enriched);
 if(initial) setLoading(false);
@@ -1109,7 +1109,7 @@ if(unknown.length>0){
 const ps=await api.get(“processes”,`?id=in.(${unknown.join(",")})&select=id,client_id`);
 if(ps&&!ps.error) ps.forEach(p=>{procMap.current[p.id]=p.client_id;});
 }
-// Group by client — show latest message per client
+// Group by client - show latest message per client
 const byClient={};
 msgs.forEach(m=>{
 const cid=procMap.current[m.process_id]||null;
@@ -1117,7 +1117,7 @@ if(cid&&!byClient[cid]) byClient[cid]=m;
 });
 const grouped=Object.entries(byClient).map(([cid,m])=>{
 const cl=clients.find(c=>c.id===cid);
-return{…m,clientName:cl?cl.name:”—”,clientId:cid};
+return{…m,clientName:cl?cl.name:”-”,clientId:cid};
 }).sort((a,b)=>(b.created_at||””).localeCompare(a.created_at||””));
 setAllMsgs(grouped);
 if(initial) setLoading(false);
@@ -1169,7 +1169,7 @@ const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(null),3500);};
 const loadClients=async()=>{
 setLoading(true);
 try{
-// Supabase limit is now 10000 — single query gets all clients
+// Supabase limit is now 10000 - single query gets all clients
 const allClients=await api.get(“clients”,”?order=created_at.desc&limit=10000”);
 if(!allClients||allClients.error){showToast(“Erro ao carregar clientes.”);setLoading(false);return;}
 // Set clients immediately so count shows
