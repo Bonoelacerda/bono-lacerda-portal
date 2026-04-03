@@ -1419,7 +1419,7 @@ const FAQ_DATA = [
     cat: "Processo de Nacionalidade",
     items: [
       { q: "Quanto tempo demora o processo de nacionalidade portuguesa?",
-        a: "O prazo total estimado pelo IRN para adultos é de 24 a 29 meses desde a submissão até ao registo final. Pedidos de menores (filhos de pai/mãe portuguesa) são tratados com prioridade, com análise e decisão entre 2 a 4 meses. Estes prazos podem variar consoante o volume de processos em cada conservatória." },
+        a: "O prazo oficial estimado pelo IRN para adultos é de 24 a 29 meses desde a submissão até ao registo final. Pedidos de menores (filhos de pai/mãe portuguesa) são tratados com prioridade, com análise e decisão entre 2 a 4 meses. Na prática, atualmente a Conservatória dos Registos Centrais está a julgar processos submetidos em maio de 2021, e o Arquivo Central do Porto processos de maio de 2022. Estes prazos podem variar consoante o volume de processos em cada conservatória." },
       { q: "O que significa cada etapa do processo?",
         a: "O processo passa por 7 etapas: 1) Recebido — o IRN confirma recepção; 2) Registado — atribuição de número oficial; 3) Consultas — verificação junto de entidades externas; 4) Documentos — análise da documentação; 5) Análise — avaliação jurídica; 6) Despacho — decisão final do conservador; 7) Terminado — processo concluído. Pode acompanhar a etapa actual na sua Dashboard." },
       { q: "Posso consultar o estado oficial do meu processo?",
