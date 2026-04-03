@@ -1762,9 +1762,19 @@ export default function App() {
   const onLogin = async c => {
     setClient(c); setLoading(true);
     /* ── MELHORIA 1: Rastrear acessos ── */
+    const now = new Date().toISOString();
     db.patch("clients", c.id, {
-      last_login_at: new Date().toISOString(),
+      last_login_at: now,
       login_count: (c.login_count || 0) + 1
+    });
+    /* ── Registo detalhado de login (login_logs) ── */
+    const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    db.post("login_logs", {
+      client_id: c.id,
+      logged_in_at: now,
+      user_agent: (navigator.userAgent || "").slice(0, 500),
+      device_type: isMobile ? "mobile" : "desktop",
+      country: Intl.DateTimeFormat().resolvedOptions().timeZone || "unknown"
     });
     /* ── MELHORIA 2: Sessão persistente ── */
     try { sessionStorage.setItem("bl_chave", c.chave_acesso); } catch {}
