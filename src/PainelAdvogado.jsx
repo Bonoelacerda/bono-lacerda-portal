@@ -211,6 +211,8 @@ function Dash({ clients }) {
   const [ldCal, setLdCal]         = useState(true);
   const [search, setSearch]        = useState("");
   const [showPend, setShowPend]    = useState(false);
+  const [recentLogins, setRecentLogins] = useState([]);
+  const [ldLogins, setLdLogins]   = useState(true);
 
   // Load Google Calendar events via Claude AI
   useEffect(() => {
@@ -233,6 +235,23 @@ function Dash({ clients }) {
       setLdCal(false);
     };
     fetchCal();
+  }, []);
+
+  // Load recent login activity
+  useEffect(() => {
+    api.get("login_logs","?order=logged_in_at.desc&limit=15&select=*,clients(name,chave_acesso)").then(rows => {
+      if(rows && !rows.error) setRecentLogins(rows);
+      setLdLogins(false);
+    }).catch(()=>setLdLogins(false));
+    // Realtime: refresh on new logins
+    const ch=supabase.channel('dash-logins')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'login_logs'},()=>{
+        api.get("login_logs","?order=logged_in_at.desc&limit=15&select=*,clients(name,chave_acesso)").then(rows=>{
+          if(rows&&!rows.error) setRecentLogins(rows);
+        });
+      })
+      .subscribe();
+    return()=>supabase.removeChannel(ch);
   }, []);
 
   // Real stats from loaded clients
@@ -294,6 +313,49 @@ function Dash({ clients }) {
         </div>
       )}
 
+      {/* ÚLTIMOS ACESSOS AO PORTAL ─────────────────────────────────────── */}
+      <div className="card cp" style={{marginBottom:"1.25rem"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}}>
+          <div className="ct" style={{margin:0}}>🟢 Últimos Acessos ao Portal</div>
+          <span style={{background:"var(--gd)",color:"var(--g)",border:"1px solid var(--g)",borderRadius:99,fontSize:".7rem",fontWeight:700,padding:".15rem .6rem"}}>
+            {recentLogins.length} registos
+          </span>
+        </div>
+        {ldLogins
+          ? <div style={{color:"var(--mu)",fontSize:".82rem",textAlign:"center",padding:"1rem"}}>A carregar acessos…</div>
+          : recentLogins.length === 0
+            ? <div style={{color:"var(--mu)",fontSize:".85rem",textAlign:"center",padding:"1.5rem"}}>Nenhum acesso registado ainda. Os acessos aparecerão aqui quando os clientes entrarem no portal.</div>
+            : <div style={{overflowX:"auto"}}>
+                <table style={{width:"100%",borderCollapse:"collapse",fontSize:".82rem"}}>
+                  <thead>
+                    <tr style={{borderBottom:"2px solid var(--bo)",textAlign:"left"}}>
+                      <th style={{padding:".5rem .6rem",color:"var(--mu)",fontWeight:600,fontSize:".72rem",textTransform:"uppercase",letterSpacing:".06em"}}>Cliente</th>
+                      <th style={{padding:".5rem .6rem",color:"var(--mu)",fontWeight:600,fontSize:".72rem",textTransform:"uppercase",letterSpacing:".06em"}}>Data/Hora</th>
+                      <th style={{padding:".5rem .6rem",color:"var(--mu)",fontWeight:600,fontSize:".72rem",textTransform:"uppercase",letterSpacing:".06em"}}>Dispositivo</th>
+                      <th style={{padding:".5rem .6rem",color:"var(--mu)",fontWeight:600,fontSize:".72rem",textTransform:"uppercase",letterSpacing:".06em"}}>Fuso/Região</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentLogins.map((log,i) => (
+                      <tr key={log.id||i} style={{borderBottom:"1px solid var(--bo)"}}>
+                        <td style={{padding:".55rem .6rem",fontWeight:600}}>{log.clients?.name || "—"}</td>
+                        <td style={{padding:".55rem .6rem",color:"var(--mu)"}}>
+                          {log.logged_in_at ? new Date(log.logged_in_at).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}) : "—"}
+                        </td>
+                        <td style={{padding:".55rem .6rem"}}>
+                          <span style={{background:log.device_type==="mobile"?"#dbeafe":"#f0fdf4",color:log.device_type==="mobile"?"#1d4ed8":"#16a34a",fontSize:".72rem",fontWeight:600,padding:".15rem .5rem",borderRadius:99}}>
+                            {log.device_type==="mobile"?"📱 Mobile":"💻 Desktop"}
+                          </span>
+                        </td>
+                        <td style={{padding:".55rem .6rem",color:"var(--mu)",fontSize:".78rem"}}>{log.country || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+        }
+      </div>
+
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1.25rem",marginBottom:"1.25rem"}}>
 
         {/* 2. BUSCA RÁPIDA ────────────────────────────────────────────────── */}
@@ -313,7 +375,7 @@ function Dash({ clients }) {
                   <Av name={c.name} size={34}/>
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{fontWeight:600,fontSize:".85rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{c.name}</div>
-                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} �. <StatusBadge s={c.proc?.status}/></div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{c.chave_acesso || "Sem chave"} · <StatusBadge s={c.proc?.status}/></div>
                   </div>
                   {c.pendencias && <span title={c.pendencias} style={{fontSize:"1rem"}}>⚠️</span>}
                 </div>
@@ -347,7 +409,7 @@ function Dash({ clients }) {
                   </div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:600,fontSize:".85rem"}}>{ev.title}</div>
-                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{ev.time} �. {ev.date}</div>
+                    <div style={{fontSize:".75rem",color:"var(--mu)"}}>{ev.time} · {ev.date}</div>
                   </div>
                   <span style={{fontSize:".7rem",background:"var(--gd)",color:"var(--g)",border:"1px solid var(--g)",borderRadius:99,padding:".15rem .5rem",fontWeight:600}}>Confirmado</span>
                 </div>
@@ -401,7 +463,7 @@ function Dash({ clients }) {
             {[
               ["Art.º 6º n.º 7",         974+233],
               ["Art.º 1º C/D",            43+26],
-              ["Art.º 7º n.º 1",          16],
+              ["Art.º 6º n.º 1",          16],
               ["Outros / Sem artigo",     total-974-233-43-26-16],
             ].map(([l,v]) => (
               <div key={l} style={{background:"var(--bg)",borderRadius:8,padding:".5rem .7rem",border:"1px solid var(--bo)"}}>
@@ -854,7 +916,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           <button className="btn btn-gh" onClick={onBack}>← Voltar</button>
           <Av name={client.name} size={44}/>
           <div><h1 className="pt" style={{fontSize:"1.6rem"}}>{client.name}</h1>
-          <p className="ps">{client.chave_acesso||client.email} �. {client.whatsapp||client.phone||"—"}</p></div>
+          <p className="ps">{client.chave_acesso||client.email} · {client.whatsapp||client.phone||"—"}</p></div>
         </div>
         <div style={{display:"flex",gap:".6rem",alignItems:"center"}}>
           <StatusBadge s={proc?.status}/>
@@ -921,7 +983,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
           {docs.map(d=>(
             <div className="dr" key={d.id}>
               <div className="dic"><Icon name="file" size={16}/></div>
-              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} �. {d.date} �. {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
+              <div style={{flex:1}}><div style={{fontWeight:600,fontSize:".85rem"}}>{d.name}</div><div style={{fontSize:".73rem",color:"var(--mu)",marginTop:2}}>{d.size} · {d.date} · {d.uploaded_by==="advogado"?"Advogado":"Cliente"}</div></div>
               <span className={`bd${d.uploaded_by==="advogado"?" bb":" bg"}`}>{d.uploaded_by==="advogado"?"Advogado":"Cliente"}</span>
               {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
               <button className="ib" style={{marginLeft:4,color:"#ef4444"}} onClick={()=>delDoc(d)} title="Eliminar">🗑️</button>
@@ -952,7 +1014,7 @@ function Detail({cid,clients,setClients,showToast,onBack}){
                 <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
                 <div style={{flex:1}}>
                   <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>⏰ {m.time} �. {m.type==="videochamada"?"📹 Video":m.type==="whatsapp"?"💬 WhatsApp":m.type==="presencial"?"📍 Presencial":"📞 Tel"}</div>
+                  <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>⏰ {m.time} · {m.type==="videochamada"?"📹 Video":m.type==="whatsapp"?"💬 WhatsApp":m.type==="presencial"?"📍 Presencial":"📞 Tel"}</div>
                   {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
                 </div>
                 <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
@@ -1129,7 +1191,7 @@ function AllMeetings({clients,openClient}){
   const pendentes=allMeets.filter(m=>m.status==="pendente");
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{allMeets.length} reuniões �. {pendentes.length} pendentes</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todas as Reuniões</h1><p className="ps">{allMeets.length} reuniões · {pendentes.length} pendentes</p></div></div>
       {pendentes.length>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {pendentes.length} pedido(s) aguardando — abra o cliente para confirmar</div></div>}
       <div className="card cp">
         {loading&&<div className="ld"><Icon name="spin" size={22}/><span>Carregando reuniões…</span></div>}
@@ -1139,7 +1201,7 @@ function AllMeetings({clients,openClient}){
             <div className="mdb"><div className="day">{d.getDate()}</div><div className="mon">{MONTHS[d.getMonth()]}</div></div>
             <div style={{flex:1}}>
               <div style={{fontWeight:600,fontSize:".9rem"}}>{m.title}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} �. ⏰ {m.time} �. {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {m.clientId?<strong onClick={()=>openClient&&openClient(m.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{m.clientName}</strong>:<strong>{m.clientName}</strong>} · ⏰ {m.time} · {m.type==="videochamada"?"📹":m.type==="whatsapp"?"💬":m.type==="presencial"?"📍":"📞"} {m.type}</div>
               {m.notes&&<div style={{fontSize:".78rem",color:"var(--mu)",marginTop:4}}>📝 {m.notes}</div>}
             </div>
             <span className={`bd${m.status==="confirmado"?" bg":m.status==="pendente"?" ba":" br"}`}>{m.status==="confirmado"?"✓ Confirmado":m.status==="pendente"?"⏳ Pendente":"Recusado"}</span>
@@ -1187,7 +1249,7 @@ function AllDocuments({clients,showToast,openClient}){
 
   return(
     <div>
-      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos �. {aguardando} aguardando revisão</p></div></div>
+      <div className="tb"><div><h1 className="pt">Todos os Documentos</h1><p className="ps">{allDocs.length} documentos · {aguardando} aguardando revisão</p></div></div>
       {aguardando>0&&<div style={{background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:12,padding:"1rem 1.25rem",marginBottom:"1.25rem"}}><div style={{fontWeight:600,fontSize:".9rem",color:"#92400e"}}>📬 {aguardando} documento(s) enviados por clientes aguardando revisão</div></div>}
       <div style={{display:"flex",gap:".5rem",marginBottom:"1.25rem"}}>
         {["todos","cliente","advogado"].map(f=>(
@@ -1207,7 +1269,7 @@ function AllDocuments({clients,showToast,openClient}){
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontWeight:600,fontSize:".9rem",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name}</div>
-              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} �. 📦 {d.size} �. 📅 {d.date}</div>
+              <div style={{fontSize:".78rem",color:"var(--mu)",marginTop:3}}>👤 {d.clientId?<strong onClick={()=>openClient&&openClient(d.clientId)} style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline"}}>{d.clientName}</strong>:<strong>{d.clientName}</strong>} · 📦 {d.size} · 📅 {d.date}</div>
             </div>
             <span className={`bd${d.uploaded_by==="cliente"?" ba":" bg"}`}>{d.uploaded_by==="cliente"?"👤 Cliente":"⚖️ Advogado"}</span>
             {d.storage_path&&<button className="ib" style={{marginLeft:8}} onClick={async()=>{const url=await api.signedUrl(d.storage_path);if(url)window.open(url,"_blank");else showToast("Erro ao gerar link.");}} title="Download"><Icon name="upload" size={13}/></button>}
@@ -1269,7 +1331,7 @@ function AllChats({clients,openClient,showToast}){
                 <strong style={{cursor:"pointer",color:"#2563eb",textDecoration:"underline",fontSize:".9rem"}}>{m.clientName}</strong>
               </div>
               <div style={{fontSize:".82rem",color:"var(--mu)",marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>"{m.text}"</div>
-              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>📅 {fmtd(m.created_at)} �. ⏰ {fmtt(m.created_at)}</div>
+              <div style={{fontSize:".72rem",color:"var(--mu)",marginTop:3}}>📅 {fmtd(m.created_at)} · ⏰ {fmtt(m.created_at)}</div>
             </div>
             <span className="bd ba">Abrir Chat →</span>
           </div>
@@ -1369,7 +1431,7 @@ export default function App(){
           <div className="sbw"><div className="av" style={{width:36,height:36,fontSize:".78rem"}}>RL</div>
             <div>
               <div className="wn">Dr. Ramom Lacerda</div>
-              <div className="wr">OAB/PB 19.165 �. 🇵🇹 Lisboa 65899L �. 🇪🇸 Madrid 142952</div>
+              <div className="wr">OAB/PB 19.165 · 🇵🇹 Lisboa 65899L · 🇪🇸 Madrid 142952</div>
             </div>
           </div>
           <nav className="sbnv">
@@ -1480,7 +1542,7 @@ function ClaudeChat({ totalClients }) {
             <div className="cl-av">AI</div>
             <div className="cl-hdr-info">
               <h4>Claude AI</h4>
-              <p>Assistente Bono & Lacerda �. {totalClients} clientes</p>
+              <p>Assistente Bono & Lacerda · {totalClients} clientes</p>
             </div>
           </div>
           <div className="cl-msgs">
