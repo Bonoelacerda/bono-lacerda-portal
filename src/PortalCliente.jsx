@@ -889,7 +889,10 @@ function Docs({ proc, toast, client }) {
     const saved = await db.post("documents", row);
     if (saved[0]) {
       setDocs(d => [saved[0], ...d]); toast(`"${f.name}" enviado com sucesso!`);
-      notifyLawyer({ type:"document_upload", client_name:client?.name||"Cliente", client_id:client?.id, process_id:proc.id });
+      /* ── Notificação persistente para o cliente (confirmação) ── */
+      db.post("notifications", { client_id:client.id, text:`Documento "${f.name}" enviado com sucesso. A equipa irá analisá-lo em breve.`, icon:"📎", read:false });
+      /* ── Notificação ao advogado via Edge Function (email + BD) ── */
+      notifyLawyer({ type:"document_upload", client_name:client?.name||"Cliente", client_id:client?.id, process_id:proc.id, document_name:f.name });
     }
     setUploading(false);
   };
