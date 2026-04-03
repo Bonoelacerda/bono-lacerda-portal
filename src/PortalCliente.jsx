@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createClient } from '@supabase/supabase-js';
 
 /* ── SECURITY: Prototype Pollution Protection (V-008) ─────────────────── */
 if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object.freeze(Array.prototype);}catch(e){}}
@@ -17,6 +18,7 @@ if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object
 const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
 const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
+const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 /* ── SECURITY: Input sanitization (V-008) ─────────────────────────────── */
 const sanitizeInput = (str) => {
@@ -54,6 +56,17 @@ const db = {
   signedUrl: async (path) => `${SUPA_URL}/storage/v1/object/public/documentos/${encodeURIComponent(path)}`,
 };
 
+/* ── MELHORIA 3: Notificação ao advogado via Edge Function ── */
+const notifyLawyer = async (payload) => {
+  try {
+    await fetch(`${SUPA_URL}/functions/v1/notify-lawyer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}` },
+      body: JSON.stringify(payload),
+    });
+  } catch {}
+};
+
 const safeName = n => n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]/g,"_");
 const MO = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const fmtd = ts => ts ? new Date(ts).toLocaleDateString("pt-BR") : "—";
@@ -80,6 +93,7 @@ function Icon({ name, size = 20 }) {
     key:      <svg {...p}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>,
     clip:     <svg {...p}><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>,
     img:      <svg {...p}><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>,
+    help:     <svg {...p}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
   };
   return map[name] || null;
 }
@@ -397,7 +411,7 @@ function Login({ onLogin, legalDoc, setLegalDoc }) {
             <h1>Bono & Lacerda<br />Advogados</h1>
             <p>Portal do Cliente</p>
           </div>
-          <p className="ltag">Advocacia Internacional<br />Migração . Nacionalidade . Empresarial</p>
+          <p className="ltag">Advocacia Internacional<br />Migração · Nacionalidade · Empresarial</p>
         </div>
         <div className="lr">
           <div className="lc">
@@ -602,7 +616,7 @@ function Dashboard({ client, proc, steps }) {
           O escritório Bono & Lacerda está a preparar o seu processo.<br />Em breve terá acesso a todas as informações aqui.
         </p>
         <div style={{ marginTop:"2rem", padding:".75rem 1.25rem", background:"rgba(255,255,255,.04)", borderRadius:12, display:"inline-block", fontSize:".82rem", color:"var(--mu)" }}>
-          +351 21 793 1934 . bonoelacerda@gmail.com
+          +351 21 793 1934 · bonoelacerda@gmail.com
         </div>
       </div>
     </div>
@@ -818,7 +832,7 @@ function Dashboard({ client, proc, steps }) {
               <div style={{ minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Ramom Lacerda</div>
                 <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2 }}>OAB/PB 19.165</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L . Madrid 142952</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", wordBreak:"break-word" }}>Lisboa 65899L · Madrid 142952</div>
                 <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
@@ -826,8 +840,8 @@ function Dashboard({ client, proc, steps }) {
               <div className="av" style={{ width:42, height:42, fontSize:".85rem", flexShrink:0 }}>LF</div>
               <div style={{ minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:".88rem" }}>Dr. Luis Felipe Bono</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 . OAB/PB 33587A</div>
-                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L . Madrid 142951</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:2, wordBreak:"break-word" }}>OAB/SP 441.255 · OAB/PB 33587A</div>
+                <div className="lawyer-info" style={{ fontSize:".72rem", color:"var(--mu)", marginTop:1, wordBreak:"break-word" }}>Lisboa 67321L · Madrid 142951</div>
                 <div style={{ fontSize:".72rem", color:"var(--ok)", marginTop:3, fontWeight:600 }}>● Online</div>
               </div>
             </div>
@@ -852,7 +866,7 @@ function Dashboard({ client, proc, steps }) {
 }
 
 /* ── DOCUMENTS ────────────────────────────────────────────────────────── */
-function Docs({ proc, toast }) {
+function Docs({ proc, toast, client }) {
   const [docs, setDocs] = useState([]);
   const [ld,   setLd]   = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -873,7 +887,10 @@ function Docs({ proc, toast }) {
     if (!ok) { toast("Erro ao enviar ficheiro. Tente novamente."); setUploading(false); return; }
     const row = { process_id:proc.id, name:f.name, size:`${(f.size/1024).toFixed(0)} KB`, date:new Date().toISOString().split("T")[0], status:"aguardando", uploaded_by:"cliente", storage_path:path };
     const saved = await db.post("documents", row);
-    if (saved[0]) { setDocs(d => [saved[0], ...d]); toast(`"${f.name}" enviado com sucesso!`); }
+    if (saved[0]) {
+      setDocs(d => [saved[0], ...d]); toast(`"${f.name}" enviado com sucesso!`);
+      notifyLawyer({ type:"document_upload", client_name:client?.name||"Cliente", client_id:client?.id, process_id:proc.id });
+    }
     setUploading(false);
   };
 
@@ -930,7 +947,7 @@ function Docs({ proc, toast }) {
                 <div className="dic"><Icon name="file" size={18} /></div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div className="dn2">{d.name}</div>
-                  <div className="dm">{d.size} . {d.date} . {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
+                  <div className="dm">{d.size} · {d.date} · {d.uploaded_by==="cliente"?"Enviado por si":"Enviado pelo advogado"}</div>
                 </div>
                 <div style={{ marginRight:8 }}>{badge(d.status)}</div>
                 <button className="ib" onClick={() => download(d)} title="Download">
@@ -959,6 +976,13 @@ function Notifs({ client }) {
 
   useEffect(() => {
     db.get("notifications", `?client_id=eq.${client.id}&order=created_at.desc`).then(setNs).finally(() => setLd(false));
+    /* ── MELHORIA 5: Real-time — notificações do advogado aparecem instantaneamente ── */
+    const ch = supabase.channel(`notifs-${client.id}`)
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'notifications', filter:`client_id=eq.${client.id}` }, (payload) => {
+        setNs(prev => [payload.new, ...prev]);
+      })
+      .subscribe();
+    return () => supabase.removeChannel(ch);
   }, []);
 
   const markAll = async () => {
@@ -1019,6 +1043,13 @@ function Meetings({ proc, client }) {
   useEffect(() => {
     if (!proc) return;
     db.get("meetings", `?process_id=eq.${proc.id}&order=date.asc`).then(setMs).finally(() => setLd(false));
+    /* ── MELHORIA 5: Real-time — status de reunião atualiza ao vivo ── */
+    const ch = supabase.channel(`meetings-${proc.id}`)
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'meetings', filter:`process_id=eq.${proc.id}` }, (payload) => {
+        setMs(prev => prev.map(m => m.id === payload.new.id ? payload.new : m));
+      })
+      .subscribe();
+    return () => supabase.removeChannel(ch);
   }, [proc]);
 
   const submit = async () => {
@@ -1028,6 +1059,7 @@ function Meetings({ proc, client }) {
     if (saved[0]) {
       setMs(m => [...m, saved[0]]);
       await db.post("notifications", { client_id:client.id, text:`Pedido de reunião enviado para ${form.date.split("-").reverse().join("/")} às ${form.time}. Aguarde confirmação.`, icon:"📅", read:false });
+      notifyLawyer({ type:"meeting_request", client_name:client.name, client_id:client.id, process_id:proc.id, meeting_date:`${form.date.split("-").reverse().join("/")} às ${form.time}`, meeting_type:form.type, meeting_title:form.title });
       setSent(true);
     }
     setBusy(false);
@@ -1124,7 +1156,7 @@ function Meetings({ proc, client }) {
               <div style={{ flex:1 }}>
                 <div style={{ fontWeight:600, fontSize:".9rem" }}>{m.title}</div>
                 <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4 }}>
-                  {m.time} . {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
+                  {m.time} · {m.type==="videochamada"?"Videochamada":m.type==="presencial"?"Presencial":m.type==="whatsapp"?"WhatsApp":"Telefone"}
                 </div>
                 {m.notes && <div style={{ fontSize:".78rem", color:"var(--mu)", marginTop:4, fontStyle:"italic" }}>{m.notes}</div>}
               </div>
@@ -1150,15 +1182,27 @@ function Chat({ client, proc }) {
 
   useEffect(() => {
     if (!proc) return;
+    // Carrega mensagens existentes
     db.get("messages", `?process_id=eq.${proc.id}&order=created_at.asc`).then(setMsgs).finally(() => setLd(false));
-  }, [proc]);
+    // Escuta novas mensagens em tempo real
+    const ch=supabase.channel(`chat-cliente-${proc.id}`)
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:`process_id=eq.${proc.id}`},(payload)=>{
+        setMsgs(m=>[...m,payload.new]);
+      })
+      .subscribe();
+    return()=>supabase.removeChannel(ch);
+  }, [proc?.id]);
 
   useEffect(() => { bot.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs]);
 
   const send = async () => {
     if (!input.trim() || !proc) return;
-    const saved = await db.post("messages", { process_id:proc.id, from_role:"client", text:input });
-    if (saved[0]) { setMsgs(m => [...m, saved[0]]); setJustSent(true); }
+    const msgText = input;
+    const saved = await db.post("messages", { process_id:proc.id, from_role:"client", text:msgText });
+    if (saved[0]) {
+      setMsgs(m => [...m, saved[0]]); setJustSent(true);
+      notifyLawyer({ type:"chat_message", client_name:client.name, client_id:client.id, process_id:proc.id, message:msgText });
+    }
     setInput("");
   };
 
@@ -1369,6 +1413,174 @@ function Perfil({ client, toast, onUpdate }) {
   );
 }
 
+/* ── MELHORIA 6: FAQ / BASE DE CONHECIMENTO ──────────────────────────── */
+const FAQ_DATA = [
+  {
+    cat: "Processo de Nacionalidade",
+    items: [
+      { q: "Quanto tempo demora o processo de nacionalidade portuguesa?",
+        a: "O prazo total estimado pelo IRN para adultos é de 24 a 29 meses desde a submissão até ao registo final. Pedidos de menores (filhos de pai/mãe portuguesa) são tratados com prioridade, com análise e decisão entre 2 a 4 meses. Estes prazos podem variar consoante o volume de processos em cada conservatória." },
+      { q: "O que significa cada etapa do processo?",
+        a: "O processo passa por 7 etapas: 1) Recebido — o IRN confirma recepção; 2) Registado — atribuição de número oficial; 3) Consultas — verificação junto de entidades externas; 4) Documentos — análise da documentação; 5) Análise — avaliação jurídica; 6) Despacho — decisão final do conservador; 7) Terminado — processo concluído. Pode acompanhar a etapa actual na sua Dashboard." },
+      { q: "Posso consultar o estado oficial do meu processo?",
+        a: "Sim! A consulta vinculativa é feita directamente no portal do IRN em justica.gov.pt/Servicos/Consultar-estado-do-processo-de-nacionalidade. Precisará do número do processo e do seu Código de Consulta (chave de acesso). Este portal Bono & Lacerda é complementar ao do IRN." },
+      { q: "Qual a diferença entre o Arquivo Central do Porto e a Conservatória dos Registos Centrais?",
+        a: "São as duas entidades que processam pedidos de nacionalidade em Portugal. O Arquivo Central do Porto (ACP) processa a maioria dos pedidos de naturalização (Art.º 6º). A Conservatória dos Registos Centrais (CRC) em Lisboa também processa pedidos de naturalização e de atribuição. Cada uma tem as suas próprias filas e prazos de análise." },
+      { q: "O que é a 'data de protocolo' do meu processo?",
+        a: "É a data em que o seu pedido foi oficialmente submetido e registado no sistema do IRN. Esta data é importante porque o IRN analisa os processos pela ordem de entrada — quanto mais antiga a data de protocolo, mais perto da análise." },
+    ]
+  },
+  {
+    cat: "Documentos",
+    items: [
+      { q: "Que documentos posso enviar pelo portal?",
+        a: "Pode enviar qualquer documento relevante para o seu processo: certidões, procurações, passaportes, comprovativos de residência, etc. Aceitamos PDF, DOC, JPG e PNG, até 20 MB por ficheiro. Use a secção 'Documentos' no menu lateral." },
+      { q: "Os meus documentos estão seguros?",
+        a: "Sim. Todos os documentos são armazenados com encriptação no servidor Supabase, com acesso restrito apenas ao escritório Bono & Lacerda e ao titular do processo. Utilizamos HTTPS em todas as comunicações." },
+      { q: "Como sei se o meu documento foi aceite?",
+        a: "Após o envio, o documento aparece com o estado 'Aguardando'. O advogado irá revê-lo e o estado mudará para 'Aprovado' quando estiver em ordem. Receberá uma notificação se houver algum problema." },
+    ]
+  },
+  {
+    cat: "Portal e Conta",
+    items: [
+      { q: "Perdi a minha chave de acesso. O que faço?",
+        a: "Entre em contacto com o escritório pelo telefone +351 21 793 1934 ou por email bonoelacerda@gmail.com. Iremos reenviar a sua chave de acesso por WhatsApp ou email." },
+      { q: "O portal é a mesma coisa que o site do IRN?",
+        a: "Não. Este portal é uma ferramenta complementar do escritório Bono & Lacerda para facilitar o acompanhamento do seu processo, comunicação com o advogado e envio de documentos. O portal oficial do IRN (justica.gov.pt) contém a informação vinculativa sobre o estado do processo." },
+      { q: "Posso aceder ao portal pelo telemóvel?",
+        a: "Sim! O portal é totalmente responsivo e funciona em qualquer dispositivo — telemóvel, tablet ou computador. Também existe a app Bono & Lacerda disponível na Google Play Store." },
+      { q: "Como actualizo os meus dados de contacto?",
+        a: "Aceda à secção 'Meu Perfil' no menu lateral. Lá pode actualizar email, telefone, WhatsApp e endereço. É importante manter os dados actualizados para que o escritório consiga contactá-lo quando necessário." },
+    ]
+  },
+  {
+    cat: "Reuniões e Comunicação",
+    items: [
+      { q: "Como posso falar com o meu advogado?",
+        a: "Tem três opções: 1) Chat — mensagens directas pelo portal, respondidas em até 24h úteis; 2) Reuniões — agende videochamada, chamada telefónica, WhatsApp ou presencial; 3) Contacto directo — ligue para +351 21 793 1934 ou envie email para bonoelacerda@gmail.com." },
+      { q: "A reunião que solicitei foi confirmada?",
+        a: "Após solicitar uma reunião, o estado aparece como 'Aguardando'. O escritório irá confirmar ou sugerir uma alternativa. Receberá uma notificação quando o estado mudar para 'Confirmado'. Acompanhe na secção 'Reuniões'." },
+      { q: "Quanto tempo demora a resposta no chat?",
+        a: "A equipa Bono & Lacerda responde normalmente em até 24 horas úteis. Para questões urgentes, recomendamos ligar directamente para o escritório." },
+    ]
+  },
+];
+
+function FAQ() {
+  const [openIdx, setOpenIdx] = useState(null);
+  const [search, setSearch] = useState("");
+
+  const filtered = search.trim()
+    ? FAQ_DATA.map(cat => ({
+        ...cat,
+        items: cat.items.filter(i =>
+          i.q.toLowerCase().includes(search.toLowerCase()) ||
+          i.a.toLowerCase().includes(search.toLowerCase())
+        )
+      })).filter(cat => cat.items.length > 0)
+    : FAQ_DATA;
+
+  const toggle = (key) => setOpenIdx(openIdx === key ? null : key);
+
+  return (
+    <div>
+      <div className="ph">
+        <h1>Perguntas Frequentes</h1>
+        <p>Encontre respostas rápidas sobre o seu processo e o portal.</p>
+      </div>
+
+      {/* Search */}
+      <div style={{ marginBottom:"1.5rem" }}>
+        <input
+          type="text"
+          placeholder="Pesquisar perguntas…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{
+            width:"100%", padding:".9rem 1.15rem", border:"1.5px solid var(--glass-border)",
+            borderRadius:"var(--r)", fontFamily:"'DM Sans',sans-serif", fontSize:".9rem",
+            color:"#fff", background:"var(--glass)", backdropFilter:"var(--blur2)",
+            outline:"none", transition:"all .3s"
+          }}
+          onFocus={e => { e.target.style.borderColor="var(--g)"; e.target.style.boxShadow="0 0 0 3px rgba(212,168,67,.12)"; }}
+          onBlur={e => { e.target.style.borderColor="var(--glass-border)"; e.target.style.boxShadow="none"; }}
+        />
+      </div>
+
+      {filtered.map((cat, ci) => (
+        <div key={ci} className="card" style={{ marginBottom:"1rem" }}>
+          <div className="ct" style={{ marginBottom:".75rem", display:"flex", alignItems:"center", gap:".5rem" }}>
+            <span style={{ fontSize:"1.1rem" }}>
+              {ci===0?"🏛️":ci===1?"📄":ci===2?"🔑":"💬"}
+            </span>
+            {cat.cat}
+          </div>
+          {cat.items.map((item, ii) => {
+            const key = `${ci}-${ii}`;
+            const isOpen = openIdx === key;
+            return (
+              <div key={key} style={{ borderBottom: ii < cat.items.length-1 ? "1px solid var(--glass-border)" : "none" }}>
+                <div
+                  onClick={() => toggle(key)}
+                  style={{
+                    padding:".9rem .5rem", cursor:"pointer", display:"flex", justifyContent:"space-between",
+                    alignItems:"center", gap:"1rem", transition:"all .2s",
+                    color: isOpen ? "#fff" : "var(--tx)"
+                  }}
+                  onMouseOver={e => e.currentTarget.style.color="#fff"}
+                  onMouseOut={e => { if (!isOpen) e.currentTarget.style.color="var(--tx)"; }}
+                >
+                  <span style={{ fontWeight:isOpen?600:500, fontSize:".88rem", lineHeight:1.5 }}>{item.q}</span>
+                  <span style={{
+                    transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition:"transform .25s", fontSize:".8rem", color:"var(--g)", flexShrink:0
+                  }}>▼</span>
+                </div>
+                {isOpen && (
+                  <div style={{
+                    padding:"0 .5rem 1rem", fontSize:".84rem", color:"var(--mu)",
+                    lineHeight:1.8, animation:"fadeUp .2s ease"
+                  }}>
+                    {item.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {filtered.length === 0 && (
+        <div className="card" style={{ textAlign:"center", padding:"3rem" }}>
+          <div style={{ fontSize:"2rem", marginBottom:"1rem" }}>🔍</div>
+          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1.1rem", color:"#fff", marginBottom:".5rem" }}>
+            Nenhum resultado encontrado
+          </div>
+          <p style={{ color:"var(--mu)", fontSize:".85rem" }}>
+            Tente outros termos ou entre em contacto pelo Chat.
+          </p>
+        </div>
+      )}
+
+      {/* Contact CTA */}
+      <div style={{
+        background:"linear-gradient(135deg, rgba(212,168,67,.06), rgba(212,168,67,.03))",
+        border:"1px solid rgba(212,168,67,.18)", borderRadius:"var(--r2)",
+        padding:"1.5rem", textAlign:"center", marginTop:"1rem"
+      }}>
+        <div style={{ fontSize:"1.3rem", marginBottom:".5rem" }}>💬</div>
+        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"1rem", color:"#fff", marginBottom:".4rem" }}>
+          Não encontrou a sua resposta?
+        </div>
+        <p style={{ color:"var(--mu)", fontSize:".82rem", lineHeight:1.6 }}>
+          Envie a sua dúvida pelo Chat ou ligue para +351 21 793 1934
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ── LEGAL / POLÍTICAS ────────────────────────────────────────────────── */
 const LEGAL = {
   privacidade: {
@@ -1493,7 +1705,7 @@ function LegalFooter({ onOpen }) {
       {links.map((l, i) => (
         <span key={l.key}>
           <a href="#" onClick={e => { e.preventDefault(); onOpen(l.key); }} style={{ color:"rgba(212,168,67,.5)", textDecoration:"none", transition:"color .2s" }} onMouseOver={e => e.target.style.color="rgba(212,168,67,.9)"} onMouseOut={e => e.target.style.color="rgba(212,168,67,.5)"}>{l.label}</a>
-          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>.</span>}
+          {i < links.length - 1 && <span style={{ color:"rgba(255,255,255,.12)", margin:"0 .2rem" }}>·</span>}
         </span>
       ))}
     </div>
@@ -1532,8 +1744,27 @@ export default function App() {
 
   const showToast = msg => { setToast(msg); setTimeout(() => setToast(null), 3500); };
 
+  /* ── MELHORIA 2: Auto-login com sessão persistente ── */
+  useEffect(() => {
+    try {
+      const savedChave = sessionStorage.getItem("bl_chave");
+      if (savedChave && !client) {
+        db.get("clients", `?chave_acesso=eq.${encodeURIComponent(savedChave)}&select=*`).then(rows => {
+          if (rows.length > 0) onLogin(rows[0]);
+        });
+      }
+    } catch {}
+  }, []);
+
   const onLogin = async c => {
     setClient(c); setLoading(true);
+    /* ── MELHORIA 1: Rastrear acessos ── */
+    db.patch("clients", c.id, {
+      last_login_at: new Date().toISOString(),
+      login_count: (c.login_count || 0) + 1
+    });
+    /* ── MELHORIA 2: Sessão persistente ── */
+    try { sessionStorage.setItem("bl_chave", c.chave_acesso); } catch {}
     const ps = await db.get("processes", `?client_id=eq.${c.id}&limit=1`);
     if (ps[0]) {
       setProc(ps[0]);
@@ -1543,12 +1774,27 @@ export default function App() {
     setLoading(false);
   };
 
+  /* ── MELHORIA 5: Real-time — processo atualiza ao vivo quando advogado muda step/status ── */
+  useEffect(() => {
+    if (!proc) return;
+    const ch = supabase.channel(`proc-${proc.id}`)
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'processes', filter:`id=eq.${proc.id}` }, (payload) => {
+        setProc(payload.new);
+        if (payload.new.current_step !== proc.current_step) {
+          showToast(`O seu processo avançou para a etapa ${payload.new.current_step}!`);
+        }
+      })
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, [proc?.id, proc?.current_step]);
+
   const nav = [
     { id:"home",     label:"Visão Geral",   ic:"home" },
     { id:"docs",     label:"Documentos",    ic:"file" },
     { id:"meetings", label:"Reuniões",      ic:"cal"  },
     { id:"notifs",   label:"Notificações",  ic:"bell" },
     { id:"chat",     label:"Chat",          ic:"chat" },
+    { id:"faq",      label:"FAQ",            ic:"help" },
     { id:"perfil",   label:"Meu Perfil",    ic:"users"},
   ];
 
@@ -1564,10 +1810,10 @@ export default function App() {
             <img src="https://jrkreiidaxadwryjhdzu.supabase.co/storage/v1/object/public/documentos/logo_bl.png" alt="BL" style={{width:32,height:32,objectFit:'contain'}} />
             <div>
               <h2>Bono & Lacerda</h2>
-              <span>{client.name.split(" ")[0]} . {client.chave_acesso}</span>
+              <span>{client.name.split(" ")[0]} · {client.chave_acesso}</span>
             </div>
           </div>
-          <button className="mob-out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
+          <button className="mob-out" onClick={() => { try{sessionStorage.removeItem("bl_chave");}catch{} setClient(null); setProc(null); setSteps([]); }}>
             <Icon name="logout" size={20} />
           </button>
         </header>
@@ -1597,7 +1843,7 @@ export default function App() {
             ))}
           </nav>
           <div className="sbf">
-            <button className="out" onClick={() => { setClient(null); setProc(null); setSteps([]); }}>
+            <button className="out" onClick={() => { try{sessionStorage.removeItem("bl_chave");}catch{} setClient(null); setProc(null); setSteps([]); }}>
               <Icon name="logout" size={16} /> Sair
             </button>
           </div>
@@ -1607,10 +1853,11 @@ export default function App() {
           {loading ? <Loader text="A carregar o seu processo…" /> : (
             <>
               {tab === "home"     && <Dashboard client={client} proc={proc} steps={steps} />}
-              {tab === "docs"     && <Docs proc={proc} toast={showToast} />}
+              {tab === "docs"     && <Docs proc={proc} toast={showToast} client={client} />}
               {tab === "meetings" && <Meetings proc={proc} client={client} />}
               {tab === "notifs"   && <Notifs client={client} />}
               {tab === "chat"     && <Chat client={client} proc={proc} />}
+              {tab === "faq"      && <FAQ />}
               {tab === "perfil"   && <Perfil client={client} toast={showToast} onUpdate={c => setClient(c)} />}
             </>
           )}
@@ -1626,6 +1873,7 @@ export default function App() {
                  n.label === "Documentos" ? "Docs" :
                  n.label === "Reuniões" ? "Reuniões" :
                  n.label === "Notificações" ? "Avisos" :
+                 n.label === "FAQ" ? "FAQ" :
                  n.label === "Meu Perfil" ? "Perfil" : "Chat"}
               </button>
             ))}
