@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { createClient } from '@supabase/supabase-js';
+import { supabase, SUPA_URL, SUPA_KEY, H } from './supabaseClient.js';
 
-/* ── SECURITY: Prototype Pollution Protection (V-008) ─────────────────── */
-if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object.freeze(Array.prototype);}catch(e){}}
+/* ── SECURITY: Prototype Pollution Protection (V-008) ─────────────────── *
+ * REMOVIDO: Object.freeze(Object.prototype) causava crash no Android WebView
+ * porque impedia atribuição de propriedades em objetos, quebrando React e Supabase SDK.
+ * Proteção contra prototype pollution agora é feita via sanitizeInput/sanitizeQueryParam. */
 
 /* ── SECURITY: Strip Meta Pixel fbclid tracking parameter (V-007 LGPD) ── */
 (function stripFbclid(){
@@ -14,11 +16,6 @@ if(typeof Object.freeze==="function"){try{Object.freeze(Object.prototype);Object
     }
   }catch(e){}
 })();
-
-const SUPA_URL = "https://jrkreiidaxadwryjhdzu.supabase.co";
-const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impya3JlaWlkYXhhZHdyeWpoZHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3Nzk3NTIsImV4cCI6MjA4OTM1NTc1Mn0.37Izlz1YVZlZadgXiL5xZC8ZofT3tob1VGPUr5m19jM";
-const H = { apikey: SUPA_KEY, Authorization: `Bearer ${SUPA_KEY}`, "Content-Type": "application/json" };
-const supabase = createClient(SUPA_URL, SUPA_KEY);
 
 /* ── SECURITY: Input sanitization (V-008) ─────────────────────────────── */
 const sanitizeInput = (str) => {
