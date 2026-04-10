@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#16213e">
+  <title>Sem Conexão — B&L Portal</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a0f1c 0%, #16213e 50%, #1a1a2e 100%);
+      color: #e0e0e0;
+      padding: 24px;
+      text-align: center;
+    }
+    .container { max-width: 400px; }
+    .icon { font-size: 64px; margin-bottom: 24px; }
+    h1 { font-size: 24px; color: #d4a84b; margin-bottom: 12px; }
+    p { font-size: 16px; line-height: 1.5; margin-bottom: 24px; color: #aaa; }
+    button {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #d4a84b, #b8942e);
+      color: #1a1a2e;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:active { transform: scale(0.97); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">&#x1F4F6;</div>
+    <h1>Sem Conexao</h1>
+    <p>Nao foi possivel conectar ao servidor. Verifique sua conexao com a internet e tente novamente.</p>
+    <button onclick="location.reload()">Tentar Novamente</button>
+  </div>
+</body>
+</html>
