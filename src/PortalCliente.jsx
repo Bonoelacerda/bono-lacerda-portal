@@ -735,7 +735,7 @@ function Dashboard({ client, proc, steps }) {
           // Art.º 1º C - Atribuição (nasc. estrangeiro)
           { match: a => (a.includes('1') && a.includes('c')) || a.includes('nasc') || a.includes('estrangeiro'),
             porto:  { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'ACP — Jan/2026' },
-            lisboa: { julgando: '1ª quinzena de novembro de 2025', fonte: 'CRC Lisboa — Fev/2026' } },
+            lisboa: { julgando: '2ª quinzena de outubro de 2023', fonte: 'CRC Lisboa — Fev/2026' } },
         ];
 
         const isPorto  = arquivo.includes('porto');
