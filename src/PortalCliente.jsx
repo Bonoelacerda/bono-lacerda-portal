@@ -685,15 +685,15 @@ function Dashboard({ client, proc, steps }) {
         const PRAZOS = [
           // Art.º 6º n.º 7 - Naturalização
           { match: a => a.includes('6') && (a.includes('n.º 7') || a.includes('n. 7') || a.includes('no 7') || a.includes('n7')),
-            porto:  { julgando: '2ª quinzena de maio de 2022',     fonte: 'ACP — Jan/2026' },
+            porto:  { julgando: '2ª quinzena de maio de 2022',     fonte: 'ACP — Mar/2026' },
             lisboa: { julgando: '1ª quinzena de maio de 2021',     fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 1 - Naturalização
           { match: a => a.includes('6') && (a.includes('n.º 1') || a.includes('n. 1') || a.includes('no 1') || a.includes('n1')),
-            porto:  { julgando: '2ª quinzena de setembro de 2023', fonte: 'ACP — Jan/2026' },
+            porto:  { julgando: '1ª quinzena de outubro de 2023',  fonte: 'ACP — Mar/2026' },
             lisboa: { julgando: '1ª quinzena de janeiro de 2024',  fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 2
           { match: a => a.includes('6') && (a.includes('n.º 2') || a.includes('n. 2') || a.includes('no 2') || a.includes('n2')),
-            porto:  { julgando: '1ª quinzena de setembro de 2025', fonte: 'ACP — Jan/2026' },
+            porto:  { julgando: '2ª quinzena de setembro de 2025', fonte: 'ACP — Mar/2026' },
             lisboa: { julgando: '2ª quinzena de fevereiro de 2026',fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 6º n.º 3
           { match: a => a.includes('6') && (a.includes('n.º 3') || a.includes('n. 3') || a.includes('no 3') || a.includes('n3')),
@@ -730,11 +730,11 @@ function Dashboard({ client, proc, steps }) {
           // Art.º 1º D - Atribuição (netos) — Maiores e Menores
           { match: a => (a.includes('1') && a.includes('d')) || a.includes('netos'),
             dual: true,
-            porto:  { maiores: '1ª quinzena de dezembro de 2021', menores: '1ª quinzena de janeiro de 2026', fonte: 'ACP — Jan/2026' },
+            porto:  { maiores: '2ª quinzena de dezembro de 2021', menores: '1ª quinzena de janeiro de 2026', fonte: 'ACP — Mar/2026' },
             lisboa: { maiores: '2ª quinzena de janeiro de 2022',  menores: '1ª quinzena de janeiro de 2025', fonte: 'CRC Lisboa — Fev/2026' } },
           // Art.º 1º C - Atribuição (nasc. estrangeiro)
           { match: a => (a.includes('1') && a.includes('c')) || a.includes('nasc') || a.includes('estrangeiro'),
-            porto:  { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'ACP — Jan/2026' },
+            porto:  { julgando: '1ª quinzena de janeiro de 2026',  fonte: 'ACP — Mar/2026' },
             lisboa: { julgando: '2ª quinzena de outubro de 2023', fonte: 'CRC Lisboa — Fev/2026' } },
         ];
 
