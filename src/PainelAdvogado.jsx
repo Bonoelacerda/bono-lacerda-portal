@@ -285,7 +285,7 @@ function Dash({ clients }) {
       <div className="sg" style={{gridTemplateColumns:"repeat(4,1fr)"}}>
         {[
           ["ðŸ‘¥ Total Clientes",  total,       `${comChave} com acesso`,         "#0f1e35"],
-          ["âš¡ Em Andamento",    emAndamento, `${aguardando} aguardando docs`,   "#1d6b48"],
+          ["Ã¢Å¡Â¡ Em Andamento",    emAndamento, `${aguardando} aguardando docs`,   "#1d6b48"],
           ["âš ï¸ Com PendÃªncias",  pendentes,   "requerem atenÃ§Ã£o",               "#92400e"],
           ["ðŸ”‘ Sem Chave",       semChave,    "nÃ£o podem aceder ao portal",      "#991b1b"],
         ].map(([l,v,s,c]) => (
@@ -1398,9 +1398,12 @@ export default function App(){
   // Realtime: notificaÃ§Ãµes globais em tempo real (sem polling)
   useEffect(()=>{
     if(!auth) return;
-    // VerificaÃ§Ã£o inicial de reuniÃµes pendentes
+    // VerificaÃ§Ã£o inicial de reuniÃµes pendentes â€” mostra TOTAL no sidebar
     api.get("meetings","?status=eq.pendente&select=id").then(r=>{
-      if(r&&!r.error) seenMeetRef.current=r.length;
+      if(r&&!r.error){
+        seenMeetRef.current=r.length;
+        if(tabRef.current!=="meetings") setPendentes(r.length);
+      }
     });
     const ch=supabase.channel('global-notifs')
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'documents',filter:'uploaded_by=eq.cliente'},(payload)=>{
@@ -1415,10 +1418,8 @@ export default function App(){
       .on('postgres_changes',{event:'*',schema:'public',table:'meetings'},async()=>{
         const r=await api.get("meetings","?status=eq.pendente&select=id");
         if(r&&!r.error){
-          const total=r.length;
-          const newOnes=total-seenMeetRef.current;
-          if(tabRef.current!=="meetings") setPendentes(newOnes>0?newOnes:0);
-          else seenMeetRef.current=total;
+          if(tabRef.current!=="meetings") setPendentes(r.length);
+          else seenMeetRef.current=r.length;
         }
       })
       .subscribe();
