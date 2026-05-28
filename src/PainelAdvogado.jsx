@@ -181,8 +181,9 @@ function Login({onLogin}){
   const [email,setEmail]=useState("");
   const [pass,setPass]=useState("");
   const [err,setErr]=useState("");
-  const go=()=>{
-    if(email==="bonoelacerda@gmail.com"&&pass==="sQjhZEmzPLC8msyL") onLogin();
+  const go=async()=>{
+    const {data}=await supabase.rpc('admin_login',{p_email:email,p_pass:pass});
+    if(data?.ok) onLogin();
     else setErr("Credenciais inválidas.");
   };
   return(
