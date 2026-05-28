@@ -182,7 +182,7 @@ function Login({onLogin}){
   const [pass,setPass]=useState("");
   const [err,setErr]=useState("");
   const go=()=>{
-    if(email==="bonoelacerda@gmail.com"&&pass==="admin123") onLogin();
+    if(email==="bonoelacerda@gmail.com"&&pass==="sQjhZEmzPLC8msyL") onLogin();
     else setErr("Credenciais inválidas.");
   };
   return(
